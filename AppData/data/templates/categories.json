@@ -1,0 +1,50 @@
+{
+    "Bookmark": {
+        "icon": "nf-oct-bookmark"
+    },
+    "Code Snippets": {
+        "icon": "nerd-font-oct-code"
+    },
+    "Development": {
+        "icon": "nf-dev-git_branch"
+    },
+    "Documentation": {
+        "icon": "nf-fa-book"
+    },
+    "Firefox Extensions": {
+        "icon": "nf-fa-firefox"
+    },
+    "Guideline": {
+        "icon": "nf-oct-book"
+    },
+    "Hardware": {
+        "icon": "nf-oct-device_desktop"
+    },
+    "Herbalism": {
+        "icon": "nf-fa-leaf"
+    },
+    "Mathematics": {
+        "icon": "nf-fa-calculator"
+    },
+    "Programing Languages": {
+        "icon": "nf-seti-python"
+    },
+    "Personalization": {
+        "icon": "nf-seti-config"
+    },
+    "Quick Reference": {
+        "icon": "nf-fae-book_open"
+    },
+    "Shell": {
+        "icon": "nf-oct-terminal"
+    },
+    "Survival": {
+        "icon": "nf-fa-fire"
+    },
+    "Guide - Tutorial": {
+        "icon": "nf-fa-institution"
+    },
+    "Web Development": {
+        "icon": "nf-dev-webplatform"
+    }
+}
