@@ -317,15 +317,7 @@ class CommandLineTool():
         """
         www_root = os.path.join(root_folder, "UserData", "www")
         os.chdir(www_root)
-        # The "http_server" executable could be inside app's AppData folder.
-        # (The app was made standalone)
         cmd_path = os.path.join(root_folder, "AppData", "data", "python_scripts", "http_server")
-
-        if not os.path.exists(cmd_path):
-            # The app wasn't made standalone, so the "http_server" executable
-            # is inside the main app (__app__).
-            cmd_path = os.path.join(os.path.join(root_folder, ".."), "__app__",
-                                    "data", "python_scripts", "http_server")
 
         # Use of os.execv() so at the end only one process is left executing.
         # The "http_server" executable also uses os.execv() to launch the real web application.
