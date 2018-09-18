@@ -4,7 +4,7 @@
 # https://unix.stackexchange.com/a/55622
 
 _have {executable_name} &&
-_decide_nospace(){
+_decide_nospace_{current_date}(){
     if [[ ${1} == "--"*"=" ]] ; then
         compopt -o nospace
     fi
@@ -36,7 +36,7 @@ index_html_generation open_main_webpage --debug --force-download" -- "${cur}") )
         ;;
     "server")
         COMPREPLY=( $(compgen -W "start stop restart --host= --port=" -- "${cur}") )
-        _decide_nospace ${COMPREPLY[0]}
+        _decide_nospace_{current_date} ${COMPREPLY[0]}
         ;;
     "generate")
         COMPREPLY=( $(compgen -W \
