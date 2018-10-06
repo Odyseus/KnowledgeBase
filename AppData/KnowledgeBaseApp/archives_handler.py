@@ -14,13 +14,18 @@ import os
 import sys
 import time
 
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 from runpy import run_path
 from shutil import rmtree
-from subprocess import Popen, STDOUT, PIPE
+from subprocess import PIPE
+from subprocess import Popen
+from subprocess import STDOUT
 
 from . import app_utils
-from .python_utils import exceptions, tqdm_wget, cmd_utils
+from .python_utils import cmd_utils
+from .python_utils import exceptions
+from .python_utils import tqdm_wget
 
 try:
     from slugify import slugify
@@ -70,7 +75,7 @@ class ArchivesHandler():
         logger : object
             See <class :any:`LogSystem`>.
         """
-        super(ArchivesHandler, self).__init__()
+        super().__init__()
         self.logger = logger
         self.archives_data = archives_data
         self.last_update_data = {}

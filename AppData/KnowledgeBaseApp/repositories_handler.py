@@ -13,10 +13,14 @@ import json
 import os
 
 from runpy import run_path
-from subprocess import Popen, PIPE
+from subprocess import PIPE
+from subprocess import Popen
 
 from . import app_utils
-from .python_utils import exceptions, shell_utils, file_utils, cmd_utils
+from .python_utils import cmd_utils
+from .python_utils import exceptions
+from .python_utils import file_utils
+from .python_utils import shell_utils
 
 root_folder = os.path.realpath(os.path.abspath(os.path.join(
     os.path.normpath(os.getcwd()))))
@@ -63,7 +67,7 @@ class RepoHandlers():
         logger : object
             See <class :any:`LogSystem`>.
         """
-        super(RepoHandlers, self).__init__()
+        super().__init__()
         self.logger = logger
         self.repo = repo
         self.debug = debug
@@ -290,7 +294,7 @@ class Repository():
         exceptions.MissingMandatoryField
             Missing mandatory field.
         """
-        super(Repository, self).__init__()
+        super().__init__()
         self.logger = logger
         self.json_data = None
         self.web_service = web_service
@@ -449,11 +453,11 @@ class BitBucketRepo(Repository):
         is_sphinx_generated : bool, optional
             See :any:`Repository` > is_sphinx_generated
         """
-        super(BitBucketRepo, self).__init__(data,
-                                            web_service=web_service,
-                                            logger=logger,
-                                            load_json_file=load_json_file,
-                                            is_sphinx_generated=is_sphinx_generated)
+        super().__init__(data,
+                         web_service=web_service,
+                         logger=logger,
+                         load_json_file=load_json_file,
+                         is_sphinx_generated=is_sphinx_generated)
 
     def get_check_repo_cmd(self):
         """Get the command to check the repository.
@@ -507,11 +511,11 @@ class GitHubRepo(Repository):
         is_sphinx_generated : bool, optional
             See :any:`Repository` > is_sphinx_generated
         """
-        super(GitHubRepo, self).__init__(data,
-                                         web_service=web_service,
-                                         logger=logger,
-                                         load_json_file=load_json_file,
-                                         is_sphinx_generated=is_sphinx_generated)
+        super().__init__(data,
+                         web_service=web_service,
+                         logger=logger,
+                         load_json_file=load_json_file,
+                         is_sphinx_generated=is_sphinx_generated)
 
     def get_check_repo_cmd(self):
         """Get the command to check the repository.

@@ -12,40 +12,41 @@ root_folder : str
 """
 
 import os
-import sys
 
 from subprocess import Popen
 from threading import Thread
 
 from . import app_utils
-from .__init__ import __appname__, __appdescription__, __version__, __status__
-from .python_utils import exceptions, log_system, shell_utils, file_utils
-from .python_utils.docopt import docopt
-
-if sys.version_info < (3, 5):
-    raise exceptions.WrongPythonVersion()
+from .__init__ import __appdescription__
+from .__init__ import __appname__
+from .__init__ import __status__
+from .__init__ import __version__
+from .python_utils import cli_utils
 
 root_folder = os.path.realpath(os.path.abspath(os.path.join(
     os.path.normpath(os.getcwd()))))
 
-docopt_doc = """{__appname__} {__version__} {__status__}
 
-{__appdescription__}
+docopt_doc = """{appname} {version} ({status})
+
+{appdescription}
 
 Usage:
+    app.py (-h | --help | --manual | --version)
     app.py run <func_name>... [--debug] [--force-download]
     app.py launch <app_launcher_script_arguments>...
     app.py server (start | stop | restart)
                   [--host=<host>]
                   [--port=<port>]
     app.py generate <file_to_generate>
-    app.py (-h | --help | --version)
-
 
 Options:
 
 -h, --help
     Show this screen.
+
+--manual
+    Show this application manual page.
 
 --version
     Show application version.
@@ -87,17 +88,19 @@ Sub-commands for the `generate` command:
     bitbucket_data_file                 github_data_file
     system_executable
 
-""".format(__appname__=__appname__,
-           __appdescription__=__appdescription__,
-           __version__=__version__,
-           __status__=__status__)
+""".format(appname=__appname__,
+           appdescription=__appdescription__,
+           version=__version__,
+           status=__status__)
 
 
-class CommandLineTool():
-    """Command line tool.
+class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
+    """Command line interface.
 
     Attributes
     ----------
+    a : dict
+        Where docopt_args is stored.
     action : method
         Set the method that will be executed when calling CommandLineTool.run().
     app_args : list
@@ -108,18 +111,9 @@ class CommandLineTool():
     file_generation_action : str
         An "action" that will be used to generate certain files from their
         predefined templates.
-    force_download : bool
-        Force the download of all archives, ignoring the frequency in which they
-        should be downloaded.
     func_names : list
         A list of function names that will be used to execute those functions
         in the order they were defined (passed as arguments).
-    host : str
-        Host name used by the web server.
-    logger : object
-        See <class :any:`LogSystem`>.
-    port : int
-        Port number used by the web server.
     run_args_order : list
         List used as a gude to execute functions in the order they need to.
     """
@@ -138,78 +132,65 @@ class CommandLineTool():
         "index_html_generation",
         "open_main_webpage",
     ]
+    action = None
+    app_args = []
+    debug = None
+    file_generation_action = None
+    func_names = []
 
-    def __init__(self, args):
+    def __init__(self, docopt_args):
         """Initialize.
 
         Parameters
         ----------
-        args : dict
+        docopt_args : dict
             The dictionary of arguments as returned by docopt parser.
         """
-        super(CommandLineTool, self).__init__()
-        self.debug = args["--debug"]
-        logs_storage_dir = "UserData/logs"
-        log_file = log_system.get_log_file(storage_dir=logs_storage_dir,
-                                           prefix="CLI")
-        file_utils.remove_surplus_files(logs_storage_dir, "CLI*")
-        self.logger = log_system.LogSystem(filename=log_file,
-                                           verbose=True)
+        self.a = docopt_args
+        self._cli_header_blacklist = [self.a["--manual"]]
 
-        self.logger.info(shell_utils.get_cli_header(__appname__), date=False)
-        print("")
+        super().__init__(__appname__, "UserData/logs")
 
-        self.action = None
-        self.host = args["--host"]
-        self.port = args["--port"]
-        self.force_download = args["--force-download"]
-        self.func_names = []
-        self.app_args = []
-        self.file_generation_action = None
-
-        if args["server"]:
+        if self.a["--manual"]:
+            self.action = self.display_manual_page
+        elif self.a["server"]:
             self.logger.info("Command: server")
             self.logger.info("Arguments:")
 
-            if args["start"]:
+            if self.a["start"]:
                 self.logger.info("start")
                 self.action = self.http_server_start
-            elif args["stop"]:
+            elif self.a["stop"]:
                 self.logger.info("stop")
                 self.action = self.http_server_stop
-            elif args["restart"]:
+            elif self.a["restart"]:
                 self.logger.info("restart")
                 self.action = self.http_server_restart
-
-        if args["run"]:
+        elif self.a["run"]:
             self.logger.info("Command: run")
             self.logger.info("Arguments:")
             # Sort the arguments so one doesn't have to worry about the order
             # in which they are passed.
             # Source: https://stackoverflow.com/a/12814719.
-            args["<func_name>"].sort(key=lambda x: self.run_args_order.index(x))
+            self.a["<func_name>"].sort(key=lambda x: self.run_args_order.index(x))
 
-            for func in args["<func_name>"]:
+            for func in self.a["<func_name>"]:
                 if getattr(self, func, False):
                     self.logger.info(func)
                     self.func_names.append(func)
                 else:
                     self.logger.warning("Non existent function: %s" % func)
-
-        if args["launch"]:
+        elif self.a["launch"]:
             self.logger.info("Command: launch")
             self.logger.info("Arguments:")
 
-            for arg in args["<app_launcher_script_arguments>"]:
+            for arg in self.a["<app_launcher_script_arguments>"]:
                 self.logger.info(arg)
                 self.app_args.append(arg)
-
-        if args["generate"]:
+        elif self.a["generate"]:
             self.logger.info("Command: generate")
-            self.logger.info("Argument: %s" % args["<file_to_generate>"])
-            self.file_generation_action = args["<file_to_generate>"]
-
-        print("")
+            self.logger.info("Argument: %s" % self.a["<file_to_generate>"])
+            self.file_generation_action = self.a["<file_to_generate>"]
 
     def run(self):
         """Run tasks depending on the arguments passed.
@@ -241,9 +222,7 @@ class CommandLineTool():
                         thread.join()
         elif self.file_generation_action is not None:
             if self.file_generation_action == "system_executable":
-                from .python_utils import template_utils
-
-                template_utils.system_executable_generation(
+                self._system_executable_generation(
                     exec_name="knowledge-base-cli",
                     app_root_folder=root_folder,
                     sys_exec_template_path=os.path.join(
@@ -272,7 +251,7 @@ class CommandLineTool():
         from . import archives_handler
 
         handler = archives_handler.ArchivesHandler(logger=self.logger)
-        handler.download_all_archives(self.force_download)
+        handler.download_all_archives(self.a["--force-download"])
 
     def github_repos_update(self):
         """See :any:`repositories_handler.github_repos_update`
@@ -293,19 +272,19 @@ class CommandLineTool():
         """
         from . import repositories_handler
 
-        repositories_handler.github_repos_json_files_creation(self.debug, self.logger)
+        repositories_handler.github_repos_json_files_creation(self.a["--debug"], self.logger)
 
     def bitbucket_repos_json_files_creation(self):
         """See :any:`repositories_handler.bitbucket_repos_json_files_creation`
         """
         from . import repositories_handler
 
-        repositories_handler.bitbucket_repos_json_files_creation(self.debug, self.logger)
+        repositories_handler.bitbucket_repos_json_files_creation(self.a["--debug"], self.logger)
 
     def main_json_file_creation(self):
         """See :any:`app_utils.main_json_file_creation`
         """
-        app_utils.main_json_file_creation(debug=self.debug, logger=self.logger)
+        app_utils.main_json_file_creation(debug=self.a["--debug"], logger=self.logger)
 
     def http_server(self, action="start"):
         """Start/Stop/Restart the HTTP server.
@@ -323,8 +302,8 @@ class CommandLineTool():
         # The "http_server" executable also uses os.execv() to launch the real web application.
         os.execv(cmd_path, [" "] + [action,
                                     "KnowledgeBase",
-                                    self.host,
-                                    self.port])
+                                    self.a["--host"],
+                                    self.a["--port"]])
 
     def http_server_start(self):
         """Self explanatory.
@@ -381,22 +360,21 @@ class CommandLineTool():
         """
         app_utils.index_html_generation(self.logger)
 
+    def display_manual_page(self):
+        """See :any:`cli_utils.CommandLineInterfaceSuper._display_manual_page`.
+        """
+        self._display_manual_page(os.path.join(root_folder, "AppData", "data", "man", "app.py.1"))
+
 
 def main():
-    """Initialize main command line interface.
-
-    Raises
-    ------
-    exceptions.BadExecutionLocation
-        Do not allow to run any command if the "flag" file isn't
-        found where it should be. See :any:`exceptions.BadExecutionLocation`.
+    """Initialize command line interface.
     """
-    if not os.path.exists(".knowledge-base.flag"):
-        raise exceptions.BadExecutionLocation()
-
-    arguments = docopt(docopt_doc, version="%s %s %s" % (__appname__, __version__, __status__))
-    cli = CommandLineTool(arguments)
-    cli.run()
+    cli_utils.run_cli(flag_file=".knowledge-base.flag",
+                      docopt_doc=docopt_doc,
+                      app_name=__appname__,
+                      app_version=__version__,
+                      app_status=__status__,
+                      cli_class=CommandLineInterface)
 
 
 if __name__ == "__main__":

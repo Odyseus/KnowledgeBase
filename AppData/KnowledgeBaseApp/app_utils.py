@@ -20,7 +20,9 @@ WWW_BASE_PATH : str
 import json
 import os
 
-from .python_utils import file_utils, misc_utils, cmd_utils
+from .python_utils import cmd_utils
+from .python_utils import file_utils
+from .python_utils import misc_utils
 
 root_folder = os.path.realpath(os.path.abspath(os.path.join(
     os.path.normpath(os.getcwd()))))
@@ -55,7 +57,7 @@ class DataTablesObject():
         logger : object
             See <class :any:`LogSystem`>.
         """
-        super(DataTablesObject, self).__init__()
+        super().__init__()
 
         self.data_tables_obj = []
         self.logger = logger

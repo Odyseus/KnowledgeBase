@@ -46,7 +46,7 @@ class KnowledgeBaseWebapp(object):
         port : str
             The port number used by the web server.
         """
-        super(KnowledgeBaseWebapp, self).__init__()
+        super().__init__()
         self.host = host
         self.port = port
 
