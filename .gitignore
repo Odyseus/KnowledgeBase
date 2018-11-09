@@ -5,6 +5,23 @@
 # Ignore all the UserData folders content, except for the README.md files inside them.
 /UserData/*
 !/UserData/README.md
+# HOLLY MOTHER OF ALL THE NONSENSE!!! YOU GOT TO BE FREAKING KIDING ME!!!
+# https://stackoverflow.com/a/16318111 and https://stackoverflow.com/a/29932318
+!/UserData/www
+/UserData/www/*
+!/UserData/www/assets
+/UserData/www/assets/*
+!/UserData/www/assets/css
+!/UserData/www/assets/data
+!/UserData/www/assets/js
+/UserData/www/assets/css/*
+/UserData/www/assets/data/*
+/UserData/www/assets/js/*
+!/UserData/www/assets/css/bootstrap.tweaks.css
+!/UserData/www/assets/data/index-base.html
+!/UserData/www/assets/js/functions-generic-init.js
+!/UserData/www/assets/js/functions-index.js
+!/UserData/www/assets/js/functions-utils.js
 
 ##################
 # Global ignores #
