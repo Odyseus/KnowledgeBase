@@ -1,20 +1,17 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-"""Repositories handler functions.
+"""Repositories handler utilities.
 
 Attributes
 ----------
 root_folder : str
-    The main folder containing the Knowledge Base. All commands must be executed
+    The main folder containing the application. All commands must be executed
     from this location without exceptions.
 """
-
 import json
 import os
 
 from runpy import run_path
-from subprocess import PIPE
-from subprocess import Popen
 
 from . import app_utils
 from .python_utils import cmd_utils
@@ -26,182 +23,101 @@ root_folder = os.path.realpath(os.path.abspath(os.path.join(
     os.path.normpath(os.getcwd()))))
 
 
-try:
-    bitbucket_data = run_path(os.path.join(root_folder, "UserData", "data_sources",
-                                           "bitbucket.py"))["data"]
-except Exception:
-    bitbucket_data = None
+repositories_data_tables_json_path = os.path.join(root_folder,
+                                                  "UserData",
+                                                  "data_storage",
+                                                  "repositories_data_tables.json")
 
-try:
-    github_data = run_path(os.path.join(root_folder, "UserData", "data_sources", "github.py"))[
-        "data"]
-except Exception:
-    github_data = None
+repo_service_url_map = {
+    "github": "https://github.com/",
+    "bitbucket": "https://bitbucket.org/",
+    "gitlab": "https://gitlab.com/",
+}
 
 
-class RepoHandlers():
-    """Main class to "handle" a repository data.
+_allowed_repo_types = ["git", "hg"]
+
+
+class InvalidRepositoryData(exceptions.ExceptionWhitoutTraceBack):
+    """InvalidRepositoryData
+    """
+    pass
+
+
+class RepositoriesHandler():
+    """Repositories handler.
 
     Attributes
     ----------
-    data_tables_obj : list
-        Where the JSON data is stored before finally save it into a JSON file.
-    debug : bool
-        Save JSON files with indentation.
     logger : object
         See <class :any:`LogSystem`>.
-    repo : dict
-        The repository data.
-    success : bool
-        If some of the taks are not successful, do not save the JSON file for the repository.
     """
+    _common_mandatory_keys = {
+        "repo_owner",
+        "repo_name",
+        "repo_handler",
+    }
 
-    def __init__(self, repo, debug=False, logger=None):
-        """
+    def __init__(self, dry_run=False, logger=None):
+        """Initialize.
+
         Parameters
         ----------
-        repo : dict
-            The repository data.
-        debug : bool, optional
-            Save JSON files with indentation.
+        dry_run : bool, optional
+            Log an action without actually performing it.
         logger : object
             See <class :any:`LogSystem`>.
         """
-        super().__init__()
+        try:
+            self._repositories_data = run_path(os.path.join(root_folder, "UserData", "data_sources",
+                                                            "repositories.py"))["data"]
+        except Exception:
+            self._repositories_data = None
+
+        self._dry_run = dry_run
         self.logger = logger
-        self.repo = repo
-        self.debug = debug
-        self.data_tables_obj = []
-        self.success = False
 
-    def sphinx_generated_handler(self):
-        """Handle repositories set to build their Sphinx documentation.
+        self._data_tables_obj = []
+
+        self._validate_repo_data()
+
+    def _validate_repo_data(self):
+        """Validate repository data.
+
+        Raises
+        ------
+        InvalidRepositoryData
+            Invalid repository data.
         """
-        try:
-            self.data_tables_obj.append({
-                "t": self.repo.title,
-                "c": self.repo.category,
-                "h": self.repo.path_handler,
-                # Path to files relative to the www folder
-                "p": os.path.join(self.repo.get_sphinx_generated_pages_storage(),
-                                  "html", self.repo.filename),
-                # Icon name
-                "i": self.repo.repo_img
-            })
-            self.success = True
-        except Exception as err:
-            self.success = False
-            self.logger.error(self.repo.repo_name)
-            self.logger.error(err)
-        finally:
-            self.generate_data_file()
+        invalid_repos = []
 
-    def single_file_handler(self):
-        """Handle repositories set to manage just one file on them.
-        """
-        try:
-            www_path = os.path.join("{}_repositories".format(self.repo.web_service),
-                                    self.repo.get_folder_name(),
-                                    self.repo.rel_path,
-                                    self.repo.filename)
-            source_path = os.path.join(self.repo.get_path(), self.repo.rel_path,
-                                       self.repo.filename)
-            destination_path = os.path.join(app_utils.WWW_BASE_PATH, www_path)
+        for repo_data in self._repositories_data:
+            if not self._common_mandatory_keys.issubset(repo_data):
+                invalid_repos.append((repo_data,
+                                      "missing_fields",
+                                      [field for field in self._common_mandatory_keys
+                                       if field not in repo_data]))
 
-            self.data_tables_obj.append({
-                "t": self.repo.title,
-                "c": self.repo.category,
-                "h": self.repo.path_handler,
-                # Path to files relative to the www folder
-                "p": www_path,
-                # Icon name
-                "i": self.repo.repo_img
-            })
+            if repo_data.get("repo_type", "git") not in _allowed_repo_types:
+                invalid_repos.append((repo_data,
+                                      "invalid_repo_type",
+                                      repo_data.get("repo_type")))
 
-            try:
-                if self.repo.copy_full_repo:
-                    source_path = self.repo.get_path()
-                    destination_path = os.path.join(app_utils.WWW_BASE_PATH,
-                                                    "{}_repositories".format(
-                                                        self.repo.web_service),
-                                                    self.repo.get_folder_name())
-                    file_utils.custom_copytree(source_path,
-                                               destination_path,
-                                               ignored_patterns=app_utils.custom_copytree_global_ignored_patterns,
-                                               logger=self.logger,
-                                               log_copied_file=True,
-                                               relative_path=app_utils.WWW_BASE_PATH)
-                else:
-                    file_utils.custom_copy2(source_path, destination_path, self.logger,
-                                            log_copied_file=True,
-                                            relative_path=app_utils.WWW_BASE_PATH)
-            except Exception as err1:
-                self.logger.error(err1)
-                self.success = False
-            else:
-                self.success = True
-        except Exception as err2:
-            self.success = False
-            self.logger.error(self.repo.repo_name)
-            self.logger.error(err2)
-        finally:
-            self.generate_data_file()
+        if invalid_repos:
+            self.logger.warning("The following repositories must be corrected:")
 
-    def multi_file_handler(self):
-        """Handle repositories set to manage more than one file on them.
-        """
-        try:
-            repo_path = self.repo.get_path()
-            rel_path = self.repo.rel_path
-            file_pattern = self.repo.file_pattern
-            filenames = os.listdir(os.path.join(repo_path, rel_path))
-            category = self.repo.category
-            web_service = self.repo.web_service
-            folder_name = self.repo.get_folder_name()
+            for repo_data, error_type, error_data in invalid_repos:
+                self.logger.warning("Repository:\n%s" % json.dumps(repo_data, indent=4), date=False)
 
-            for filename in filenames:
-                if filename not in self.repo.files_to_ignore and filename.endswith(file_pattern):
-                    try:
-                        title = filename[:-int(len(file_pattern))]
-                        www_path = os.path.join("{}_repositories".format(web_service),
-                                                folder_name,
-                                                rel_path,
-                                                filename)
-                        source_path = os.path.join(repo_path, rel_path, filename)
-                        destination_path = os.path.join(app_utils.WWW_BASE_PATH, www_path)
+                if error_type is "missing_fields":
+                    self.logger.warning("Missing fields: %s" % ", ".join(error_data), date=False)
+                elif error_type is "invalid_repo_type":
+                    self.logger.warning("Invalid repository type: %s" % error_data, date=False)
+                    self.logger.warning("Valid values are: %s" % ", ".join(_allowed_repo_types), date=False)
 
-                        self.data_tables_obj.append({
-                            "t": self.repo.title_prefix + title,
-                            "c": category,
-                            "h": 0,
-                            # Path to files relative to the www folder
-                            "p": www_path,
-                            # Icon name
-                            "i": "md"
-                        })
+            raise InvalidRepositoryData("Operation aborted!")
 
-                        try:
-                            file_utils.custom_copy2(source_path, destination_path, self.logger,
-                                                    log_copied_file=True,
-                                                    relative_path=app_utils.WWW_BASE_PATH)
-                        except Exception as err1:
-                            self.logger.error(err1)
-                            self.success = False
-                        else:
-                            self.success = True
-                    except Exception as err2:
-                        self.logger.error(filename)
-                        self.logger.error(err2)
-                        continue
-            self.success = True
-        except Exception as err3:
-            self.success = False
-            self.logger.error(self.repo.repo_name)
-            self.logger.error(err3)
-        finally:
-            self.generate_data_file()
-
-    def generate_data_file(self):
+    def _generate_repositories_data_tables_json_file(self):
         """Generate the JSON file for the repository.
 
         Returns
@@ -209,157 +125,27 @@ class RepoHandlers():
         None
             Do not try to save the JSON file in case something went wrong handling the repository.
         """
-        if not self.success:
-            return
+        self.logger.info("Generating repositories JSON file...")
 
         try:
-            json_path = self.repo.get_json_path()
-            json_parent = os.path.dirname(json_path)
+            json_parent = os.path.dirname(repositories_data_tables_json_path)
 
             if not os.path.exists(json_parent):
-                os.makedirs(json_parent)
-
-            with open(json_path, "w") as json_file:
-                if (self.debug):
-                    json_file.write(json.dumps(self.data_tables_obj, indent=4, sort_keys=True))
+                if self._dry_run:
+                    self.logger.log_dry_run("Parent directory will be created at:\n%s" % json_parent)
                 else:
-                    json_file.write(json.dumps(self.data_tables_obj))
+                    os.makedirs(json_parent)
+
+            if self._dry_run:
+                self.logger.log_dry_run("JSON file will be created at:\n%s" %
+                                  repositories_data_tables_json_path)
+            else:
+                with open(repositories_data_tables_json_path, "w") as json_file:
+                    json_file.write(json.dumps(self._data_tables_obj))
         except Exception as err:
-            self.logger.error(self.repo.repo_name)
             self.logger.error(err)
 
-
-class Repository():
-    """Main class to initialize a repository.
-
-    Attributes
-    ----------
-    category : str
-        Category name.
-    copy_full_repo : boot
-        Whether to copy all the files on the repository or not.
-    file_append : list
-        A list of tuples containing the path to a file and the data to append to said file.
-    file_pattern : str
-        A pattern to determine the files to copy.
-    filename : str
-        Name of the file to copy.
-    files_to_ignore : list
-        List of files to ignore (not copy).
-    json_data : list
-        Repository data storage.
-    logger : object
-        See <class :any:`LogSystem`>.
-    path_handler : int
-        A flag that determines how to handle the path or paths specified on the json_data object
-        of the repository.
-    rel_path : str
-        A path relative to the root of the repository folder were the file/files is/are located.
-    repo_img : str
-        String to be usaed to represent the image that will be shown on the index.html table.
-    repo_name : str
-        The name of the repository.
-    repo_owner : str
-        The owner of the repository.
-    repo_url : str
-        The repository URL.
-    title : str
-        The text that will be used as title for the entry/entries generated by this class.
-    title_prefix : str
-        A title prefix.
-    web_service : str
-        The name of the web service (github or bitbucket).
-    """
-
-    def __init__(self, data, web_service="github", load_json_file=True,
-                 is_sphinx_generated=False, logger=None):
-        """
-        Parameters
-        ----------
-        data : dict
-            Repository data.
-        web_service : str, optional
-            The name of the web service (github or bitbucket).
-        load_json_file : bool, optional
-            Load JSON data only when it is needed.
-        is_sphinx_generated : bool, optional
-            Boolean to determine which file name to use as default. If it is a repository to
-            generate a Sphinx documentation, the use "index.html" as default file name. Else,
-            use "README.md" as default.
-        logger : object
-            See <class :any:`LogSystem`>.
-
-        Raises
-        ------
-        exceptions.MissingMandatoryField
-            Missing mandatory field.
-        """
-        super().__init__()
-        self.logger = logger
-        self.json_data = None
-        self.web_service = web_service
-        self.repo_owner = data.get("repo_owner", None)
-        self.repo_name = data.get("repo_name", None)
-
-        if self.repo_owner is None or self.repo_name is None:
-            msg = "web_service  = %s\n" % str(self.web_service)
-            msg += "repo_owner   = %s\n" % str(self.repo_owner)
-            msg += "repo_name    = %s\n" % str(self.repo_name)
-            raise exceptions.MissingMandatoryField(msg)
-
-        self.repo_img = data.get("repo_img", "md")
-        self.repo_url = "https://{}.com/{}/{}.git".format(web_service,
-                                                          self.repo_owner,
-                                                          self.repo_name)
-        self.path_handler = data.get("path_handler", 0)
-        self.category = data.get("category", "Category")
-
-        self.files_to_ignore = data.get("files_to_ignore", [])
-        self.title = data.get("title", "")
-        self.file_pattern = data.get("file_pattern", "")
-        self.title_prefix = data.get("title_prefix", "")
-        self.filename = data.get(
-            "filename", "index.html" if is_sphinx_generated else "README.md")
-        self.rel_path = data.get("rel_path", "")
-        self.copy_full_repo = data.get("copy_full_repo", False)
-        self.file_append = data.get("file_append", [])
-
-        if load_json_file:
-            self.set_json_data()
-
-    def set_json_data(self):
-        """Set the JSON data.
-        """
-        try:
-            with open(self.get_json_path(), "r") as json_file:
-                self.json_data = json.loads(json_file.read())
-        except Exception as err:
-            self.json_data = None
-            self.logger.error(self.repo_name)
-            self.logger.error(err)
-
-    def build_sphinx_docs(self):
-        """Build Sphinx documentation.
-        """
-        self.logger.info("Attempting to build %s's docs." % self.repo_name)
-
-        script_path = os.path.join(root_folder, "AppData", "data", "bash_scripts",
-                                   "generate_repo_docs.sh")
-        doctrees_path = os.path.join(root_folder, "UserData", "tmp", "sphinx_doctrees",
-                                     self.get_folder_name(), "doctrees")
-        html_path = os.path.join(app_utils.WWW_BASE_PATH,
-                                 self.get_sphinx_generated_pages_storage(), "html")
-
-        po = Popen('"{0}" "{1}" "{2}"'.format(script_path, doctrees_path, html_path),
-                   shell=True,
-                   env=cmd_utils.get_environment(),
-                   cwd=os.path.join(self.get_path(), self.rel_path))
-        po.wait()
-
-        if self.file_append:
-            self._append_data_to_files(html_path)
-
-    def _append_data_to_files(self, html_path):
+    def _append_data_to_files(self, html_path, repo_data):
         """Append data to files.
 
         Parameters
@@ -367,18 +153,156 @@ class Repository():
         html_path : str
             Path to where HTML pages are stored.
         """
-        self.logger.info("Appending data to <%s>'s files." % self.repo_name)
+        self.logger.info("Appending data to files...")
 
-        for append_data in self.file_append:
+        for append_data in repo_data.get("kb_file_append", []):
             file_path = os.path.join(html_path, append_data[0])
             file_data = append_data[1]
 
             if os.path.exists(file_path):
-                self.logger.info("Appending data to <%s>." % append_data[0])
-                with open(file_path, "a") as file_to_append:
-                    file_to_append.write(file_data)
+                if self._dry_run:
+                    self.logger.log_dry_run("\n".join(["Data to append to existent file:",
+                                                 "File: %s" % file_path,
+                                                 "Data: %s" % file_data]))
+                else:
+                    self.logger.info(append_data[0])
+                    with open(file_path, "a") as file_to_append:
+                        file_to_append.write(file_data)
 
-    def get_sphinx_generated_pages_storage(self):
+    def _get_filename(self, repo_data):
+        """Get file name.
+
+        Returns
+        -------
+        str
+            The name of a file found inside a repository.
+        """
+        return repo_data.get("repo_filename", "index.html"
+                             if repo_data.get("repo_handler") is "sphinx_docs"
+                             else "README.md")
+
+    def _handle_sphinx_docs_repo_type(self, repo_data):
+        """Handle repositories set to build their Sphinx documentation.
+        """
+        try:
+            self._data_tables_obj.append({
+                "t": repo_data.get("kb_title", ""),
+                "c": repo_data.get("kb_category", "Uncategorized"),
+                # Path to files relative to the www folder
+                "p": os.path.join(self._get_sphinx_generated_pages_storage(repo_data),
+                                  "html", self._get_filename(repo_data)),
+                # Icon name
+                "i": repo_data.get("kb_image", "html-external")
+            })
+        except Exception as err:
+            self.logger.error("%s-%s" % (repo_data.get("repo_owner"), repo_data.get("repo_name")))
+            self.logger.error(err)
+
+    def _handle_single_file_repo_type(self, repo_data):
+        """Handle repositories set to manage just one file on them.
+        """
+        try:
+            www_path = os.path.join("%s_repositories" % repo_data.get("repo_service", "github"),
+                                    self._get_folder_name(repo_data),
+                                    repo_data.get("kb_rel_path", ""),
+                                    self._get_filename(repo_data))
+            source_path = os.path.join(self._get_path(repo_data), repo_data.get("kb_rel_path", ""),
+                                       self._get_filename(repo_data))
+            destination_path = os.path.join(app_utils.WWW_BASE_PATH, www_path)
+
+            self._data_tables_obj.append({
+                "t": repo_data.get("kb_title", ""),
+                "c": repo_data.get("kb_category", "Uncategorized"),
+                # Path to files relative to the www folder
+                "p": www_path,
+                # Icon name
+                "i": repo_data.get("kb_image", "md")
+            })
+
+            try:
+                if repo_data.get("copy_full_repo"):
+                    source_path = self._get_path(repo_data)
+                    destination_path = os.path.join(app_utils.WWW_BASE_PATH,
+                                                    "%s_repositories" % repo_data.get(
+                                                        "repo_service", "github"),
+                                                    self._get_folder_name(repo_data))
+                    if self._dry_run:
+                        self.logger.log_dry_run("A folder will be copied:")
+                        self.logger.log_dry_run("Source: %s" % source_path)
+                        self.logger.log_dry_run("Destination: %s" % destination_path)
+                    else:
+                        file_utils.custom_copytree(source_path,
+                                                   destination_path,
+                                                   ignored_patterns=app_utils.custom_copytree_global_ignored_patterns,
+                                                   logger=self.logger,
+                                                   log_copied_file=True,
+                                                   relative_path=app_utils.WWW_BASE_PATH)
+                else:
+                    if self._dry_run:
+                        self.logger.log_dry_run("A file will be copied:")
+                        self.logger.log_dry_run("Source: %s" % source_path)
+                        self.logger.log_dry_run("Destination: %s" % destination_path)
+                    else:
+                        file_utils.custom_copy2(source_path, destination_path, self.logger,
+                                                log_copied_file=True,
+                                                relative_path=app_utils.WWW_BASE_PATH)
+            except Exception as err1:
+                self.logger.error(err1)
+        except Exception as err2:
+            self.logger.error("%s-%s" % (repo_data.get("repo_owner"), repo_data.get("repo_name")))
+            self.logger.error(err2)
+
+    def _handle_multi_files_repo_type(self, repo_data):
+        """Handle repositories set to manage more than one file on them.
+        """
+        try:
+            repo_path = self._get_path(repo_data)
+            rel_path = repo_data.get("kb_rel_path", "")
+            file_pattern = repo_data.get("repo_file_pattern", "")
+            filenames = os.listdir(os.path.join(repo_path, rel_path))
+
+            for filename in filenames:
+                if filename not in repo_data.get("repo_files_ignore", []) and \
+                        filename.endswith(file_pattern):
+                    try:
+                        title = filename[:-int(len(file_pattern))]
+                        www_path = os.path.join("%s_repositories" %
+                                                repo_data.get("repo_service", "github"),
+                                                self._get_folder_name(repo_data),
+                                                rel_path,
+                                                filename)
+                        source_path = os.path.join(repo_path, rel_path, filename)
+                        destination_path = os.path.join(app_utils.WWW_BASE_PATH, www_path)
+
+                        self._data_tables_obj.append({
+                            "t": repo_data.get("kb_title_prefix", "") + title,
+                            "c": repo_data.get("kb_category", "Uncategorized"),
+                            # Path to files relative to the www folder
+                            "p": www_path,
+                            # Icon name
+                            "i": repo_data.get("kb_image", "md")
+                        })
+
+                        try:
+                            if self._dry_run:
+                                self.logger.log_dry_run("A file will be copied:")
+                                self.logger.log_dry_run("Source: %s" % source_path)
+                                self.logger.log_dry_run("Destination: %s" % destination_path)
+                            else:
+                                file_utils.custom_copy2(source_path, destination_path, self.logger,
+                                                        log_copied_file=True,
+                                                        relative_path=app_utils.WWW_BASE_PATH)
+                        except Exception as err1:
+                            self.logger.error(err1)
+                    except Exception as err2:
+                        self.logger.error(filename)
+                        self.logger.error(err2)
+                        continue
+        except Exception as err3:
+            self.logger.error("%s-%s" % (repo_data.get("repo_owner"), repo_data.get("repo_name")))
+            self.logger.error(err3)
+
+    def _get_sphinx_generated_pages_storage(self, repo_data):
         """Get Sphinx generated pages storage.
 
         Returns
@@ -386,9 +310,9 @@ class Repository():
         str
             The path to the Sphinx generated pages storage.
         """
-        return os.path.join("sphinx_generated_pages", self.get_folder_name())
+        return os.path.join("sphinx_generated_pages", self._get_folder_name(repo_data))
 
-    def get_folder_name(self):
+    def _get_folder_name(self, repo_data):
         """Get the repository folder name.
 
         Returns
@@ -396,9 +320,9 @@ class Repository():
         str
             The repository folder name.
         """
-        return self.repo_owner + "-" + self.repo_name
+        return repo_data.get("repo_owner") + "-" + repo_data.get("repo_name")
 
-    def get_storage_path(self):
+    def _get_storage_path(self, repo_data):
         """Get the storage path (were all the repositories are cloned into).
 
         Returns
@@ -406,9 +330,10 @@ class Repository():
         str
             The storage path.
         """
-        return os.path.join(root_folder, "UserData", "tmp", "{}_repositories".format(self.web_service))
+        return os.path.join(root_folder, "UserData", "data_storage",
+                            "%s_repositories" % repo_data.get("repo_service", "github"))
 
-    def get_path(self):
+    def _get_path(self, repo_data):
         """Get the repository path.
 
         Returns
@@ -416,403 +341,258 @@ class Repository():
         str
             The repository path.
         """
-        return os.path.join(self.get_storage_path(), self.get_folder_name())
+        return os.path.join(self._get_storage_path(repo_data),
+                            self._get_folder_name(repo_data))
 
-    def get_json_path(self):
-        """Get the JSON file path for the repository.
+    def _get_repo_service_slug(self, repo_data):
+        """Get the repository service slug.
 
         Returns
         -------
         str
-            The JSON file path.
+            The repository path.
         """
-        return os.path.join(root_folder,
-                            "UserData",
-                            "tmp",
-                            "{}_repositories_json_storage".format(self.web_service),
-                            self.get_folder_name() + ".json")
+        return os.path.join(self._get_storage_path(repo_data),
+                            self._get_folder_name(repo_data))
 
-
-class BitBucketRepo(Repository):
-    """Sub-class of :any:`Repository` to initialize a BitBucket repository.
-    """
-
-    def __init__(self, data, logger, web_service="bitbucket", load_json_file=True,
-                 is_sphinx_generated=False):
-        """
-        Parameters
-        ----------
-        data : dict
-            See :any:`Repository` > data
-        logger : object
-            See <class :any:`LogSystem`>.
-        web_service : str, optional
-            See :any:`Repository` > web_service
-        load_json_file : bool, optional
-            See :any:`Repository` > load_json_file
-        is_sphinx_generated : bool, optional
-            See :any:`Repository` > is_sphinx_generated
-        """
-        super().__init__(data,
-                         web_service=web_service,
-                         logger=logger,
-                         load_json_file=load_json_file,
-                         is_sphinx_generated=is_sphinx_generated)
-
-    def get_check_repo_cmd(self):
+    def _get_check_repo_cmd(self, repo_type):
         """Get the command to check the repository.
+
+        No used for now.
 
         Returns
         -------
         list
             The command to check the repository.
         """
-        return ["hg", "-R", ".", "root"]
+        if repo_type == "git":
+            return ["Some command that's actually useful!!!!"]
+            # Why not? Because Git can be absolutely retarded.
+            # I WANT TO KNOW IF THE CURRENT DIRECTORY IS A FUCKING GIT REPOSITORY!!!!
+            # NOT IF THE CURRENT DIRECTORY IS INSIDE A GIT REPOSITORY!!!
+            # return ["git", "rev-parse", "--git-dir"]
+            # return ["git", "status"]
 
-    def do_pull(self):
+            # Why not? It connects to internet.
+            # return ["git", "ls-remote"]
+        elif repo_type == "hg":
+            return ["hg", "-R", ".", "root"]
+
+    def _do_pull(self, repo_data):
         """Pull from the repository.
         """
-        cmd_utils.exec_command(
-            "hg pull",
-            self.get_path(),
-            logger=self.logger
-        )
+        cmd = "%s pull" % repo_data.get("repo_type", "git")
+        cwd = self._get_path(repo_data)
 
-    def do_clone(self):
+        if self._dry_run:
+            self.logger.log_dry_run("Command that will be executed:\n%s" % cmd)
+            self.logger.log_dry_run("Command will be executed on directory:\n%s" % cwd)
+        else:
+            cmd_utils.run_cmd(
+                cmd,
+                stdout=None,
+                stderr=None,
+                shell=True,
+                check=True,
+                cwd=cwd
+            )
+
+    def _do_clone(self, repo_data):
         """Clone the repository.
         """
-        cmd_utils.exec_command(
-            "hg clone {} {}".format(
-                self.repo_url,
-                self.get_folder_name()
-            ),
-            self.get_storage_path(),
-            logger=self.logger
+        repo_type = repo_data.get("repo_type", "git")
+        repo_service = repo_data.get("repo_service", "github")
+        repo_url_template = "{}{}/{}.git" if repo_type is "git" else "{}{}/{}"
+        repo_base_url = repo_service_url_map[repo_service] if \
+            repo_service in repo_service_url_map else repo_service
+
+        repo_url = repo_url_template.format(repo_base_url,
+                                            repo_data.get("repo_owner"),
+                                            repo_data.get("repo_name"))
+
+        cmd = "{cmd} clone {depth} {url} {path}".format(
+            cmd=repo_type,
+            depth="--depth=1" if repo_type is "git" else "",
+            url=repo_url,
+            path=self._get_folder_name(repo_data)
         )
+        cwd = self._get_storage_path(repo_data)
 
+        if self._dry_run:
+            self.logger.log_dry_run("Command that will be executed:\n%s" % cmd)
+            self.logger.log_dry_run("Command will be executed on directory:\n%s" % cwd)
+        else:
+            cmd_utils.run_cmd(
+                cmd,
+                stdout=None,
+                stderr=None,
+                shell=True,
+                check=True,
+                cwd=cwd,
+            )
 
-class GitHubRepo(Repository):
-    """Sub-class of :any:`Repository` to initialize a GitHub repository.
-    """
+    def handle_all_repositories(self):
+        """Handle all repositories.
 
-    def __init__(self, data, logger, web_service="github", load_json_file=True,
-                 is_sphinx_generated=False):
+        The main tasks of this method are to populate the ``self._data_tables_obj`` list with
+        all repositories data and to copy desired files into the www folder. The
+        ``self._data_tables_obj`` is finally saved into a JSON file for easy retrieval.
+
+        Repositories whose handler is **sphinx_docs** will have their DataTables data generated,
+        but are purposely handled (the Sphinx documentations built) separately in
+        ``self.build_sphinx_docs``.
         """
-        Parameters
-        ----------
-        data : dict
-            See :any:`Repository` > data
-        logger : object
-            See <class :any:`LogSystem`>.
-        web_service : str, optional
-            See :any:`Repository` > web_service
-        load_json_file : bool, optional
-            See :any:`Repository` > load_json_file
-        is_sphinx_generated : bool, optional
-            See :any:`Repository` > is_sphinx_generated
-        """
-        super().__init__(data,
-                         web_service=web_service,
-                         logger=logger,
-                         load_json_file=load_json_file,
-                         is_sphinx_generated=is_sphinx_generated)
+        self.logger.info(shell_utils.get_cli_separator("-"), date=False)
+        self.logger.info("Handling repositories...")
 
-    def get_check_repo_cmd(self):
-        """Get the command to check the repository.
+        for repo_data in sorted(self._repositories_data, key=lambda k: k["repo_handler"]):
+            # Do not generate JSON files for repositories that are used to generate
+            # Markdown files (or other types of files) from the repository data.
+            # Right now, there is only one repository of this type
+            # ActiveState/code which repo handler is called "code_recipes_handler".
+            if repo_data.get("no_json", False):
+                continue
 
-        Returns
-        -------
-        list
-            The command to check the repository.
-        """
-        return ["git", "ls-remote"]
+            repo_handler = repo_data.get("repo_handler")
 
-    def do_pull(self):
-        """Pull from the repository.
-        """
-        cmd_utils.exec_command(
-            "git pull",
-            self.get_path(),
-            logger=self.logger
-        )
+            if repo_handler:
+                handler = getattr(self, "_handle_%s_repo_type" % repo_handler)
 
-    def do_clone(self):
-        """Clone the repository.
-        """
-        cmd_utils.exec_command(
-            "git clone {} {}".format(
-                self.repo_url,
-                self.get_folder_name()
-            ),
-            self.get_storage_path(),
-            logger=self.logger
-        )
-
-
-class RepoBridge():
-    """"Bridge" class used to retrieve the actual classes from a string.
-    """
-
-    def github(self, *args, **kargs):
-        """Get GitHub repository.
-
-        Parameters
-        ----------
-        *args
-            Positional arguments.
-        **kargs
-            Keyword arguments.
-
-        Returns
-        -------
-        object
-            Initialized :any:`GitHubRepo` class.
-        """
-        return GitHubRepo(*args, **kargs)
-
-    def bitbucket(self, *args, **kargs):
-        """Get BitBucket repository.
-
-        Parameters
-        ----------
-        *args
-            Positional arguments.
-        **kargs
-            Keyword arguments.
-
-        Returns
-        -------
-        object
-            Initialized :any:`BitBucketRepo` class.
-        """
-        return BitBucketRepo(*args, **kargs)
-
-
-def github_repos_json_files_creation(debug, logger):
-    """Create the JSON files for GitHub repositories.
-
-    Parameters
-    ----------
-    debug : bool
-        Save JSON files with indentation.
-    logger : object
-        See <class :any:`LogSystem`>.
-    """
-    generate_repositories_json_files(github_data, debug, logger)
-
-
-def bitbucket_repos_json_files_creation(debug, logger):
-    """Create the JSON files for BitBucket repositories.
-
-    Parameters
-    ----------
-    debug : bool
-        Save JSON files with indentation.
-    logger : object
-        See <class :any:`LogSystem`>.
-    """
-    generate_repositories_json_files(bitbucket_data, debug, logger)
-
-
-def generate_repositories_json_files(repository_data, debug, logger):
-    """Main function to create the JSON files for the repositories.
-
-    Parameters
-    ----------
-    repository_data : dict
-        The repository data to process.
-    debug : bool
-        Save JSON files with indentation.
-    logger : object
-        See <class :any:`LogSystem`>.
-    """
-    if repository_data is not None:
-        for repository_handler in repository_data["repositories"]:
-            for repo_data in repository_data["repositories"][repository_handler]:
-                # Do not generate JSON files for repositories that are used to generate
-                # Markdown files (or other types of files) from the repository data.
-                # Right now, there is only one repository of this type
-                # ActiveState/code which repo handler is called "code_recipes_handler".
-                if repo_data.get("no_json", False):
-                    continue
-
-                repo = getattr(RepoBridge(), repository_data["web_service"])(
-                    repo_data,
-                    load_json_file=False,
-                    is_sphinx_generated=repository_handler == "sphinx_generated_handler",
-                    logger=logger
-                )
-
-                repo_handler = RepoHandlers(repo, debug=debug, logger=logger)
                 try:
-                    getattr(repo_handler, repository_handler)()
+                    handler(repo_data)
                 except AttributeError as err:
-                    logger.warning(repo_data)
-                    logger.error(err)
+                    self.logger.warning("Repository handler: %s" % repo_handler)
+                    self.logger.error(err)
                     continue
 
-            logger.info("Finished creating JSON files for <%s> repositories using the handler <%s>"
-                        % (repository_data["web_service"], repository_handler))
+        self._generate_repositories_data_tables_json_file()
+        self.logger.info("Finished handling all repositories.")
 
+    def update_all_repositories(self):
+        """Main function to update repositories.
 
-def github_repos_update(logger):
-    """Update all GitHub repositories.
+        Raises
+        ------
+        exceptions.KeyboardInterruption
+            Halt execution.
+        """
+        warnings = []
+        errors = []
 
-    Parameters
-    ----------
-    logger : object
-        See <class :any:`LogSystem`>.
-    """
-    update_repositories(github_data, logger)
+        repos_count = len(self._repositories_data)
+        repos_processed = 0
 
+        for repo_data in self._repositories_data:
+            repos_processed += 1
+            try:
+                self.logger.info(shell_utils.get_cli_separator(), date=False)
+                self.logger.info("%s/%s" % (repos_processed, repos_count), date=False)
 
-def bitbucket_repos_update(logger):
-    """Update all BitBucket repositories.
+                repo_path = self._get_path(repo_data)
+                repo_parent = os.path.dirname(repo_path)
 
-    Parameters
-    ----------
-    logger : object
-        See <class :any:`LogSystem`>.
-    """
-    update_repositories(bitbucket_data, logger)
+                if not os.path.exists(repo_parent):
+                    os.makedirs(repo_parent)
 
-
-def update_repositories(repository_data, logger):
-    """Main function to update repositories.
-
-    Parameters
-    ----------
-    repository_data : dict
-        The repository data to process.
-    logger : object
-        See <class :any:`LogSystem`>.
-    """
-    if repository_data is not None:
-        for repository_handler in repository_data["repositories"]:
-            for repo_data in repository_data["repositories"][repository_handler]:
-                try:
-                    logger.info(shell_utils.get_cli_separator(), date=False)
-                    repo = getattr(RepoBridge(), repository_data["web_service"])(
-                        repo_data,
-                        load_json_file=False,
-                        is_sphinx_generated=repository_handler == "sphinx_generated_handler",
-                        logger=logger
-                    )
-                    repo_path = repo.get_path()
-                    repo_parent = os.path.dirname(repo_path)
-
-                    if not os.path.exists(repo_parent):
-                        os.makedirs(repo_parent)
-
-                    if file_utils.is_real_dir(repo_path):
-                        # If the repository path exists, check if it is a valid repository
-                        # and proceed to attempt to pull from it.
-                        p = Popen(repo.get_check_repo_cmd(), stdout=PIPE, cwd=repo_path)
-
-                        output, error_output = p.communicate()
-                    else:
-                        # If the repository path doesn't exists, attempt to clone the
-                        # repository and get out of the loop.
-                        logger.warning("%s doesn't seem to exist." % repo.repo_name)
-                        logger.info("Cloning %s repository." % repo.repo_name)
-                        repo.do_clone()
-                        continue
-
-                    if p and not p.returncode:  # Return code should be zero.
-                        logger.info("Pulling from %s repository." % repo.repo_name)
-                        repo.do_pull()
-                except Exception as err:
-                    logger.error(err)
+                # START USING THIS WHEN GIT GAINS SOME FUCKING SENSE!!!
+                # If the repository path exists, check if it is a valid repository
+                # and proceed to attempt to pull from it.
+                # p = cmd_utils.run_cmd(self._get_check_repo_cmd(repo_data.get("repo_type", "git")),
+                #                       stdout=DEVNULL,
+                #                       stderr=DEVNULL,
+                #                       cwd=repo_path)
+                if not file_utils.is_real_dir(repo_path):
+                    # If the repository path doesn't exists, attempt to clone the
+                    # repository and get out of the loop.
+                    self.logger.warning("<%s-%s> doesn't seem to exist." %
+                                        (repo_data.get("repo_owner"), repo_data.get("repo_name")))
+                    self.logger.info("Cloning repository...")
+                    self._do_clone(repo_data)
                     continue
 
+                # Do the wrong thing until Git allows me to do the right thing.
+                # Check for the .git or .hg directories to decide if a folder is a repository.
+                if file_utils.is_real_dir(os.path.join(repo_path, ".%s" %
+                                                       repo_data.get("repo_type", "git"))):
+                    self.logger.info("Pulling from <%s-%s> repository." %
+                                     (repo_data.get("repo_owner"), repo_data.get("repo_name")))
+                    self._do_pull(repo_data)
+                else:
+                    warnings.append(repo_path)
+                    self.logger.warning("Manual intervention required!")
+                    self.logger.warning("The following path doesn't seem to be a repository:")
+                    self.logger.warning(repo_path)
+            except Exception as err:
+                errors.append((err, repo_path))
+                self.logger.error(err)
+                self.logger.error(repo_path)
+                continue
+            except KeyboardInterrupt:
+                raise exceptions.KeyboardInterruption()
 
-def bitbucket_sphinx_docs_build(logger):
-    """Build Sphinx documentation of all BitBucket repositories.
+        if warnings:
+            self.logger.warning("Manual intervention required!")
+            self.logger.warning("The following path/s don't point to a repository:")
 
-    Parameters
-    ----------
-    logger : object
-        See <class :any:`LogSystem`>.
-    """
-    build_sphinx_docs(bitbucket_data, logger)
+            for w in warnings:
+                self.logger.warning(w, date=False)
 
+        if errors:
+            self.logger.error("The following error/s were encountered:")
 
-def github_sphinx_docs_build(logger):
-    """Build Sphinx documentation of all GitHub repositories.
+            for err, repo_path in errors:
+                self.logger.info(shell_utils.get_cli_separator("-"), date=False)
+                self.logger.error(err, date=False)
+                self.logger.error(repo_path, date=False)
 
-    Parameters
-    ----------
-    logger : object
-        See <class :any:`LogSystem`>.
-    """
-    build_sphinx_docs(github_data, logger)
+    def build_sphinx_docs(self):
+        """Build Sphinx documentation.
+        """
+        for repo_data in [repo for repo in self._repositories_data
+                          if repo.get("repo_handler") is "sphinx_docs"]:
+            self.logger.info(shell_utils.get_cli_separator("-"), date=False)
+            self.logger.info("Attempting to build Sphinx docs.")
+            self.logger.info("Repository: %s-%s" %
+                             (repo_data.get("repo_owner"), repo_data.get("repo_name")), date=False)
 
+            doctrees_path = os.path.join(root_folder, "UserData", "data_storage", "sphinx_doctrees",
+                                         self._get_folder_name(repo_data), "doctrees")
+            html_path = os.path.join(app_utils.WWW_BASE_PATH,
+                                     self._get_sphinx_generated_pages_storage(repo_data), "html")
 
-def build_sphinx_docs(repository_data, logger):
-    """Main function to build Sphinx documentation for all repositories.
+            cmd = ["sphinx-build", ".", "-b", "html", "-d", doctrees_path, html_path]
+            cwd = os.path.join(self._get_path(repo_data), repo_data.get("kb_rel_path", ""))
 
-    Parameters
-    ----------
-    repository_data : dict
-        The repository data to process.
-    logger : object
-        See <class :any:`LogSystem`>.
-    """
-    if repository_data is not None:
-        for repository_handler in repository_data["repositories"]:
-            if repository_handler == "sphinx_generated_handler":
-                for repo_data in repository_data["repositories"][repository_handler]:
-                    try:
-                        logger.info(shell_utils.get_cli_separator(), date=False)
-                        repo = getattr(RepoBridge(), repository_data["web_service"])(
-                            repo_data,
-                            load_json_file=False,
-                            is_sphinx_generated=True,
-                            logger=logger
-                        )
-                        repo.build_sphinx_docs()
-                    except Exception as err:
-                        logger.error(err)
-                        continue
+            if self._dry_run:
+                self.logger.log_dry_run("Command that will be executed:\n%s" % cmd)
+                self.logger.log_dry_run("Command will be executed on directory:\n%s" % cwd)
+            else:
+                cmd_utils.run_cmd(cmd,
+                                  stdout=None,
+                                  stderr=None,
+                                  cwd=cwd)
 
+            if repo_data.get("kb_file_append", []):
+                self._append_data_to_files(html_path, repo_data)
 
-def get_json_data_from_repositories(logger):
-    """Obtain the JSON data generated for each repository.
+    def get_data_tables_obj(self):
+        """Obtain the JSON data generated for all repositories.
 
-    Each repository, after it's "handled", will generate a JSON file containing data related
-    to the repository itself.
+        Returns
+        -------
+        list
+            DataTables object.
+        """
+        data_tables_obj = []
 
-    Parameters
-    ----------
-    logger : object
-        See <class :any:`LogSystem`>.
+        try:
+            with open(repositories_data_tables_json_path, "r") as json_file:
+                data_tables_obj = json.loads(json_file.read())
+        except Exception as err:
+            data_tables_obj = []
+            self.logger.error(err)
 
-    Returns
-    -------
-    list
-        DataTables object.
-    """
-    data_tables_obj = []
-
-    for repository_data in [bitbucket_data, github_data]:
-        if repository_data is not None:
-            for repository_handler in repository_data.get("repositories", None):
-                for repo_data in repository_data["repositories"][repository_handler]:
-                    if repo_data.get("no_json", False):
-                        continue
-
-                    repo = getattr(RepoBridge(),
-                                   repository_data["web_service"])(
-                        repo_data,
-                        is_sphinx_generated=repository_handler == "sphinx_generated_handler",
-                        logger=logger
-                    )
-                    repo_json_data = repo.json_data
-
-                    if repo_json_data is not None:
-                        data_tables_obj += repo_json_data
-
-    return data_tables_obj
+        return data_tables_obj
 
 
 if __name__ == "__main__":

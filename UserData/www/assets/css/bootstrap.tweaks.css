@@ -1,0 +1,346 @@
+/*
+ * General tweaks.
+ */
+
+/* Set cursor pointers for title links and home link */
+.title-link,
+#home-link {
+    cursor: pointer;
+}
+
+/* For Back To Top Button */
+#to-top-of-page {
+    bottom: 1rem;
+    display: none;
+    font-size: 2em;
+    font-weight: bold;
+    outline: none;
+    position: fixed;
+    right: 1rem;
+    text-decoration: none;
+    z-index: 999999;
+}
+
+#to-top-of-page:hover {
+    opacity: 0.4 !important;
+}
+
+#mainarea {
+    padding-bottom: 0.25em !important;
+}
+
+/*
+ * General tweaks.
+ */
+
+/*
+ * Table tweaks.
+ */
+
+#main-index.table th,
+#main-index.table td {
+    vertical-align: middle !important;
+}
+
+/* This seems to fix two absolutely annoying bugs:
+   - It FINALLY fixed the image column width to randomly expand.
+   - And also helps to keep the image column width when hiding the sidebar.
+*/
+th.title-link,
+/* Attempt to expand the clickable area of title links */
+.title-link div {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.title-link div:after {
+    content: "";
+    height: 100%;
+    left: 0;
+    top: 0;
+    width: 100%;
+}
+
+/* Absolutely dirty trick. Remove the padding from the table
+and add it to the internal <div>. ¬¬ */
+.table-sm td.title-link {
+    padding: 0 !important;
+}
+
+.table-sm td.title-link div {
+    padding: 0.3em !important;
+}
+
+/* Set a fixed width for the first column (the image) of the table. */
+.img-col {
+    width: 24px !important;
+    min-width: 24px !important;
+    max-width: 24px !important;
+}
+
+/* Keep the first column of the table (the image) centered. */
+.img-cell-td {
+    text-align: center !important;
+}
+
+/* Slim a bit the styling of the buttons in the first column. */
+.img-cell-td .btn-sm {
+    border-radius: 3px;
+    width: 100% !important;
+    vertical-align: middle !important;
+    padding: 2px 3px;
+}
+
+/* Set title links to bold and no decoration */
+td.title-link {
+    font-weight: bold;
+    text-decoration: none;
+}
+
+/*
+ * Table tweaks.
+ */
+
+/*
+ * Sidebar tweaks.
+ */
+
+#sidebar {
+    border-right: 1px solid #eee;
+    bottom: 0;
+    left: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 20px 0;
+    position: fixed;
+    top: 0;
+    z-index: 1000;
+}
+
+#sidebar .nav-item {
+    width: 100%;
+}
+
+#sidebar .nav-link {
+    border-radius: 0;
+    font-weight: bold;
+    text-align: left !important;
+}
+
+#sidebar .nav-item .toggle-cat-btn:hover,
+#sidebar .nav-item .cat-btn:not(.active):hover,
+#sidebar .nav-item > .nav-link:not(.active):hover {
+    background: rgba(0, 0, 0, 0.075) !important;
+}
+
+/* Set a transparent background for sub-categories to easily differentiate them
+from categories. */
+#sidebar .subcats {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Bigger font size for categories. */
+#sidebar .nav-item .nav-link {
+    font-size: 1rem !important;
+}
+
+/* Smaller font size for sub-categories. */
+#sidebar .nav-item .nav-link.sub-cat-link {
+    font-size: 0.85rem !important;
+}
+
+/* Less padding for categories and sub-categories. */
+#sidebar .nav-item .nav-link.cat-btn {
+    padding: 0.25rem 0.5rem;
+}
+
+#sidebar .nav-item .nav-link.cat-btn.sub-cat-link {
+    padding-left: 1.5rem;
+}
+
+/* Remove border-radius from the categories that are actually buttons. */
+#sidebar .nav-item a.cat-btn,
+#sidebar .nav-item a.toggle-cat-btn,
+#sidebar .nav-item a.cat-btn:hover,
+#sidebar .nav-item a.toggle-cat-btn:hover {
+    border-radius: 0 !important;
+}
+
+/* Set padding for category icons to separate them from the category name. */
+#sidebar .cat-icon {
+    padding-right: 5px !important;
+}
+
+#sidebar .nav-item .btn-group,
+#sidebar .nav-item .btn-group .cat-btn {
+    width: 100% !important;
+}
+
+#sidebar .toggle-cat-btn[aria-expanded="false"]::before,
+#sidebar .toggle-cat-btn[aria-expanded="true"]::before {
+    display: inline-block !important;
+    width: 0 !important;
+    height: 0 !important;
+    vertical-align: middle !important;
+    content: "" !important;
+    border-top: 0.3em solid !important;
+    border-right: 0.3em solid transparent !important;
+    border-bottom: 0 !important;
+    border-left: 0.3em solid transparent !important;
+}
+
+#sidebar .toggle-cat-btn[aria-expanded="true"]::before {
+    border-top: 0 !important;
+    border-right: 0.3em solid transparent !important;
+    border-bottom: 0.3em solid !important;
+    border-left: 0.3em solid transparent !important;
+}
+
+#sidebar .cat-btn:focus,
+#sidebar .toggle-cat-btn:focus {
+    box-shadow: none !important;
+}
+/*
+ * Sidebar tweaks.
+ */
+
+/*
+ * Icons.
+ */
+
+.custom-icon-md::before {
+    content: "\f48a" !important;
+    font-size: 1.3em !important;
+    font-weight: 500 !important;
+}
+
+.custom-icon-html-external::before {
+    content: "\f14c" !important;
+    font-size: 1.3em !important;
+    font-weight: bold !important;
+}
+
+.custom-icon-pdf::before {
+    content: "\f1c1" !important;
+    font-size: 1.3em !important;
+    font-weight: bold !important;
+}
+
+.custom-icon-html::before {
+    content: "\f13b" !important;
+    font-size: 1.3em !important;
+    font-weight: bold !important;
+}
+
+.custom-icon-epub::before {
+    content: "\fd2c" !important;
+    font-size: 1.3em !important;
+    font-weight: bold !important;
+}
+
+/*
+ * Icons.
+ */
+
+/*
+ * Navigation bar tweaks.
+ */
+
+/* Get rid of the repugnant box-shadow when the search input is focused.
+   Don't even ask me why this even works!!! ¬¬ */
+#top-navbar select.custom-select,
+#top-navbar input.form-control {
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075) !important;
+}
+
+/* Set to bold all links on the navigation bar */
+#top-navbar .nav-link,
+#top-navbar .navbar-brand {
+    font-weight: bold !important;
+}
+
+/* Set cursor pointers for the "Open file..." and "force reload..." buttons. */
+#edit-button,
+#reload-button {
+    cursor: pointer;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+#edit-button[disabled],
+#reload-button[disabled] {
+    cursor: not-allowed;
+}
+
+#edit-button:focus,
+#edit-button.focus,
+#reload-button:focus,
+#reload-button.focus {
+    box-shadow: none !important;
+}
+
+#edit-button:hover,
+#reload-button:hover {
+    opacity: 0.4 !important;
+}
+
+/* Set and allow cursor pointers for the "Clear search input" button */
+#clear-search-button.form-control-feedback {
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+/* Sidebar/Navbar toggler tweaks */
+.navbar-light .navbar-toggler,
+.navbar-light .sidebar-toggler {
+    background: transparent;
+    border-radius: 0.25rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0.25rem;
+}
+
+.navbar-light .navbar-toggler:hover,
+.navbar-light .sidebar-toggler:hover {
+    opacity: 0.5 !important;
+}
+
+/* Set a padding for the home link to keep it away from the sidebar toggler. */
+#home-link {
+    padding-left: 10px;
+}
+
+/*
+ * Navigation bar tweaks.
+ */
+
+/*
+ * Pagination tweaks.
+ */
+
+/* Shrink pagination style using bootstrap's "pagination" class CSS. */
+.dataTables_paginate > ul.pagination .page-link {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    padding: 0.25rem 0.5rem;
+}
+
+.dataTables_paginate > ul.pagination .page-item:first-child .page-link {
+    border-bottom-left-radius: 0.2rem;
+    border-top-left-radius: 0.2rem;
+}
+
+.dataTables_paginate > ul.pagination .page-item:last-child .page-link {
+    border-bottom-right-radius: 0.2rem;
+    border-top-right-radius: 0.2rem;
+}
+
+/*
+ * Pagination tweaks.
+ */
+
+/* Because "geniuses" upstream removed this!!!!! */
+.action-dropdown-menu > .btn {
+    white-space: nowrap;
+}

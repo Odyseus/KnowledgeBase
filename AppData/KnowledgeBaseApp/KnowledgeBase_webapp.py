@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-"""Summary
+"""Web application.
 
 Attributes
 ----------
@@ -12,7 +12,7 @@ root_folder : str
 import os
 import sys
 
-from subprocess import call
+from subprocess import run
 
 try:
     from python_utils import bottle
@@ -25,7 +25,7 @@ root_folder = os.path.realpath(os.path.abspath(os.path.join(
 bottle_app = bottle.Bottle()
 
 
-class KnowledgeBaseWebapp(object):
+class KnowledgeBaseWebapp():
     """Knowledge Base web server.
 
     Attributes
@@ -46,7 +46,6 @@ class KnowledgeBaseWebapp(object):
         port : str
             The port number used by the web server.
         """
-        super().__init__()
         self.host = host
         self.port = port
 
@@ -96,7 +95,7 @@ class KnowledgeBaseWebapp(object):
         action = bottle.request.POST["action"]
         file_path = os.path.abspath(os.path.join(root_folder, bottle.request.POST["href"]))
         file_folder = os.path.dirname(file_path)
-        file_name = os.path.basename(file_path)
+        p = None
 
         if action == "file":
             # FIXME:
@@ -106,9 +105,14 @@ class KnowledgeBaseWebapp(object):
             # but what actually fixed it was the restart of the server. It seems that the problem
             # is triggered when the server is started at system start up.
             # call('xdg-open "%s"' % file_name, cwd=file_folder, shell=True)
-            call(["xdg-open", file_name], cwd=file_folder)
+            p = run(["xdg-open", file_path], cwd=file_folder, check=True)
         elif action == "folder":
-            call(["xdg-open", file_folder], cwd=file_folder)
+            p = run(["xdg-open", file_folder], cwd=file_folder, check=True)
+
+        if p and p.returncode:
+            # Implement a fallback.
+            # Delay it as long as possible before swallowing GLib or Gio.
+            pass
 
 
 # FIXME: Convert this script into a module.

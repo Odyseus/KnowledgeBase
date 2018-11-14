@@ -11,7 +11,7 @@ CAT_MENU_TEMPLATE : str
 custom_copytree_global_ignored_patterns : list
     List of globally ignored patterns for the :any:`file_utils.custom_copytree` function.
 root_folder : str
-    The main folder containing the Knowledge Base. All commands must be executed
+    The main folder containing the application. All commands must be executed
     from this location without exceptions.
 WWW_BASE_PATH : str
     The path to the www folder.
@@ -20,9 +20,12 @@ WWW_BASE_PATH : str
 import json
 import os
 
+from shlex import quote as shell_quote
+from subprocess import CalledProcessError
+
 from .python_utils import cmd_utils
 from .python_utils import file_utils
-from .python_utils import misc_utils
+from .python_utils import shell_utils
 
 root_folder = os.path.realpath(os.path.abspath(os.path.join(
     os.path.normpath(os.getcwd()))))
@@ -30,6 +33,25 @@ root_folder = os.path.realpath(os.path.abspath(os.path.join(
 custom_copytree_global_ignored_patterns = [".git"]
 
 WWW_BASE_PATH = os.path.join(root_folder, "UserData", "www")
+
+
+CAT_LIST_ITEM_TEMPLATE = """{indent}<li class="nav-item">
+{indent}    <span class="btn-group" role="group">
+{indent}        <a class="nav-link {cat_class} cat-btn btn" href="#"><i class="cat-icon nf {cat_icon}"></i>{cat_title}</a>
+{indent}    </span>
+{indent}</li>"""
+
+
+CAT_MENU_TEMPLATE = """<li class="nav-item">
+    <span class="btn-group" role="group">
+        <a class="nav-link cat-btn btn" href="#"><i class="cat-icon nf {cat_icon}">\
+</i>{cat_title}</a>
+        <a class="toggle-cat-btn btn" href="#{cat_menu_id}" data-toggle="collapse" aria-expanded="false"></a>
+    </span>
+    <ul class="collapse list-unstyled subcats" id="{cat_menu_id}">
+{sub_cat_items}
+    </ul>
+</li>"""
 
 
 class DataTablesObject():
@@ -41,38 +63,38 @@ class DataTablesObject():
     ----------
     data_tables_obj : list
         Where the JSON data is stored before finally save it into a JSON file.
-    file_extensions : list
-        Used by the :any:`DataTablesObject.generate_data_by_file_extension` method.
     logger : object
         See <class :any:`LogSystem`>.
     """
 
-    def __init__(self, file_extensions=[], logger=None):
+    def __init__(self, file_extensions=[], dry_run=False, logger=None):
         """Initialize.
 
         Parameters
         ----------
         file_extensions : list, optional
-            Used by the :any:`DataTablesObject.generate_data_by_file_extension` method.
+            Used by the :any:`DataTablesObject._get_data_by_file_extension` method.
+        dry_run : bool, optional
+            Log an action without actually performing it.
         logger : object
             See <class :any:`LogSystem`>.
         """
-        super().__init__()
-
         self.data_tables_obj = []
+        self._dry_run = dry_run
         self.logger = logger
-        self.file_extensions = file_extensions
+        self._file_extensions = file_extensions
 
-        self.generate_data_by_file_extension()
-        self.generate_data_from_html_pages()
-        self.generate_data_from_repositories()
-        self.generate_data_from_html_pages_from_archives()
+        self._get_data_by_file_extension()
+        self._get_data_from_html_pages()
+        self._get_data_from_repositories()
+        self._get_data_from_html_pages_from_archives()
 
-    def generate_data_by_file_extension(self):
-        """Generate JSON data depending on the file extensions stored in self.file_extensions.
+    def _get_data_by_file_extension(self):
+        """Generate JSON data depending on the file extensions stored in self._file_extensions.
 
         The file extensions are actually name of folders located inside the UserData/www
-        folder (as of now, "md" for Markdown files, "html" for HTML pages and "pdf" for PDF files).
+        folder (as of now, "md" for Markdown files, "html" for HTML pages, "pdf" for PDF files and
+        epub for ePub files).
         Inside these folders are sub-folders (representing category names) which contain other
         folders (representing sub-category names). Finally, all second level sub-folders contain
         files of said file types.
@@ -80,7 +102,7 @@ class DataTablesObject():
         These folders will be scanned in search for files and generate "JSON data objects" that
         will be stored into self.data_tables_obj.
         """
-        for file_extension in self.file_extensions:
+        for file_extension in self._file_extensions:
             file_pattern = "." + file_extension
             pages_path = os.path.join(WWW_BASE_PATH, file_extension)
 
@@ -118,12 +140,28 @@ class DataTablesObject():
                                         # Icon name
                                         "i": file_extension
                                     })
+
+                                    if file_extension == "epub":
+                                        rel_epub = os.path.join(
+                                            file_extension, cat, sub_cat, title, "index.html")
+                                        abs_epub = os.path.join(WWW_BASE_PATH, rel_epub)
+
+                                        if file_utils.is_real_file(abs_epub):
+                                            self.data_tables_obj.append({
+                                                "t": title,
+                                                "c": category,
+                                                "h": 1,
+                                                # Full path to files from the www folder.
+                                                "p": rel_epub,
+                                                # Icon name
+                                                "i": "html-external"
+                                            })
                             except Exception as err:
                                 self.logger.error(filename)
                                 self.logger.error(err)
                                 continue
 
-    def generate_data_from_html_pages(self):
+    def _get_data_from_html_pages(self):
         """Obtain the JSON data stored in html_pages.json and store it into self.data_tables_obj.
 
         The UserData/www/html_pages/html_pages.json is manually maintained and it contains
@@ -137,12 +175,20 @@ class DataTablesObject():
                 json_data = json.loads(json_file.read())
 
             if json_data is not None:
+                # Add this common data here instead of specifying the same data
+                # a million times inside the JSON file.
+                for data in json_data:
+                    data["p"] = "html_pages/{title}/{html_file}".format(title=data["t"],
+                                                                        html_file=data["p"])
+                    data["h"] = 1
+                    data["i"] = "html-external"
+
                 self.data_tables_obj += json_data
         except Exception as err:
             self.logger.error("get_data_from_html_pages")
             self.logger.error(err)
 
-    def generate_data_from_repositories(self):
+    def _get_data_from_repositories(self):
         """Obtain the JSON data generated for each repository.
 
         Each repository, after it's "handled", will generate a JSON file containing data related
@@ -150,18 +196,21 @@ class DataTablesObject():
         """
         from . import repositories_handler
 
-        data_tables_obj = repositories_handler.get_json_data_from_repositories(self.logger)
+        handler = repositories_handler.RepositoriesHandler(dry_run=self._dry_run,
+                                                           logger=self.logger)
+        data_tables_obj = handler.get_data_tables_obj()
 
         if data_tables_obj:
             self.data_tables_obj += data_tables_obj
 
-    def generate_data_from_html_pages_from_archives(self):
+    def _get_data_from_html_pages_from_archives(self):
         """Obtain the JSON data generated for downloaded archives.
         """
         from . import archives_handler
 
-        handler = archives_handler.ArchivesHandler(logger=self.logger)
-        data_tables_obj = handler.get_archives_json_data()
+        handler = archives_handler.ArchivesHandler(dry_run=self._dry_run,
+                                                   logger=self.logger)
+        data_tables_obj = handler.get_data_tables_obj()
 
         if data_tables_obj:
             self.data_tables_obj += data_tables_obj
@@ -248,7 +297,7 @@ def pandoc_inplace_convertion(from_format, to_format, from_clipboard, logger):
         Halt execution.
     """
     file_pattern = ".%s" % from_format
-    output_path = os.path.join(root_folder, "UserData", "tmp",
+    output_path = os.path.join(root_folder, "UserData", "data_storage",
                                "pandoc_convertions", "%s_to_%s" % (from_format, to_format))
 
     # Use of the latest version of pandoc downloaded from their repository.
@@ -341,60 +390,105 @@ def convert_with_pandoc(input_file, output_path, from_format, to_format, logger)
         logger.error(err)
 
 
-def main_json_file_creation(debug=False, logger=None):
+def convert_epub_to_html(logger):
+    """Convert epub to html.
+
+    Parameters
+    ----------
+    logger : object
+        See <class :any:`LogSystem`>.
+    """
+    output_path = os.path.join(root_folder, "UserData", "data_storage",
+                               "pandoc_convertions", "epub_to_html")
+
+    header_include_path = os.path.join(root_folder, "AppData", "data",
+                                       "includes", "epub_to_html_header_include.html")
+
+    list_of_files = [entry.name for entry in os.scandir(output_path) if
+                     entry.is_file(follow_symlinks=False) and entry.name.endswith(".epub")]
+
+    for f in list_of_files:
+        logger.info(shell_utils.get_cli_separator("-"), date=False)
+        logger.info("Converting:")
+        logger.info(f, date=False)
+        f_path = os.path.join(output_path, f)
+        dst_name = os.path.splitext(f)[0]
+        dst_path = os.path.join(output_path, dst_name)
+
+        os.makedirs(dst_path, mode=0o777, exist_ok=True)
+
+        cmd = [
+            "pandoc",
+            "--standalone",
+            shell_quote(f_path),
+            "--output",
+            shell_quote("%s/index.html" % dst_path),
+            "--extract-media=assets",
+            "--include-in-header=%s" % shell_quote(header_include_path),
+            "--wrap=none",
+            "--table-of-contents",
+            "--to=html5"
+        ]
+
+        try:
+            logger.info(" ".join(cmd), date=False)
+
+            cmd_utils.run_cmd(" ".join(cmd), stdout=None, stderr=None,
+                              cwd=dst_path, shell=True, check=True)
+        except CalledProcessError as err:
+            logger.error(err)
+
+
+def create_main_json_file(dry_run=False, logger=None):
     """Generate the data_tables.json file.
 
     See :any:`DataTablesObject`
 
     Parameters
     ----------
-    debug : bool, optional
-        Save JSON files with indentation.
+    dry_run : bool, optional
+        See :any:`DataTablesObject` > dry_run parameter.
     logger : object
         See <class :any:`LogSystem`>.
     """
-    data_tables_obj = DataTablesObject(
-        file_extensions=["md", "pdf", "html"], logger=logger).get_data_tables_obj()
+    logger.info(shell_utils.get_cli_separator("-"), date=False)
+    logger.info("Generating main JSON file...")
+    data_tables_obj = DataTablesObject(file_extensions=["md", "pdf", "html", "epub"],
+                                       dry_run=dry_run,
+                                       logger=logger).get_data_tables_obj()
 
     data_tables_json_path = os.path.join(WWW_BASE_PATH, "assets", "data", "data_tables.json")
 
     try:
-        with open(data_tables_json_path, "w") as data_tables_json_file:
-            if (debug):
-                data_tables_json_file.write(json.dumps(data_tables_obj, indent=4, sort_keys=True))
-            else:
+        if dry_run:
+            logger.info("[DRY_RUN] Main JSON file will be created at: \n%s" %
+                        data_tables_json_path, date=False)
+        else:
+            with open(data_tables_json_path, "w") as data_tables_json_file:
                 data_tables_json_file.write(json.dumps(data_tables_obj))
+
+                logger.info("data_tables.json file created at: \n%s" % data_tables_json_path)
     except Exception as err:
         logger.error(err)
 
 
-CAT_LIST_ITEM_TEMPLATE = """{indent}<li class="nav-item">
-{indent}    <span class="btn-group" role="group">
-{indent}        <a class="nav-link {cat_class} cat-btn btn" href="#"><i class="cat-icon nf {cat_icon}"></i>{cat_title}</a>
-{indent}    </span>
-{indent}</li>"""
-
-
-CAT_MENU_TEMPLATE = """<li class="nav-item">
-    <span class="btn-group" role="group">
-        <a class="nav-link cat-btn btn" href="#"><i class="cat-icon nf {cat_icon}">\
-</i>{cat_title}</a>
-        <a class="toggle-cat-btn btn" href="#{cat_menu_id}" data-toggle="collapse" aria-expanded="false"></a>
-    </span>
-    <ul class="collapse list-unstyled subcats" id="{cat_menu_id}">
-{sub_cat_items}
-    </ul>
-</li>"""
-
-
-def categories_html_generation(logger):
+def generate_categories_html(dry_run=False, logger=None):
     """Generate the categories.html file.
 
     Parameters
     ----------
+    dry_run : bool, optional
+        See :any:`DataTablesObject` > dry_run parameter.
     logger : object
         See <class :any:`LogSystem`>.
+
+    Raises
+    ------
+    SystemExit
+        Halt execution.
     """
+    logger.info(shell_utils.get_cli_separator("-"), date=False)
+    logger.info("Generating categories.html file...")
     # Collect all categories from the data_tables.json file.
     data_tables_json = os.path.join(WWW_BASE_PATH, "assets", "data", "data_tables.json")
     temp_set = set()
@@ -406,7 +500,7 @@ def categories_html_generation(logger):
                 temp_set.add(cat_data["c"])
     except Exception as err:
         logger.error(err)
-        exit()
+        raise SystemExit()
 
     # Collect categories' data. Just icons are stored for now.
     categories_data_json = os.path.join(
@@ -429,7 +523,7 @@ def categories_html_generation(logger):
     else:
         msg = "UserData/categories_data/categories.json non existent.\n"
         msg += "This file is used to add custom icons to each category.\n"
-        msg += "Can be created with `./app.py run categories_html_generation` command.\n"
+        msg += "Can be created with `./app.py run generate_categories_html` command.\n"
         msg += "Or let categories use a generic icon."
         logger.warning(msg)
 
@@ -497,24 +591,39 @@ def categories_html_generation(logger):
 
     # And finally, save the HTML list items into categories.html file.
     categories_html_file = os.path.join(WWW_BASE_PATH, "assets", "data", "categories.html")
+    categories_html_data = "\n".join(categories_html_list_items)
 
     try:
-        with open(categories_html_file, "w") as html_file:
-            html_file.write("\n".join(categories_html_list_items))
+        if dry_run:
+            msg = "categories.html file will be created at:\n%s" % categories_html_file
+            logger.info("[DRY_RUN] %s" % msg, date=False)
+            logger.info("[DRY_RUN] File content: \n%s" % categories_html_data, date=False)
+        else:
+            with open(categories_html_file, "w") as html_file:
+                html_file.write(categories_html_data)
 
-        logger.info("categories.html file created.")
+            logger.info("categories.html file created at: \n%s" % categories_html_file)
     except Exception as err:
         logger.error(err)
 
 
-def index_html_generation(logger):
+def generate_index_html(dry_run=False, logger=None):
     """generate the index.html file.
 
     Parameters
     ----------
+    dry_run : bool, optional
+        See :any:`DataTablesObject` > dry_run parameter.
     logger : object
         See <class :any:`LogSystem`>.
+
+    Raises
+    ------
+    SystemExit
+        Halt execution.
     """
+    logger.info(shell_utils.get_cli_separator("-"), date=False)
+    logger.info("Generating index.html file...")
     categories_html_file = os.path.join(WWW_BASE_PATH, "assets", "data", "categories.html")
 
     try:
@@ -522,7 +631,7 @@ def index_html_generation(logger):
             categories_data = html_file.read()
     except Exception as err:
         logger.error(err)
-        exit()
+        raise SystemExit(1)
 
     base_index_html_file = os.path.join(WWW_BASE_PATH, "assets", "data", "index-base.html")
 
@@ -531,97 +640,22 @@ def index_html_generation(logger):
             index_data = html_file.read().replace("<!-- {{categories}} -->", categories_data)
     except Exception as err:
         logger.error(err)
-        exit()
+        raise SystemExit(1)
 
     index_html_file = os.path.join(WWW_BASE_PATH, "index.html")
 
     try:
-        with open(index_html_file, "w") as html_file:
-            html_file.write(index_data)
+        if dry_run:
+            msg = "index.html file will be created at:\n%s" % index_html_file
+            logger.info("[DRY_RUN] %s" % msg, date=False)
+            logger.info("[DRY_RUN] File content: \n%s" % index_data, date=False)
+        else:
+            with open(index_html_file, "w") as html_file:
+                html_file.write(index_data)
 
-        logger.info("index.html file created.")
+            logger.info("index.html file created at: \n%s" % index_html_file)
     except Exception as err:
         logger.error(err)
-
-
-def create_file_from_template(action, logger):
-    """Create a "user" file from a template.
-
-    Parameters
-    ----------
-    action : str
-        An "action" that will be used to generate certain files from their
-        predefined templates.
-    logger : object
-        See <class :any:`LogSystem`>.
-    """
-    actions_map = {
-        "app_launcher_script": {
-            "filename": "app_launcher",
-            "ext": ".sh",
-            "destination": "UserData/bash_scripts"
-        },
-        "github_data_file": {
-            "filename": "github",
-            "template_filename": "repository",
-            "ext": ".py",
-            "destination": "UserData/data_sources"
-        },
-        "bitbucket_data_file": {
-            "filename": "bitbucket",
-            "template_filename": "repository",
-            "ext": ".py",
-            "destination": "UserData/data_sources"
-        },
-        "argos_script": {
-            "filename": "argos_helper_script",
-            "ext": ".py",
-            "destination": "UserData/argos_script"
-        },
-        "categories_data_file": {
-            "filename": "categories",
-            "ext": ".json",
-            "destination": "UserData/categories_data"
-        },
-    }
-
-    src_dir = os.path.join(root_folder, "AppData", "data", "templates")
-    dst_dir = os.path.join(root_folder, actions_map[action]["destination"])
-
-    if not os.path.exists(dst_dir):
-        os.makedirs(dst_dir)
-
-    src_filename = actions_map[action].get("template_filename", actions_map[action].get("filename"))
-    src_file = os.path.join(src_dir, src_filename + actions_map[action]["ext"])
-    dst_file = os.path.join(dst_dir, actions_map[action]["filename"] + actions_map[action]["ext"])
-
-    if os.path.exists(dst_file):
-        renamed_file_name = actions_map[action]["filename"] + "-" + \
-            misc_utils.micro_to_milli(misc_utils.get_date_time(
-                "filename")) + actions_map[action]["ext"]
-        renamed_file_path = os.path.join(dst_dir, renamed_file_name)
-        os.rename(dst_file, renamed_file_path)
-        logger.warning("Destination file already in existence. Renamed to:")
-        logger.warning(os.path.relpath(renamed_file_path, root_folder))
-
-    try:
-        file_utils.custom_copy2(src_file, dst_file, logger)
-    finally:
-        if action in ["github_data_file", "bitbucket_data_file"]:
-            # The fileinput module is absolute garbage. So...
-            # Let's read in the file...
-            with open(dst_file, "r") as file:
-                filedata = file.read()
-
-            # Replace the target string...
-            filedata = filedata.replace("{repository}", actions_map[action]["filename"])
-
-            # Write the file out again...
-            with open(dst_file, "w") as file:
-                file.write(filedata)
-
-        logger.info("New file created at:")
-        logger.info(os.path.relpath(dst_file, root_folder))
 
 
 if __name__ == "__main__":

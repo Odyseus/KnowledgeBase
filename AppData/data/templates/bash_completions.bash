@@ -18,7 +18,7 @@ __knowledge_base_cli_{current_date}(){
     # Completion of commands and "first level options.
     if [[ $COMP_CWORD == 1 ]]; then
         COMPREPLY=( $(compgen -W \
-            "run launch server generate -h --help --manual --version" -- "${cur}") )
+            "run server generate -h --help --manual --version" -- "${cur}") )
         return 0
     fi
 
@@ -27,12 +27,19 @@ __knowledge_base_cli_{current_date}(){
 
     case $cmd in
     "run")
-        COMPREPLY=( $(compgen -W \
-            "github_repos_update bitbucket_repos_update github_repos_json_files_creation \
-bitbucket_repos_json_files_creation archives_download main_json_file_creation \
-html_to_markdown_files html_to_markdown_clip \
-bitbucket_sphinx_docs_build github_sphinx_docs_build categories_html_generation \
-index_html_generation open_main_webpage --debug --force-download" -- "${cur}") )
+        COMPREPLY=( $(compgen -W "\
+update_all_repositories \
+handle_all_repositories \
+download_all_archives \
+create_main_json_file \
+html_to_markdown_files \
+html_to_markdown_clip \
+epub_to_html \
+build_sphinx_docs \
+generate_categories_html \
+generate_index_html \
+open_main_webpage \
+--force-download --dry-run" -- "${cur}") )
         ;;
     "server")
         COMPREPLY=( $(compgen -W "start stop restart --host= --port=" -- "${cur}") )
@@ -40,8 +47,7 @@ index_html_generation open_main_webpage --debug --force-download" -- "${cur}") )
         ;;
     "generate")
         COMPREPLY=( $(compgen -W \
-            "app_launcher_script argos_script bitbucket_data_file github_data_file \
-system_executable" -- "${cur}") )
+            "system_executable" -- "${cur}") )
         ;;
     esac
 } &&

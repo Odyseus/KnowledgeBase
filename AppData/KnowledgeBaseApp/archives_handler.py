@@ -5,26 +5,25 @@
 Attributes
 ----------
 root_folder : str
-    The main folder containing the Knowledge Base. All commands must be executed
+    The main folder containing the application. All commands must be executed
     from this location without exceptions.
 """
 
 import json
 import os
-import sys
 import time
 
 from datetime import datetime
 from datetime import timedelta
 from runpy import run_path
 from shutil import rmtree
-from subprocess import PIPE
-from subprocess import Popen
+from subprocess import CalledProcessError
 from subprocess import STDOUT
 
 from . import app_utils
 from .python_utils import cmd_utils
 from .python_utils import exceptions
+from .python_utils import shell_utils
 from .python_utils import tqdm_wget
 
 try:
@@ -37,63 +36,63 @@ root_folder = os.path.realpath(os.path.abspath(os.path.join(
     os.path.normpath(os.getcwd()))))
 
 
-try:
-    archives_data = run_path(os.path.join(root_folder, "UserData", "data_sources", "archives.py"))[
-        "data"]
-except Exception:
-    archives_data = None
-
-
 class ArchivesHandler():
     """Class to handle archives downloaded from the net (compressed or not).
 
     Attributes
     ----------
-    archives_data : list
-        The list containing all the data needed to handle archives.
-    archives_destination : str
-        The final path where to store the downloaded archives.
-    archives_last_updated : str
-        Path to the JSON file were the last updated dates are stored.
-    archives_storage : str
-        The path to the temporary folder to store downloaded archives and other data.
-    compressed_archives : list
-        The list of compressed archives.
-    current_date : str
-        The current date.
-    last_update_data : dict
-        The dictionary containing the dates in which the archives were updated.
     logger : object
         See <class :any:`LogSystem`>.
     """
+    _tar_allowed_args = [
+        "--xz",
+        "-J",
+        "--gzip",
+        "-z",
+        "--bzip2",
+        "-j"
+    ]
+    _source_mandatory_keys = [
+        "kb_title",
+        "kb_category",
+        "arch_url"
+    ]
 
-    def __init__(self, logger=None):
+    def __init__(self, dry_run=False, logger=None):
         """Initialize.
 
         Parameters
         ----------
+        dry_run : bool, optional
+            Log an action without actually performing it.
         logger : object
             See <class :any:`LogSystem`>.
         """
-        super().__init__()
         self.logger = logger
-        self.archives_data = archives_data
-        self.last_update_data = {}
-        self.compressed_archives = []
+        self._dry_run = dry_run
+        self._last_update_data = {}
+        self._compressed_archives = []
+
+        try:
+            self._archives_data = run_path(os.path.join(root_folder, "UserData", "data_sources",
+                                                        "archives.py"))["data"]
+        except Exception:
+            self._archives_data = None
 
         self._validate_archives_data()
 
-        self.archives_storage = os.path.join(root_folder, "UserData", "tmp", "archives_storage")
-        self.archives_destination = os.path.join(
+        self._archives_storage = os.path.join(
+            root_folder, "UserData", "data_storage", "downloaded_archives")
+        self._archives_destination = os.path.join(
             app_utils.WWW_BASE_PATH, "html_pages_from_archives")
-        self.archives_last_updated = os.path.join(self.archives_storage, "last_updated.json")
-        self.current_date = time.strftime("%B %d %Y", time.gmtime())  # Format = January 1 2018
+        self._archives_last_updated = os.path.join(self._archives_storage, "last_updated.json")
+        self._current_date = time.strftime("%B %d %Y", time.gmtime())  # Format = January 1 2018
 
         self._ensure_paths()
         self._expand_archives_data()
 
-    def get_archives_json_data(self):
-        """Get archives DataTables JSON data.
+    def get_data_tables_obj(self):
+        """Get DataTables object.
 
         Returns
         -------
@@ -102,21 +101,22 @@ class ArchivesHandler():
         """
         data_tables_obj = []
 
-        for data in self.archives_data:
+        for data in self._archives_data:
             try:
                 data_tables_obj.append({
-                    "t": data["title"],
-                    "c": data["category"],
-                    "h": 1,  # Hard-coded path handler. No need to be specified in the data source.
+                    "t": data["kb_title"],
+                    "c": data["kb_category"],
                     # Path to files relative to the www folder
                     "p": os.path.join("html_pages_from_archives",
-                                      data["title"],
-                                      data.get("index_path", "index.html")),
-                    # Hard-coded icon name. No need to be specified in the data source.
+                                      data["kb_title"],
+                                      data.get("kb_rel_path", ""),
+                                      data.get("kb_filename", "index.html")),
+                    # Hard-coded icon name. No need to be specified in the data source since,
+                    # at the moment, all archives contain HTML files.
                     "i": "html-external"
                 })
             except Exception as err:
-                self.logger.error(data["title"])
+                self.logger.error(data["kb_title"])
                 self.logger.error(err)
                 continue
 
@@ -136,11 +136,13 @@ class ArchivesHandler():
             See <class :any:`exceptions.KeyboardInterruption`>.
         """
         try:
-            for data in self.archives_data:
+            for data in self._archives_data:
+                self.logger.info(shell_utils.get_cli_separator("-"), date=False)
+
                 try:
                     self._download_archive(data, force_download)
                 except Exception as err:
-                    self.logger.error("Error downloading archive. URL: ", data["url"])
+                    self.logger.error("Error downloading archive. URL: ", data["arch_url"])
                     self.logger.error(err)
                     continue
                 except (KeyboardInterrupt, SystemExit):
@@ -148,30 +150,30 @@ class ArchivesHandler():
         except (KeyboardInterrupt, SystemExit):
             raise exceptions.KeyboardInterruption()
         else:
-            with open(self.archives_last_updated, "w", encoding="UTF-8") as data_file:
-                data_file.write(json.dumps(self.last_update_data, indent=4, sort_keys=True))
+            with open(self._archives_last_updated, "w", encoding="UTF-8") as data_file:
+                data_file.write(json.dumps(self._last_update_data, indent=4, sort_keys=True))
 
-        if self.compressed_archives:
+        if self._compressed_archives:
             self.logger.info("Handling compressed archives.")
             self._handle_compressed_archives()
 
-        self._handle_append_to_files()
+        self._append_to_files()
 
-    def _handle_append_to_files(self):
-        """Summary
+    def _append_to_files(self):
+        """Append to files.
         """
-        for data in self.archives_data:
-            arvhive_append_data = data.get("file_append", False)
+        for data in self._archives_data:
+            arvhive_append_data = data.get("kb_file_append", False)
 
             if arvhive_append_data:
-                self.logger.info("Appending data to <" + data["title"] + ">'s files.")
+                self.logger.info("Appending data to <%s>'s files." % data["kb_title"])
 
                 for append_data in arvhive_append_data:
                     file_path = os.path.join(data["extraction_destination"], append_data[0])
                     file_data = append_data[1]
 
                     if os.path.exists(file_path):
-                        self.logger.info("Appending data to <" + append_data[0] + ">.")
+                        self.logger.info("Appending data to <%s>." % append_data[0], date=False)
                         with open(file_path, "a") as file_to_append:
                             file_to_append.write(file_data)
 
@@ -184,11 +186,12 @@ class ArchivesHandler():
             See <class :any:`exceptions.KeyboardInterruption`>.
         """
         try:
-            for source in self.compressed_archives:
-                self.logger.info("Decompressing source <%s>." % source["title"])
+            for source in self._compressed_archives:
+                self.logger.info(shell_utils.get_cli_separator("-"), date=False)
+                self.logger.info("Decompressing <%s>" % source["kb_title"])
 
                 try:
-                    aborted_msg = "Extract operation for <%s> aborted." % source["title"]
+                    aborted_msg = "Extract operation for <%s> aborted." % source["kb_title"]
                     ext_dst = source["extraction_destination"]
                     cmd = []
 
@@ -204,45 +207,58 @@ class ArchivesHandler():
                         cmd += ["unzip", "-q", "-o", source["downloaded_filename"],
                                 "-d", ext_dst]
                     elif source["unzip_prog"] == "tar":
-                        if not source["unzip_args"]:
-                            self.logger.error(
-                                "The `tar` command requires arguments (unzip_args key).\n" + aborted_msg)
-                            continue
+                        untar_arg = source.get("untar_arg")
+                        cmd = ["tar", "--extract"]
 
-                        cmd += ["tar", source["unzip_args"],
-                                source["downloaded_filename"], "--directory", ext_dst]
+                        if untar_arg:
+                            if untar_arg not in self._tar_allowed_args:
+                                self.logger.warning("untar_arg key ignored!")
+                                self.logger.warning("Allowed arguments are:\n%s" %
+                                                    ", ".join(self._tar_allowed_args))
+                            else:
+                                cmd += [untar_arg]
+
+                        cmd += [
+                            "--file",
+                            source["downloaded_filename"],
+                            "--totals",
+                            "--directory", ext_dst
+                        ]
 
                     if cmd:
                         try:
                             if os.path.isfile(ext_dst):
-                                os.remove(ext_dst)
+                                if self._dry_run:
+                                    self.logger.log_dry_run("File will be removed:\n%s" % ext_dst)
+                                else:
+                                    os.remove(ext_dst)
 
                             if os.path.isdir(ext_dst):
-                                rmtree(ext_dst)
+                                if self._dry_run:
+                                    self.logger.log_dry_run(
+                                        "Directory will be removed:\n%s" % ext_dst)
+                                else:
+                                    rmtree(ext_dst)
                         finally:
-                            os.makedirs(ext_dst, exist_ok=True)
+                            if self._dry_run:
+                                self.logger.log_dry_run(
+                                    "Directory will be created at:\n%s" % ext_dst)
+                            else:
+                                os.makedirs(ext_dst, exist_ok=True)
 
-                            self.logger.warning(
-                                "Running command:\n" + " ".join(cmd))
+                            try:
+                                if self._dry_run:
+                                    self.logger.log_dry_run(
+                                        "Command that will be executed:\n%s" % " ".join(cmd))
+                                else:
+                                    self.logger.info("Running command:\n" + " ".join(cmd))
 
-                            p = Popen(
-                                cmd,
-                                stdout=PIPE,
-                                stderr=STDOUT,
-                                env=cmd_utils.get_environment(),
-                                cwd=os.path.dirname(source["downloaded_filename"])
-                            )
-
-                            while True:
-                                # Without decoding output, the loop will run forever. ¬¬
-                                output = p.stdout.read(1).decode("utf-8")
-
-                                if output == "" and p.poll() is not None:
-                                    break
-
-                                if output:
-                                    sys.stdout.write(output)
-                                    sys.stdout.flush()
+                                    cmd_utils.run_cmd(cmd,
+                                                      stdout=None,
+                                                      stderr=STDOUT,
+                                                      check=True)
+                            except CalledProcessError as err:
+                                self.logger.error(err)
                 except Exception as err:
                     self.logger.error(err)
         except (KeyboardInterrupt, SystemExit):
@@ -265,31 +281,42 @@ class ArchivesHandler():
         """
         is_compressed_source = data.get("unzip_prog", False)
 
-        if is_compressed_source:
-            try:
-                os.makedirs(os.path.dirname(data["downloaded_filename"]), exist_ok=True)
-            except Exception as err:
-                self.logger.error(err)
+        try:
+            parent_dir = os.path.dirname(data["downloaded_filename"])
+
+            if self._dry_run:
+                self.logger.log_dry_run("Parent directory will be created at:\n%s" % parent_dir)
+            else:
+                os.makedirs(parent_dir, exist_ok=True)
+        except Exception as err:
+            self.logger.error(err)
 
         if force_download or self._should_download_archive(data):
-            self.logger.info("Updating source <" + data["title"] + ">")
+            self.logger.info("Updating <%s>" % data["kb_title"])
 
             try:
-                tqdm_wget.download(data["url"], data["downloaded_filename"])
+                if self._dry_run:
+                    self.logger.log_dry_run("File will be downloaded:")
+                    self.logger.log_dry_run("URL: %s" % data["arch_url"])
+                    self.logger.log_dry_run("Location: %s" % data["downloaded_filename"])
+                else:
+                    tqdm_wget.download(data["arch_url"], data["downloaded_filename"])
             except (KeyboardInterrupt, SystemExit):
                 raise exceptions.KeyboardInterruption()
             except Exception as err:
                 self.logger.error(err)
             else:
-                self.last_update_data[data["slugified_name"]] = self.current_date
+                # Do not modify download history on dry run.
+                if not self._dry_run:
+                    self._last_update_data[data["slugified_name"]] = self._current_date
 
                 if is_compressed_source:
-                    self.compressed_archives.append(data)
+                    self._compressed_archives.append(data)
         else:
-            self.logger.info("Source <" + data["title"] + "> doesn't need updating.")
+            self.logger.info("<%s> doesn't need updating." % data["kb_title"])
 
             if is_compressed_source:
-                self.compressed_archives.append(data)
+                self._compressed_archives.append(data)
 
     def _should_download_archive(self, data):
         """Check if the archive should be updated.
@@ -305,10 +332,10 @@ class ArchivesHandler():
             If the archive needs to be updated depending on its configured specified
             update frequency.
         """
-        frequency = data.get("frequency", "frequently")
+        frequency = data.get("download_frequency", "m")
         last_updated = data.get("last_updated", False)
 
-        if frequency == "frequently" or not last_updated:
+        if frequency == "d" or not last_updated:
             return True
 
         downloaded_filename = data.get("downloaded_filename", False)
@@ -319,12 +346,14 @@ class ArchivesHandler():
 
         try:
             then = datetime.strptime(last_updated, "%B %d %Y")
-            now = datetime.strptime(self.current_date, "%B %d %Y")
+            now = datetime.strptime(self._current_date, "%B %d %Y")
 
-            if frequency == "occasionally":  # Weekly.
+            if frequency == "w":  # Weekly.
                 return (now - then) > timedelta(days=6)
-            elif frequency == "rarely":  # Monthly.
+            elif frequency == "m":  # Monthly.
                 return (now - then) > timedelta(days=29)
+            elif frequency == "s":  # Semestrial.
+                return (now - then) > timedelta(days=87)
         except Exception:
             return True
 
@@ -336,23 +365,22 @@ class ArchivesHandler():
         exceptions.MalformedSources
             See <class :any:`exceptions.MalformedSources`>.
         """
-        mandatory_keys = ["title", "url"]
         titles = []
         errors = []
 
-        for data in self.archives_data:
-            source_title = data.get("title", False)
+        for data in self._archives_data:
+            source_title = data.get("kb_title", False)
             report_source = source_title if source_title else data
             source_keys = data.keys()
 
             # Do not allow sources without mandatory keys.
-            for key in mandatory_keys:
+            for key in self._source_mandatory_keys:
                 if key not in source_keys:
                     errors.append("Missing mandatory <%s> key!!! Source: <%s>" %
                                   (key, report_source))
 
             if source_title:
-                # Do not allow more than one source with the same "title".
+                # Do not allow more than one source with the same "kb_title".
                 if source_title in titles:
                     errors.append("More than one source with the same title. <%s>" % source_title)
                 else:
@@ -365,41 +393,45 @@ class ArchivesHandler():
     def _ensure_paths(self):
         """Ensure the existence of some folders.
         """
-        if not os.path.exists(self.archives_storage):
-            os.makedirs(self.archives_storage)
+        if self._dry_run:
+            self.logger.log_dry_run("Parent directory will be created at:\n%s" %
+                                    self._archives_storage)
+        else:
+            if not os.path.exists(self._archives_storage):
+                os.makedirs(self._archives_storage)
 
     def _expand_archives_data(self):
         """Add additional data to the archives data.
         """
         try:
-            with open(self.archives_last_updated, "r", encoding="UTF-8") as json_file:
-                self.last_update_data = json.loads(json_file.read())
+            with open(self._archives_last_updated, "r", encoding="UTF-8") as json_file:
+                self._last_update_data = json.loads(json_file.read())
         except Exception:
-            self.last_update_data = {}
+            self._last_update_data = {}
 
-        for data in self.archives_data:
+        for data in self._archives_data:
             # Generate and add "slugified_name".
-            data["slugified_name"] = slugify(data["title"])
+            data["slugified_name"] = slugify(data["kb_title"])
 
             # Generate and add the path to the extraction destination directory.
-            data["extraction_destination"] = os.path.join(self.archives_destination,
-                                                          data["title"])
+            data["extraction_destination"] = os.path.join(self._archives_destination,
+                                                          data["kb_title"])
 
             # Generate and add the path for the downloaded file.
             # If it's a compressed file, download it into a storage folder.
             if data.get("unzip_prog", False):
                 data["downloaded_filename"] = os.path.join(
-                    self.archives_storage, data["slugified_name"])
+                    self._archives_storage, data["slugified_name"])
             else:  # If it's an HTML file, download it directly into its final destination.
                 data["downloaded_filename"] = os.path.join(
                     data["extraction_destination"], "index.html")
 
             # Insert the date in which the data was last updated.
-            if self.last_update_data:
-                data["last_updated"] = self.last_update_data.get(data["slugified_name"], None)
+            if self._last_update_data:
+                data["last_updated"] = self._last_update_data.get(data["slugified_name"], None)
 
         # Lastly, sort dictionaries by data names.
-        self.archives_data = sorted(self.archives_data, key=lambda title: title["title"])
+        self._archives_data = sorted(self._archives_data, key=lambda title: title["kb_title"])
 
 
 if __name__ == "__main__":
