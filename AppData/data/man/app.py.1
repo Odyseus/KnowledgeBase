@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH "APP.PY" "1" "Nov 05, 2018" "" "Knowledge Base"
+.TH "APP.PY" "1" "Nov 15, 2018" "" "Knowledge Base"
 .SH NAME
 app.py \- A CLI utility to generate and manage a personal and self-hosted *Knowledge Base* on GNU/Linux.
 .
@@ -41,7 +41,8 @@ This Python application can generate a system executable with Bash completions s
 .ft C
 
 app.py (\-h | \-\-help | \-\-manual | \-\-version)
-app.py run <func_name>... [\-\-debug] [\-\-force\-download]
+app.py run <func_name>... [\-\-dry\-run]
+                          [\-\-force\-download]
 app.py server (start | stop | restart)
               [\-\-host=<host>]
               [\-\-port=<port>]
@@ -53,7 +54,17 @@ app.py generate system_executable
 .UNINDENT
 .SH REQUIREMENTS
 .sp
-No mayor requirements are needed to run this application other than Python 3 (Python 3.5+ to be precise).
+\fBATTENTION:\fP
+.INDENT 0.0
+.INDENT 3.5
+.INDENT 0.0
+.IP \(bu 2
+Python 3.5+.
+.IP \(bu 2
+\fBpython\-slugify\fP module.
+.UNINDENT
+.UNINDENT
+.UNINDENT
 .SH DETAILED USAGE
 .SS CLI options
 .INDENT 0.0
@@ -81,6 +92,210 @@ It will also ask for bash completions creation.
 .UNINDENT
 .UNINDENT
 .UNINDENT
+.SH FILE TEMPLATES
+.sp
+These templates are files used to perform several tasks within the Knowledge Base application.
+.SS \fBarchives.py\fP template
+.sp
+In this file is stored all the data to handle on\-line archives. Its location should always be \fB/UserData/KnowledgeBase/UserData/data_sources/archives.py\fP\&.
+.INDENT 0.0
+.INDENT 3.5
+.IP "Highlights"
+.INDENT 0.0
+.IP \(bu 2
+Compressed/Tared archives are downloaded into a temporary location (\fBUserData/data_storage/downloaded_archives\fP) and then their content extracted into their final location (\fBUserData/www/html_pages_from_archives/<kb_title>\fP).
+.IP \(bu 2
+Non\-compressed/Non\-tared files are directly downloaded into their final destination.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+#!/usr/bin/python3
+# \-*\- coding: utf\-8 \-*\-
+"""Archives data practical example.
+"""
+data = [
+    {
+        "kb_title": "PyGObject API Reference (By Lazka)",
+        "kb_category": "Software|Documentation",
+        "arch_url": "http://github.com/lazka/pgi\-docs/archive/master.zip",
+        "kb_rel_path": "pgi\-docs\-master",
+        "unzip_prog": "unzip",
+        "file_append": [
+            ("pgi\-docs\-master/_static/css/theme.css", """
+    /* CSS code that will be appended to the
+       pgi\-docs\-master/_static/css/theme.css file*/
+    """)
+        ]
+    }, {
+        "kb_title": "Bash Reference Manual",
+        "kb_category": "Software|Documentation",
+        "arch_url": "https://www.gnu.org/software/bash/manual/bash.html",
+        "frequency": "s"
+    }, {
+        "kb_title": "ZSH Documentation",
+        "kb_category": "Software|Documentation",
+        "arch_url": "http://zsh.sourceforge.net/Doc/zsh_html.tar.gz",
+        "kb_rel_path": "zsh_html",
+        "unzip_prog": "tar",
+        "untar_arg": "\-\-gzip",
+        "frequency": "s"
+    }
+]
+
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS Data keys
+.INDENT 0.0
+.IP \(bu 2
+\fBkb_title\fP (Madatory): The title that will be displayed in the web page index.
+.IP \(bu 2
+\fBkb_category\fP (Madatory): A category name to organize the web page index.
+.IP \(bu 2
+\fBarch_url\fP (Madatory): The url from which to download an archive.
+.IP \(bu 2
+\fBkb_rel_path\fP (\fBOptional\fP): The path (relative to \fBUserData/www/html_pages_from_archives/<kb_title>\fP) to the a folder containing an HTML file (\fBkb_filename\fP) found inside the extracted content of an archive. \fBDefault\fP: empty.
+.IP \(bu 2
+\fBkb_filename\fP (\fBOptional\fP): The file name found inside the extracted content of an archive relative to \fBkb_rel_path\fP\&. \fBDefault\fP: \fBindex.html\fP\&.
+.IP \(bu 2
+\fBkb_file_append\fP (\fBOptional\fP): A list of tuples. Each tuple must contain a path to a file (relative to \fBUserData/www/html_pages_from_archives/<title key>\fP) at index 0 (zero) and a string at index 1 (one). The string will be appended at the end of the file defined at index zero.
+.IP \(bu 2
+\fBdownload_frequency\fP (\fBOptional\fP): The frequency at which an archive should be downloaded. Default: \fBm\fP\&. Possible values:
+.INDENT 2.0
+.INDENT 3.5
+.INDENT 0.0
+.IP \(bu 2
+\fBw\fP: Weekly.
+.IP \(bu 2
+\fBm\fP: Monthly.
+.IP \(bu 2
+\fBs\fP: Semestrial.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+\fBunzip_prog\fP (\fBOptional\fP): The command to use to decompress archives. Possible values are \fB7z\fP, \fBunzip\fP and \fBtar\fP\&. The tar command can accept a decompression argument (See \fBuntar_arg\fP).
+.IP \(bu 2
+\fBuntar_arg\fP (\fBOptional\fP): The decompress argument used by the \fBtar\fP program. Possible values are \fB\-\-xz\fP, \fB\-J\fP, \fB\-\-gzip\fP, \fB\-z\fP, \fB\-\-bzip2\fP or \fB\-j\fP\&. \fBDefault\fP: empty (no decompression argument is passed to \fBtar\fP).
+.UNINDENT
+.SS \fBrepositories.py\fP template
+.sp
+In this file is stored all the data to handle on\-line repositories. Its location should always be \fB/UserData/KnowledgeBase/UserData/data_sources/repositories.py\fP\&.
+.INDENT 0.0
+.INDENT 3.5
+.IP "Highlights"
+.INDENT 0.0
+.IP \(bu 2
+\fBsphinx>=1.6.5\fP: \fBsudo pip3 install sphinx\fP
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+#!/usr/bin/python3
+# \-*\- coding: utf\-8 \-*\-
+"""Repositories data practical example.
+"""
+data = [
+    {
+        "repo_owner": "hexchat",
+        "repo_name": "documentation",
+        "repo_handler": "sphinx_docs",
+        "kb_category": "Software|Documentation",
+        "kb_title": "HexChat documentation",
+        "kb_rel_path": ""
+    }, {
+        "repo_owner": "sindresorhus",
+        "repo_name": "awesome",
+        "repo_handler": "single_file",
+        "repo_filename": "readme.md",
+        "kb_category": "Bookmark",
+        "kb_title": "Awesome (Curated list of awesome lists)",
+    }, {
+        "repo_owner": "rstacruz",
+        "repo_name": "cheatsheets",
+        "repo_handler": "multi_files",
+        "repo_file_pattern": ".md",
+        "kb_category": "Software|Quick Reference",
+        "kb_title_prefix": "Devhints cheatsheets \- ",
+        "kb_file_ignore": ["README.md"]
+    }
+]
+
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.SS Data keys
+.INDENT 0.0
+.IP \(bu 2
+\fBrepo_owner\fP (\fBMandatory\fP): Repository owner/organization.
+.IP \(bu 2
+\fBrepo_name\fP (\fBMandatory\fP): Repository name.
+.IP \(bu 2
+\fBrepo_service\fP (\fBOptional\fP): \fBDefault\fP: \fBgithub\fP\&.
+.IP \(bu 2
+\fBrepo_handler\fP (\fBMandatory\fP): Repository handler. Possible values:
+.INDENT 2.0
+.INDENT 3.5
+.INDENT 0.0
+.IP \(bu 2
+\fBsphinx_docs\fP: Repositories that contain Sphinx documentation sources. These sources are then used to build the HTML documentation.
+.IP \(bu 2
+\fBsingle_file\fP: Repositories from which one file is used.
+.IP \(bu 2
+\fBmulti_files\fP: Repositories from which more than file is used.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+\fBrepo_type\fP (\fBOptional\fP): Repository type (\fBgit\fP or \fBhg\fP). \fBDefault\fP: \fBgit\fP\&.
+.IP \(bu 2
+\fBrepo_filename\fP (\fBOptional\fP): \fBDefault\fP: \fBindex.html\fP for \fBrepo_handler\fP \fBsphinx_docs\fP and \fBREADME.md\fP for \fBrepo_handler\fP \fBsingle_file\fP\&.
+.IP \(bu 2
+\fBrepo_files_ignore\fP (\fBOptional|List\fP):
+.IP \(bu 2
+\fBrepo_file_pattern\fP (\fBOptional\fP):
+.IP \(bu 2
+\fBkb_category\fP (\fBOptional\fP): \fBDefault\fP: \fBUncategorized\fP\&.
+.IP \(bu 2
+\fBkb_title\fP (\fBOptional\fP):
+.IP \(bu 2
+\fBkb_title_prefix\fP (\fBOptional\fP):
+.IP \(bu 2
+\fBkb_rel_path\fP (\fBOptional\fP): Relative path to the desired file/folder/Sphinx docs sources.
+.INDENT 2.0
+.INDENT 3.5
+.INDENT 0.0
+.IP \(bu 2
+\fBsphinx_docs\fP: The path should be relative to a downloaded repository and point to a Sphinx docs source folder (e.g. if the docs sources of a downloaded repository are at \fBUserData/tmp/<repo_service>_repositories/<repo_owner>\-<repo_name>/doc\fP, then the \fBkb_rel_path\fP key value should be \fBdoc\fP).
+.IP \(bu 2
+\fBsingle_file\fP: Repositories that
+.IP \(bu 2
+\fBmulti_files\fP:
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+\fBkb_file_append\fP (\fBOptional|List\fP):
+.UNINDENT
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+Both previously mentioned files should contain one property called \fBdata\fP\&. A list containing dictionaries.
+.UNINDENT
+.UNINDENT
+.SS \fBcategories.json\fP template
 .SH AUTHOR
 Odyseus
 .SH COPYRIGHT
