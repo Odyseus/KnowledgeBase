@@ -133,7 +133,6 @@ class DataTablesObject():
                                     self.data_tables_obj.append({
                                         "t": title,
                                         "c": category,
-                                        "h": 0 if file_extension in ["md", "html"] else 1,
                                         # Full path to files from the www folder.
                                         "p": os.path.join(file_extension, cat, sub_cat,
                                                           title + "." + file_extension),
@@ -150,7 +149,6 @@ class DataTablesObject():
                                             self.data_tables_obj.append({
                                                 "t": title,
                                                 "c": category,
-                                                "h": 1,
                                                 # Full path to files from the www folder.
                                                 "p": rel_epub,
                                                 # Icon name
@@ -180,7 +178,6 @@ class DataTablesObject():
                 for data in json_data:
                     data["p"] = "html_pages/{title}/{html_file}".format(title=data["t"],
                                                                         html_file=data["p"])
-                    data["h"] = 1
                     data["i"] = "html-external"
 
                 self.data_tables_obj += json_data
