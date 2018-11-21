@@ -35,7 +35,7 @@ repo_service_url_map = {
 }
 
 
-_allowed_repo_types = ["git", "hg"]
+_allowed_repo_types = {"git", "hg"}
 
 
 class InvalidRepositoryData(exceptions.ExceptionWhitoutTraceBack):
@@ -113,7 +113,8 @@ class RepositoriesHandler():
                     self.logger.warning("Missing fields: %s" % ", ".join(error_data), date=False)
                 elif error_type is "invalid_repo_type":
                     self.logger.warning("Invalid repository type: %s" % error_data, date=False)
-                    self.logger.warning("Valid values are: %s" % ", ".join(_allowed_repo_types), date=False)
+                    self.logger.warning("Valid values are: %s" %
+                                        ", ".join(list(_allowed_repo_types)), date=False)
 
             raise InvalidRepositoryData("Operation aborted!")
 
@@ -132,13 +133,14 @@ class RepositoriesHandler():
 
             if not os.path.exists(json_parent):
                 if self._dry_run:
-                    self.logger.log_dry_run("Parent directory will be created at:\n%s" % json_parent)
+                    self.logger.log_dry_run(
+                        "Parent directory will be created at:\n%s" % json_parent)
                 else:
                     os.makedirs(json_parent)
 
             if self._dry_run:
                 self.logger.log_dry_run("JSON file will be created at:\n%s" %
-                                  repositories_data_tables_json_path)
+                                        repositories_data_tables_json_path)
             else:
                 with open(repositories_data_tables_json_path, "w") as json_file:
                     json_file.write(json.dumps(self._data_tables_obj))
@@ -162,8 +164,8 @@ class RepositoriesHandler():
             if os.path.exists(file_path):
                 if self._dry_run:
                     self.logger.log_dry_run("\n".join(["Data to append to existent file:",
-                                                 "File: %s" % file_path,
-                                                 "Data: %s" % file_data]))
+                                                       "File: %s" % file_path,
+                                                       "Data: %s" % file_data]))
                 else:
                     self.logger.info(append_data[0])
                     with open(file_path, "a") as file_to_append:
@@ -260,9 +262,10 @@ class RepositoriesHandler():
             rel_path = repo_data.get("kb_rel_path", "")
             file_pattern = repo_data.get("repo_file_pattern", "")
             filenames = os.listdir(os.path.join(repo_path, rel_path))
+            repo_files_ignore = set(repo_data.get("repo_files_ignore", []))
 
             for filename in filenames:
-                if filename not in repo_data.get("repo_files_ignore", []) and \
+                if filename not in repo_files_ignore and \
                         filename.endswith(file_pattern):
                     try:
                         title = filename[:-int(len(file_pattern))]

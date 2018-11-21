@@ -44,14 +44,14 @@ class ArchivesHandler():
     logger : object
         See <class :any:`LogSystem`>.
     """
-    _tar_allowed_args = [
+    _tar_allowed_args = {
         "--xz",
         "-J",
         "--gzip",
         "-z",
         "--bzip2",
         "-j"
-    ]
+    }
     _source_mandatory_keys = [
         "kb_title",
         "kb_category",
@@ -214,7 +214,7 @@ class ArchivesHandler():
                             if untar_arg not in self._tar_allowed_args:
                                 self.logger.warning("untar_arg key ignored!")
                                 self.logger.warning("Allowed arguments are:\n%s" %
-                                                    ", ".join(self._tar_allowed_args))
+                                                    ", ".join(list(self._tar_allowed_args)))
                             else:
                                 cmd += [untar_arg]
 
@@ -365,13 +365,13 @@ class ArchivesHandler():
         exceptions.MalformedSources
             See <class :any:`exceptions.MalformedSources`>.
         """
-        titles = []
+        titles = set()
         errors = []
 
         for data in self._archives_data:
             source_title = data.get("kb_title", False)
             report_source = source_title if source_title else data
-            source_keys = data.keys()
+            source_keys = set(data.keys())
 
             # Do not allow sources without mandatory keys.
             for key in self._source_mandatory_keys:
@@ -384,7 +384,7 @@ class ArchivesHandler():
                 if source_title in titles:
                     errors.append("More than one source with the same title. <%s>" % source_title)
                 else:
-                    titles.append(source_title)
+                    titles.add(source_title)
 
         if errors:
             raise exceptions.MalformedSources(
