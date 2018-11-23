@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH "APP.PY" "1" "Nov 15, 2018" "" "Knowledge Base"
+.TH "APP.PY" "1" "Nov 22, 2018" "" "Knowledge Base"
 .SH NAME
 app.py \- A CLI utility to generate and manage a personal and self-hosted *Knowledge Base* on GNU/Linux.
 .
@@ -76,6 +76,25 @@ Python 3.5+.
 \fB\-\-version\fP: Show this application version.
 .UNINDENT
 .SS Commands
+.SS app.py server
+.sp
+The HTTP server started will host the folder at \fBUserData/www\fP\&.
+.SS Sub\-commands
+.INDENT 0.0
+.IP \(bu 2
+\fBstart\fP: Start HTTP server.
+.IP \(bu 2
+\fBstop\fP: Stop HTTP server.
+.IP \(bu 2
+\fBrestart\fP: Restart HTTP server.
+.UNINDENT
+.SS Options
+.INDENT 0.0
+.IP \(bu 2
+\fB\-\-host=<host>\fP Host name.
+.IP \(bu 2
+\fB\-\-port=<port>\fP Port number.
+.UNINDENT
 .SS app.py generate
 .SS Sub\-commands
 .INDENT 0.0
@@ -152,6 +171,13 @@ data = [
 .UNINDENT
 .UNINDENT
 .SS Data keys
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+All data keys are of type string and are optional unless specified otherwise.
+.UNINDENT
+.UNINDENT
 .INDENT 0.0
 .IP \(bu 2
 \fBkb_title\fP (Madatory): The title that will be displayed in the web page index.
@@ -189,7 +215,7 @@ data = [
 In this file is stored all the data to handle on\-line repositories. Its location should always be \fB/UserData/KnowledgeBase/UserData/data_sources/repositories.py\fP\&.
 .INDENT 0.0
 .INDENT 3.5
-.IP "Highlights"
+.IP "Documentations building requirement"
 .INDENT 0.0
 .IP \(bu 2
 \fBsphinx>=1.6.5\fP: \fBsudo pip3 install sphinx\fP
@@ -236,13 +262,20 @@ data = [
 .UNINDENT
 .UNINDENT
 .SS Data keys
+.sp
+\fBNOTE:\fP
+.INDENT 0.0
+.INDENT 3.5
+All data keys are of type string and are optional unless specified otherwise.
+.UNINDENT
+.UNINDENT
 .INDENT 0.0
 .IP \(bu 2
 \fBrepo_owner\fP (\fBMandatory\fP): Repository owner/organization.
 .IP \(bu 2
 \fBrepo_name\fP (\fBMandatory\fP): Repository name.
 .IP \(bu 2
-\fBrepo_service\fP (\fBOptional\fP): \fBDefault\fP: \fBgithub\fP\&.
+\fBrepo_service\fP: \fBDefault\fP: \fBgithub\fP\&.
 .IP \(bu 2
 \fBrepo_handler\fP (\fBMandatory\fP): Repository handler. Possible values:
 .INDENT 2.0
@@ -258,21 +291,21 @@ data = [
 .UNINDENT
 .UNINDENT
 .IP \(bu 2
-\fBrepo_type\fP (\fBOptional\fP): Repository type (\fBgit\fP or \fBhg\fP). \fBDefault\fP: \fBgit\fP\&.
+\fBrepo_type\fP: Repository type (\fBgit\fP or \fBhg\fP). \fBDefault\fP: \fBgit\fP\&.
 .IP \(bu 2
-\fBrepo_filename\fP (\fBOptional\fP): \fBDefault\fP: \fBindex.html\fP for \fBrepo_handler\fP \fBsphinx_docs\fP and \fBREADME.md\fP for \fBrepo_handler\fP \fBsingle_file\fP\&.
+\fBrepo_filename\fP: \fBDefault\fP: \fBindex.html\fP for \fBrepo_handler\fP \fBsphinx_docs\fP and \fBREADME.md\fP for \fBrepo_handler\fP \fBsingle_file\fP\&.
 .IP \(bu 2
-\fBrepo_files_ignore\fP (\fBOptional|List\fP):
+\fBrepo_files_ignore\fP (\fBList\fP):
 .IP \(bu 2
-\fBrepo_file_pattern\fP (\fBOptional\fP):
+\fBrepo_file_pattern\fP:
 .IP \(bu 2
-\fBkb_category\fP (\fBOptional\fP): \fBDefault\fP: \fBUncategorized\fP\&.
+\fBkb_category\fP: \fBDefault\fP: \fBUncategorized\fP\&.
 .IP \(bu 2
-\fBkb_title\fP (\fBOptional\fP):
+\fBkb_title\fP:
 .IP \(bu 2
-\fBkb_title_prefix\fP (\fBOptional\fP):
+\fBkb_title_prefix\fP:
 .IP \(bu 2
-\fBkb_rel_path\fP (\fBOptional\fP): Relative path to the desired file/folder/Sphinx docs sources.
+\fBkb_rel_path\fP: Relative path to the desired file/folder/Sphinx docs sources.
 .INDENT 2.0
 .INDENT 3.5
 .INDENT 0.0
@@ -286,7 +319,7 @@ data = [
 .UNINDENT
 .UNINDENT
 .IP \(bu 2
-\fBkb_file_append\fP (\fBOptional|List\fP):
+\fBkb_file_append\fP (\fBList\fP):
 .UNINDENT
 .sp
 \fBNOTE:\fP
@@ -296,6 +329,26 @@ Both previously mentioned files should contain one property called \fBdata\fP\&.
 .UNINDENT
 .UNINDENT
 .SS \fBcategories.json\fP template
+.sp
+This file is used to assign custom icons to the categories in the sidebar of the web page index.
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+{
+    "Bookmark": {
+        "icon": "nf\-oct\-bookmark"
+    },
+    "Web Development": {
+        "icon": "nf\-dev\-webplatform"
+    }
+}
+
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
 .SH AUTHOR
 Odyseus
 .SH COPYRIGHT
