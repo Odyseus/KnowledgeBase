@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH "APP.PY" "1" "Nov 24, 2018" "" "Knowledge Base"
+.TH "APP.PY" "1" "Nov 26, 2018" "" "Knowledge Base"
 .SH NAME
 app.py \- A CLI utility to generate and manage a personal and self-hosted *Knowledge Base* on GNU/Linux.
 .
@@ -54,17 +54,7 @@ app.py generate system_executable
 .UNINDENT
 .SH REQUIREMENTS
 .sp
-\fBATTENTION:\fP
-.INDENT 0.0
-.INDENT 3.5
-.INDENT 0.0
-.IP \(bu 2
-Python 3.5+.
-.IP \(bu 2
-\fBpython\-slugify\fP module.
-.UNINDENT
-.UNINDENT
-.UNINDENT
+No mayor requirements are needed to run this application other than Python 3.5+.
 .SH DETAILED USAGE
 .SS CLI options
 .INDENT 0.0
@@ -121,6 +111,8 @@ In this file is stored all the data to handle on\-line archives. Its location sh
 .INDENT 3.5
 .IP "Highlights"
 .INDENT 0.0
+.IP \(bu 2
+This file should contain one property called \fBdata\fP\&. A list containing dictionaries.
 .IP \(bu 2
 Compressed/Tared archives are downloaded into a temporary location (\fBUserData/data_storage/downloaded_archives\fP) and then their content extracted into their final location (\fBUserData/www/html_pages_from_archives/<kb_title>\fP).
 .IP \(bu 2
@@ -180,19 +172,19 @@ All data keys are of type string and are optional unless specified otherwise.
 .UNINDENT
 .INDENT 0.0
 .IP \(bu 2
-\fBkb_title\fP (Madatory): The title that will be displayed in the web page index.
+\fBkb_title\fP (\fBMadatory\fP): The title that will be displayed in the web page index.
 .IP \(bu 2
-\fBkb_category\fP (Madatory): A category name to organize the web page index.
+\fBkb_category\fP (\fBMadatory\fP): A category name to organize the web page index.
 .IP \(bu 2
-\fBarch_url\fP (Madatory): The url from which to download an archive.
+\fBarch_url\fP (\fBMadatory\fP): The url from which to download an archive.
 .IP \(bu 2
-\fBkb_rel_path\fP (\fBOptional\fP): The path (relative to \fBUserData/www/html_pages_from_archives/<kb_title>\fP) to the a folder containing an HTML file (\fBkb_filename\fP) found inside the extracted content of an archive. \fBDefault\fP: empty.
+\fBkb_rel_path\fP (\fBDefault\fP: empty): The path (relative to \fBUserData/www/html_pages_from_archives/<kb_title>\fP) to the a folder containing an HTML file (\fBkb_filename\fP) found inside the extracted content of an archive.
 .IP \(bu 2
-\fBkb_filename\fP (\fBOptional\fP): The file name found inside the extracted content of an archive relative to \fBkb_rel_path\fP\&. \fBDefault\fP: \fBindex.html\fP\&.
+\fBkb_filename\fP (\fBDefault\fP: \fBindex.html\fP): The file name found inside the extracted content of an archive relative to \fBkb_rel_path\fP\&.
 .IP \(bu 2
-\fBkb_file_append\fP (\fBOptional\fP): A list of tuples. Each tuple must contain a path to a file (relative to \fBUserData/www/html_pages_from_archives/<title key>\fP) at index 0 (zero) and a string at index 1 (one). The string will be appended at the end of the file defined at index zero.
+\fBkb_file_append\fP (\fBList\fP): A list of tuples. Each tuple must contain a path to a file (relative to \fBUserData/www/html_pages_from_archives/<kb_title>\fP) at index 0 (zero) and a string at index 1 (one). The string will be appended at the end of the file defined at index zero.
 .IP \(bu 2
-\fBdownload_frequency\fP (\fBOptional\fP): The frequency at which an archive should be downloaded. Default: \fBm\fP\&. Possible values:
+\fBdownload_frequency\fP (\fBDefault\fP: \fBm\fP): The frequency at which an archive should be downloaded. Possible values:
 .INDENT 2.0
 .INDENT 3.5
 .INDENT 0.0
@@ -206,19 +198,21 @@ All data keys are of type string and are optional unless specified otherwise.
 .UNINDENT
 .UNINDENT
 .IP \(bu 2
-\fBunzip_prog\fP (\fBOptional\fP): The command to use to decompress archives. Possible values are \fB7z\fP, \fBunzip\fP and \fBtar\fP\&. The tar command can accept a decompression argument (See \fBuntar_arg\fP).
+\fBunzip_prog\fP: The command to use to decompress archives. Possible values are \fB7z\fP, \fBunzip\fP and \fBtar\fP\&. The tar command can accept a decompression argument (See \fBuntar_arg\fP).
 .IP \(bu 2
-\fBuntar_arg\fP (\fBOptional\fP): The decompress argument used by the \fBtar\fP program. Possible values are \fB\-\-xz\fP, \fB\-J\fP, \fB\-\-gzip\fP, \fB\-z\fP, \fB\-\-bzip2\fP or \fB\-j\fP\&. \fBDefault\fP: empty (no decompression argument is passed to \fBtar\fP).
+\fBuntar_arg\fP (\fBDefault\fP: empty (no decompression argument is passed to \fBtar\fP)): The decompress argument used by the \fBtar\fP program. Possible values are \fB\-\-xz\fP, \fB\-J\fP, \fB\-\-gzip\fP, \fB\-z\fP, \fB\-\-bzip2\fP or \fB\-j\fP\&.
 .UNINDENT
 .SS \fBrepositories.py\fP template
 .sp
 In this file is stored all the data to handle on\-line repositories. Its location should always be \fB/UserData/KnowledgeBase/UserData/data_sources/repositories.py\fP\&.
 .INDENT 0.0
 .INDENT 3.5
-.IP "Documentations building requirement"
+.IP "Highlights"
 .INDENT 0.0
 .IP \(bu 2
-\fBsphinx>=1.6.5\fP: \fBsudo pip3 install sphinx\fP
+This file should contain one property called \fBdata\fP\&. A list containing dictionaries.
+.IP \(bu 2
+Repositories are cloned into a temporary location (\fBUserData/data_storage/<repo_service>_repositories\fP).
 .UNINDENT
 .UNINDENT
 .UNINDENT
@@ -237,23 +231,22 @@ data = [
         "repo_name": "documentation",
         "repo_handler": "sphinx_docs",
         "kb_category": "Software|Documentation",
-        "kb_title": "HexChat documentation",
-        "kb_rel_path": ""
+        "kb_title": "HexChat documentation"
     }, {
         "repo_owner": "sindresorhus",
         "repo_name": "awesome",
-        "repo_handler": "single_file",
-        "repo_filename": "readme.md",
+        "repo_handler": "files",
+        "repo_file_patterns_include": ["readme.md"],
         "kb_category": "Bookmark",
         "kb_title": "Awesome (Curated list of awesome lists)",
     }, {
         "repo_owner": "rstacruz",
         "repo_name": "cheatsheets",
-        "repo_handler": "multi_files",
-        "repo_file_pattern": ".md",
+        "repo_handler": "files",
+        "repo_file_patterns_include": ["*.md"],
+        "repo_file_patterns_ignore": ["README.md"],
         "kb_category": "Software|Quick Reference",
-        "kb_title_prefix": "Devhints cheatsheets \- ",
-        "kb_file_ignore": ["README.md"]
+        "kb_title_prefix": "Devhints cheatsheets \- "
     }
 ]
 
@@ -275,58 +268,41 @@ All data keys are of type string and are optional unless specified otherwise.
 .IP \(bu 2
 \fBrepo_name\fP (\fBMandatory\fP): Repository name.
 .IP \(bu 2
-\fBrepo_service\fP: \fBDefault\fP: \fBgithub\fP\&.
+\fBrepo_service\fP (\fBDefault\fP: \fBgithub\fP): This value is used to generate a URL to an on\-line service. Possible values are: \fBgithub\fP, \fBbitbucket\fP and \fBgitlab\fP\&.
 .IP \(bu 2
-\fBrepo_handler\fP (\fBMandatory\fP): Repository handler. Possible values:
+\fBcopy_full_repo\fP (\fBBoolean\fP): Whether to copy the full repository to its final location or not.
+.IP \(bu 2
+\fBrepo_handler\fP (\fBDefault\fP: \fBfiles\fP): Repository handler. Possible values:
 .INDENT 2.0
 .INDENT 3.5
 .INDENT 0.0
 .IP \(bu 2
 \fBsphinx_docs\fP: Repositories that contain Sphinx documentation sources. These sources are then used to build the HTML documentation.
 .IP \(bu 2
-\fBsingle_file\fP: Repositories from which one file is used.
-.IP \(bu 2
-\fBmulti_files\fP: Repositories from which more than file is used.
+\fBfiles\fP: Repositories from which one or more files are used as they are.
 .UNINDENT
 .UNINDENT
 .UNINDENT
 .IP \(bu 2
-\fBrepo_type\fP: Repository type (\fBgit\fP or \fBhg\fP). \fBDefault\fP: \fBgit\fP\&.
+\fBrepo_type\fP (\fBDefault\fP: \fBgit\fP): Repository type (\fBgit\fP or \fBhg\fP).
 .IP \(bu 2
-\fBrepo_filename\fP: \fBDefault\fP: \fBindex.html\fP for \fBrepo_handler\fP \fBsphinx_docs\fP and \fBREADME.md\fP for \fBrepo_handler\fP \fBsingle_file\fP\&.
+\fBrepo_file_names\fP (\fBList\fP) (\fBDefault\fP if \fBrepo_file_patterns_include\fP is not defined: \fB["README.md"]\fP): A list of file paths relative to a repository folder. These relative paths are used to generate entries in the web page index. If defined, the \fBrepo_file_patterns_include\fP and \fBrepo_file_patterns_ignore\fP keys will be ignored.
 .IP \(bu 2
-\fBrepo_files_ignore\fP (\fBList\fP):
+\fBrepo_file_patterns_include\fP (\fBList\fP): A list of file patterns. This key replaces the \fBrepo_file_names\fP key functionality. Instead of explicitly declaring file names in the \fBrepo_file_names\fP key, one can define several file patterns in \fBrepo_file_patterns_include\fP\&. For example: \fB["*.md"]\fP\&.
 .IP \(bu 2
-\fBrepo_file_pattern\fP:
+\fBrepo_file_patterns_ignore\fP (\fBList\fP): A list of file patterns. This key complements the \fBrepo_file_patterns_include\fP key functionality by ignoring the files that match the patterns defined in this key.
 .IP \(bu 2
-\fBkb_category\fP: \fBDefault\fP: \fBUncategorized\fP\&.
+\fBrepo_sources_path\fP (\fBsphinx_docs\fP \fBrepo_handler\fP only): A relative path to the desired Sphinx documentation sources. The path should be relative to a downloaded repository and point to a Sphinx documentation sources folder (e.g., if the documentation sources of a downloaded repository are at \fBUserData/data_storage/<repo_service>_repositories/<repo_owner>\-<repo_name>/doc\fP, then the \fBrepo_sources_path\fP key value should be \fBdoc\fP).
 .IP \(bu 2
-\fBkb_title\fP:
+\fBkb_category\fP (\fBDefault\fP: \fBUncategorized\fP):
 .IP \(bu 2
-\fBkb_title_prefix\fP:
+\fBkb_title_prefix\fP: If defined, this prefix will be used to generate a label that will be displayed in the web page index table. The final label will look like \fB<kb_title_prefix><file_name>\fP\&. \fB<file_name>\fP being the name of the file or files defined either by the \fBrepo_file_names\fP or the \fBrepo_file_patterns_include\fP keys. This key is more suitable for use when more than one file is used in a repository.
 .IP \(bu 2
-\fBkb_rel_path\fP: Relative path to the desired file/folder/Sphinx docs sources.
-.INDENT 2.0
-.INDENT 3.5
-.INDENT 0.0
+\fBkb_title\fP: If \fBkb_title_prefix\fP is not defined, this key will be used to display the label in the web page index table. This key is more suitable for use when only one file is used in a repository.
 .IP \(bu 2
-\fBsphinx_docs\fP: The path should be relative to a downloaded repository and point to a Sphinx docs source folder (e.g. if the docs sources of a downloaded repository are at \fBUserData/tmp/<repo_service>_repositories/<repo_owner>\-<repo_name>/doc\fP, then the \fBkb_rel_path\fP key value should be \fBdoc\fP).
+\fBkb_index_filename\fP (\fBsphinx_docs\fP \fBrepo_handler\fP only): The file name of the index file of the generated documentation. In the case that someone was malevolent enough to change the default one (LOL).
 .IP \(bu 2
-\fBsingle_file\fP: Repositories that
-.IP \(bu 2
-\fBmulti_files\fP:
-.UNINDENT
-.UNINDENT
-.UNINDENT
-.IP \(bu 2
-\fBkb_file_append\fP (\fBList\fP):
-.UNINDENT
-.sp
-\fBNOTE:\fP
-.INDENT 0.0
-.INDENT 3.5
-Both previously mentioned files should contain one property called \fBdata\fP\&. A list containing dictionaries.
-.UNINDENT
+\fBkb_file_append\fP (\fBList\fP) (\fBsphinx_docs\fP \fBrepo_handler\fP only): A list of tuples. Each tuple must contain a path to a file inside the generated documentation (relative to \fBUserData/www/sphinx_generated_pages/<repo_owner>\-<repo_name>/html\fP) at index 0 (zero) and a string at index 1 (one). The string will be appended at the end of the file defined at index zero.
 .UNINDENT
 .SS \fBcategories.json\fP template
 .sp
