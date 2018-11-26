@@ -24,13 +24,8 @@ from . import app_utils
 from .python_utils import cmd_utils
 from .python_utils import exceptions
 from .python_utils import shell_utils
+from .python_utils import string_utils
 from .python_utils import tqdm_wget
-
-try:
-    from slugify import slugify
-except (SystemError, ImportError):
-    raise exceptions.MissingDependencyModule("Module not installed: <python-slugify>")
-
 
 root_folder = os.path.realpath(os.path.abspath(os.path.join(
     os.path.normpath(os.getcwd()))))
@@ -411,7 +406,7 @@ class ArchivesHandler():
 
         for data in self._archives_data:
             # Generate and add "slugified_name".
-            data["slugified_name"] = slugify(data["kb_title"])
+            data["slugified_name"] = string_utils.slugify(data["kb_title"])
 
             # Generate and add the path to the extraction destination directory.
             data["extraction_destination"] = os.path.join(self._archives_destination,
