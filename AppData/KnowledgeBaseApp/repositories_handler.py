@@ -18,6 +18,7 @@ from .python_utils import cmd_utils
 from .python_utils import exceptions
 from .python_utils import file_utils
 from .python_utils import shell_utils
+from .python_utils import string_utils
 
 root_folder = os.path.realpath(os.path.abspath(os.path.join(
     os.path.normpath(os.getcwd()))))
@@ -54,8 +55,7 @@ class RepositoriesHandler():
     """
     _common_mandatory_keys = {
         "repo_owner",
-        "repo_name",
-        "repo_handler",
+        "repo_name"
     }
 
     def __init__(self, dry_run=False, logger=None):
@@ -171,18 +171,6 @@ class RepositoriesHandler():
                     with open(file_path, "a") as file_to_append:
                         file_to_append.write(file_data)
 
-    def _get_filename(self, repo_data):
-        """Get file name.
-
-        Returns
-        -------
-        str
-            The name of a file found inside a repository.
-        """
-        return repo_data.get("repo_filename", "index.html"
-                             if repo_data.get("repo_handler") is "sphinx_docs"
-                             else "README.md")
-
     def _handle_sphinx_docs_repo_type(self, repo_data):
         """Handle repositories set to build their Sphinx documentation.
         """
@@ -192,7 +180,7 @@ class RepositoriesHandler():
                 "c": repo_data.get("kb_category", "Uncategorized"),
                 # Path to files relative to the www folder
                 "p": os.path.join(self._get_sphinx_generated_pages_storage(repo_data),
-                                  "html", self._get_filename(repo_data)),
+                                  "html", repo_data.get("kb_index_filename", "index.html")),
                 # Icon name
                 "i": repo_data.get("kb_image", "html-external")
             })
@@ -200,92 +188,69 @@ class RepositoriesHandler():
             self.logger.error("%s-%s" % (repo_data.get("repo_owner"), repo_data.get("repo_name")))
             self.logger.error(err)
 
-    def _handle_single_file_repo_type(self, repo_data):
-        """Handle repositories set to manage just one file on them.
-        """
-        try:
-            www_path = os.path.join("%s_repositories" % repo_data.get("repo_service", "github"),
-                                    self._get_folder_name(repo_data),
-                                    repo_data.get("kb_rel_path", ""),
-                                    self._get_filename(repo_data))
-            source_path = os.path.join(self._get_path(repo_data), repo_data.get("kb_rel_path", ""),
-                                       self._get_filename(repo_data))
-            destination_path = os.path.join(app_utils.WWW_BASE_PATH, www_path)
-
-            self._data_tables_obj.append({
-                "t": repo_data.get("kb_title", ""),
-                "c": repo_data.get("kb_category", "Uncategorized"),
-                # Path to files relative to the www folder
-                "p": www_path,
-                # Icon name
-                "i": repo_data.get("kb_image", "md")
-            })
-
-            try:
-                if repo_data.get("copy_full_repo"):
-                    source_path = self._get_path(repo_data)
-                    destination_path = os.path.join(app_utils.WWW_BASE_PATH,
-                                                    "%s_repositories" % repo_data.get(
-                                                        "repo_service", "github"),
-                                                    self._get_folder_name(repo_data))
-                    if self._dry_run:
-                        self.logger.log_dry_run("A folder will be copied:")
-                        self.logger.log_dry_run("Source: %s" % source_path)
-                        self.logger.log_dry_run("Destination: %s" % destination_path)
-                    else:
-                        file_utils.custom_copytree(source_path,
-                                                   destination_path,
-                                                   ignored_patterns=app_utils.custom_copytree_global_ignored_patterns,
-                                                   logger=self.logger,
-                                                   log_copied_file=True,
-                                                   relative_path=app_utils.WWW_BASE_PATH)
-                else:
-                    if self._dry_run:
-                        self.logger.log_dry_run("A file will be copied:")
-                        self.logger.log_dry_run("Source: %s" % source_path)
-                        self.logger.log_dry_run("Destination: %s" % destination_path)
-                    else:
-                        file_utils.custom_copy2(source_path, destination_path, self.logger,
-                                                log_copied_file=True,
-                                                relative_path=app_utils.WWW_BASE_PATH)
-            except Exception as err1:
-                self.logger.error(err1)
-        except Exception as err2:
-            self.logger.error("%s-%s" % (repo_data.get("repo_owner"), repo_data.get("repo_name")))
-            self.logger.error(err2)
-
-    def _handle_multi_files_repo_type(self, repo_data):
+    def _handle_files_repo_type(self, repo_data):
         """Handle repositories set to manage more than one file on them.
         """
         try:
             repo_path = self._get_path(repo_data)
-            rel_path = repo_data.get("kb_rel_path", "")
-            file_pattern = repo_data.get("repo_file_pattern", "")
-            filenames = os.listdir(os.path.join(repo_path, rel_path))
-            repo_files_ignore = set(repo_data.get("repo_files_ignore", []))
+            repo_file_names = repo_data.get("repo_file_names", [])
+            repo_file_patterns_include = repo_data.get("repo_file_patterns_include", [])
+            repo_file_patterns_ignore = repo_data.get("repo_file_patterns_ignore", [])
+            filenames = []
 
-            for filename in filenames:
-                if filename not in repo_files_ignore and \
-                        filename.endswith(file_pattern):
-                    try:
-                        title = filename[:-int(len(file_pattern))]
-                        www_path = os.path.join("%s_repositories" %
-                                                repo_data.get("repo_service", "github"),
-                                                self._get_folder_name(repo_data),
-                                                rel_path,
-                                                filename)
-                        source_path = os.path.join(repo_path, rel_path, filename)
-                        destination_path = os.path.join(app_utils.WWW_BASE_PATH, www_path)
+            # To have a default and to avoid having to specify repo_file_names in every
+            # single repository data object.
+            if not repo_file_names and not repo_file_patterns_include:
+                repo_file_names = ["README.md"]
 
-                        self._data_tables_obj.append({
-                            "t": repo_data.get("kb_title_prefix", "") + title,
-                            "c": repo_data.get("kb_category", "Uncategorized"),
-                            # Path to files relative to the www folder
-                            "p": www_path,
-                            # Icon name
-                            "i": repo_data.get("kb_image", "md")
-                        })
+            if repo_file_names:
+                filenames += repo_file_names
+            else:
+                temp_files_list = []
 
+                for root, dirs, files in os.walk(repo_path, topdown=True):
+                    # <3 https://stackoverflow.com/a/19859907
+                    # Modify dirs in-place to avoid visiting undesired directories.
+                    dirs[:] = [d for d in dirs
+                               if d not in set(app_utils.custom_copytree_global_ignored_patterns)]
+
+                    for f_name in string_utils.super_filter(files,
+                                                            repo_file_patterns_include,
+                                                            repo_file_patterns_ignore):
+                        temp_files_list.append(self._get_file_rel_path(root, f_name, repo_path))
+
+                # Second filtering to apply exclusion_patterns. In case that there is
+                # a directory filtering pattern.
+                filenames += string_utils.super_filter(temp_files_list,
+                                                       exclusion_patterns=repo_file_patterns_ignore)
+
+            for file_rel_path in filenames:
+                file_name = os.path.splitext(os.path.basename(file_rel_path))[0]
+
+                try:
+                    if repo_data.get("kb_title_prefix"):
+                        title = repo_data.get("kb_title_prefix") + file_name
+                    else:
+                        title = repo_data.get("kb_title") or file_name
+
+                    www_path = os.path.join("%s_repositories" %
+                                            repo_data.get("repo_service", "github"),
+                                            self._get_folder_name(repo_data),
+                                            file_rel_path)
+                    source_path = os.path.join(repo_path, file_rel_path)
+                    destination_path = os.path.join(app_utils.WWW_BASE_PATH, www_path)
+
+                    self._data_tables_obj.append({
+                        "t": title,
+                        "c": repo_data.get("kb_category", "Uncategorized"),
+                        # Path to files relative to the www folder
+                        "p": www_path,
+                        # Icon name
+                        "i": repo_data.get("kb_image", "md")
+                    })
+
+                    # If copy_full_repo is True, there is no need to copy the actually used files.
+                    if not repo_data.get("copy_full_repo"):
                         try:
                             if self._dry_run:
                                 self.logger.log_dry_run("A file will be copied:")
@@ -297,13 +262,34 @@ class RepositoriesHandler():
                                                         relative_path=app_utils.WWW_BASE_PATH)
                         except Exception as err1:
                             self.logger.error(err1)
-                    except Exception as err2:
-                        self.logger.error(filename)
-                        self.logger.error(err2)
-                        continue
+                except Exception as err2:
+                    self.logger.error(file_name)
+                    self.logger.error(err2)
+                    continue
+
+            if repo_data.get("copy_full_repo"):
+                full_repo_destination_path = os.path.join(app_utils.WWW_BASE_PATH,
+                                                          "%s_repositories" % repo_data.get(
+                                                              "repo_service", "github"),
+                                                          self._get_folder_name(repo_data))
+                if self._dry_run:
+                    self.logger.log_dry_run("A folder will be copied:")
+                    self.logger.log_dry_run("Source: %s" % repo_path)
+                    self.logger.log_dry_run("Destination: %s" % full_repo_destination_path)
+                else:
+                    file_utils.custom_copytree(repo_path,
+                                               full_repo_destination_path,
+                                               ignored_patterns=app_utils.custom_copytree_global_ignored_patterns,
+                                               logger=self.logger,
+                                               log_copied_file=True,
+                                               relative_path=app_utils.WWW_BASE_PATH)
+
         except Exception as err3:
             self.logger.error("%s-%s" % (repo_data.get("repo_owner"), repo_data.get("repo_name")))
             self.logger.error(err3)
+
+    def _get_file_rel_path(self, root_dir, file_name, start_path):
+        return os.path.relpath(os.path.join(root_dir, file_name), start=start_path)
 
     def _get_sphinx_generated_pages_storage(self, repo_data):
         """Get Sphinx generated pages storage.
@@ -371,7 +357,7 @@ class RepositoriesHandler():
         if repo_type == "git":
             return ["Some command that's actually useful!!!!"]
             # Why not? Because Git can be absolutely retarded.
-            # I WANT TO KNOW IF THE CURRENT DIRECTORY IS A FUCKING GIT REPOSITORY!!!!
+            # I WANT TO KNOW IF THE CURRENT DIRECTORY IS A FREAKING GIT REPOSITORY!!!!
             # NOT IF THE CURRENT DIRECTORY IS INSIDE A GIT REPOSITORY!!!
             # return ["git", "rev-parse", "--git-dir"]
             # return ["git", "status"]
@@ -448,7 +434,8 @@ class RepositoriesHandler():
         self.logger.info(shell_utils.get_cli_separator("-"), date=False)
         self.logger.info("Handling repositories...")
 
-        for repo_data in sorted(self._repositories_data, key=lambda k: k["repo_handler"]):
+        for repo_data in sorted(self._repositories_data,
+                                key=lambda k: ("repo_handler" not in k, k.get("repo_handler", "files"))):
             # Do not generate JSON files for repositories that are used to generate
             # Markdown files (or other types of files) from the repository data.
             # Right now, there is only one repository of this type
@@ -456,7 +443,7 @@ class RepositoriesHandler():
             if repo_data.get("no_json", False):
                 continue
 
-            repo_handler = repo_data.get("repo_handler")
+            repo_handler = repo_data.get("repo_handler", "files")
 
             if repo_handler:
                 handler = getattr(self, "_handle_%s_repo_type" % repo_handler)
@@ -497,7 +484,7 @@ class RepositoriesHandler():
                 if not os.path.exists(repo_parent):
                     os.makedirs(repo_parent)
 
-                # START USING THIS WHEN GIT GAINS SOME FUCKING SENSE!!!
+                # START USING THIS WHEN GIT GAINS SOME FREAKING SENSE!!!
                 # If the repository path exists, check if it is a valid repository
                 # and proceed to attempt to pull from it.
                 # p = cmd_utils.run_cmd(self._get_check_repo_cmd(repo_data.get("repo_type", "git")),
@@ -564,7 +551,7 @@ class RepositoriesHandler():
                                      self._get_sphinx_generated_pages_storage(repo_data), "html")
 
             cmd = ["sphinx-build", ".", "-b", "html", "-d", doctrees_path, html_path]
-            cwd = os.path.join(self._get_path(repo_data), repo_data.get("kb_rel_path", ""))
+            cwd = os.path.join(self._get_path(repo_data), repo_data.get("repo_sources_path", ""))
 
             if self._dry_run:
                 self.logger.log_dry_run("Command that will be executed:\n%s" % cmd)

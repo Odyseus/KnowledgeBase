@@ -30,7 +30,7 @@ from .python_utils import shell_utils
 root_folder = os.path.realpath(os.path.abspath(os.path.join(
     os.path.normpath(os.getcwd()))))
 
-custom_copytree_global_ignored_patterns = [".git"]
+custom_copytree_global_ignored_patterns = [".git", ".hg"]
 
 WWW_BASE_PATH = os.path.join(root_folder, "UserData", "www")
 

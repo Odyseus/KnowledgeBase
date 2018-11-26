@@ -14,8 +14,6 @@ root_folder : str
 import os
 
 from . import app_utils
-from . import archives_handler
-from . import repositories_handler
 from .__init__ import __appdescription__
 from .__init__ import __appname__
 from .__init__ import __status__
@@ -64,8 +62,8 @@ Options:
 --dry-run
     Do not perform file system changes. Only display messages informing of the
     actions that will be performed or commands that will be executed.
-    WARNING! Some file system changes will be performed (e.g. temporary files
-    creation) and some commands will be executed (e.g. checking if a directory
+    WARNING! Some file system changes will be performed (e.g., temporary files
+    creation) and some commands will be executed (e.g., checking if a directory
     belongs to a repository).
 
 """.format(appname=__appname__,
@@ -155,6 +153,8 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
                 raise exceptions.InvalidArgument(err)
 
             if any(e in self.args_to_init_repo_handler for e in self.a["<func_name>"]):
+                from . import repositories_handler
+
                 self._repositories_handler = repositories_handler.RepositoriesHandler(
                     dry_run=self.a["--dry-run"],
                     logger=self.logger
@@ -189,6 +189,8 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
     def download_all_archives(self):
         """See :any:`archives_handler.ArchivesHandler`
         """
+        from . import archives_handler
+
         handler = archives_handler.ArchivesHandler(
             dry_run=self.a["--dry-run"],
             logger=self.logger
