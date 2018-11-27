@@ -4,6 +4,10 @@
 
 Attributes
 ----------
+repo_service_url_map : dict
+    List of repositories service URLs.
+repositories_data_tables_json_path : str
+    Path to the repositories_data_tables.json file.
 root_folder : str
     The main folder containing the application. All commands must be executed
     from this location without exceptions.
@@ -120,11 +124,6 @@ class RepositoriesHandler():
 
     def _generate_repositories_data_tables_json_file(self):
         """Generate the JSON file for the repository.
-
-        Returns
-        -------
-        None
-            Do not try to save the JSON file in case something went wrong handling the repository.
         """
         self.logger.info("Generating repositories JSON file...")
 
@@ -154,6 +153,8 @@ class RepositoriesHandler():
         ----------
         html_path : str
             Path to where HTML pages are stored.
+        repo_data : dict
+            Repository data.
         """
         self.logger.info("Appending data to files...")
 
@@ -173,6 +174,11 @@ class RepositoriesHandler():
 
     def _handle_sphinx_docs_repo_type(self, repo_data):
         """Handle repositories set to build their Sphinx documentation.
+
+        Parameters
+        ----------
+        repo_data : dict
+            Repository data.
         """
         try:
             self._data_tables_obj.append({
@@ -189,7 +195,12 @@ class RepositoriesHandler():
             self.logger.error(err)
 
     def _handle_files_repo_type(self, repo_data):
-        """Handle repositories set to manage more than one file on them.
+        """Handle repositories set to manage one or more files on them.
+
+        Parameters
+        ----------
+        repo_data : dict
+            Repository data.
         """
         try:
             repo_path = self._get_path(repo_data)
@@ -289,6 +300,22 @@ class RepositoriesHandler():
             self.logger.error(err3)
 
     def _get_file_rel_path(self, root_dir, file_name, start_path):
+        """Get file relative path.
+
+        Parameters
+        ----------
+        root_dir : str
+            Path to file location.
+        file_name : str
+            File name.
+        start_path : str
+            The path that the resulting path should be relative to.
+
+        Returns
+        -------
+        str
+            A relative path.
+        """
         return os.path.relpath(os.path.join(root_dir, file_name), start=start_path)
 
     def _get_sphinx_generated_pages_storage(self, repo_data):
@@ -298,6 +325,11 @@ class RepositoriesHandler():
         -------
         str
             The path to the Sphinx generated pages storage.
+
+        Parameters
+        ----------
+        repo_data : dict
+            Repository data.
         """
         return os.path.join("sphinx_generated_pages", self._get_folder_name(repo_data))
 
@@ -308,6 +340,11 @@ class RepositoriesHandler():
         -------
         str
             The repository folder name.
+
+        Parameters
+        ----------
+        repo_data : dict
+            Repository data.
         """
         return repo_data.get("repo_owner") + "-" + repo_data.get("repo_name")
 
@@ -318,6 +355,11 @@ class RepositoriesHandler():
         -------
         str
             The storage path.
+
+        Parameters
+        ----------
+        repo_data : dict
+            Repository data.
         """
         return os.path.join(root_folder, "UserData", "data_storage",
                             "%s_repositories" % repo_data.get("repo_service", "github"))
@@ -329,6 +371,11 @@ class RepositoriesHandler():
         -------
         str
             The repository path.
+
+        Parameters
+        ----------
+        repo_data : dict
+            Repository data.
         """
         return os.path.join(self._get_storage_path(repo_data),
                             self._get_folder_name(repo_data))
@@ -340,6 +387,11 @@ class RepositoriesHandler():
         -------
         str
             The repository path.
+
+        Parameters
+        ----------
+        repo_data : dict
+            Repository data.
         """
         return os.path.join(self._get_storage_path(repo_data),
                             self._get_folder_name(repo_data))
@@ -353,6 +405,11 @@ class RepositoriesHandler():
         -------
         list
             The command to check the repository.
+
+        Parameters
+        ----------
+        repo_type : str
+            Repository type (git or hg).
         """
         if repo_type == "git":
             return ["Some command that's actually useful!!!!"]
@@ -369,6 +426,11 @@ class RepositoriesHandler():
 
     def _do_pull(self, repo_data):
         """Pull from the repository.
+
+        Parameters
+        ----------
+        repo_data : dict
+            Repository data.
         """
         cmd = "%s pull" % repo_data.get("repo_type", "git")
         cwd = self._get_path(repo_data)
@@ -388,6 +450,11 @@ class RepositoriesHandler():
 
     def _do_clone(self, repo_data):
         """Clone the repository.
+
+        Parameters
+        ----------
+        repo_data : dict
+            Repository data.
         """
         repo_type = repo_data.get("repo_type", "git")
         repo_service = repo_data.get("repo_service", "github")

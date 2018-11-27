@@ -81,6 +81,8 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
         Where docopt_args is stored.
     action : method
         Set the method that will be executed when calling CommandLineTool.run().
+    args_to_init_repo_handler : set
+        The arguments that should be passed to the CLI to initialize the :any:`class <repositories_handler.RepositoriesHandler>`.
     func_names : list
         A list of function names that will be used to execute those functions
         in the order they were defined (passed as arguments).
@@ -101,11 +103,11 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
         "open_main_webpage",
     ]
     action = None
-    args_to_init_repo_handler = [
+    args_to_init_repo_handler = {
         "update_all_repositories",
         "handle_all_repositories",
         "build_sphinx_docs"
-    ]
+    }
     func_names = []
     _repositories_handler = None
 
@@ -116,6 +118,11 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
         ----------
         docopt_args : dict
             The dictionary of arguments as returned by docopt parser.
+
+        Raises
+        ------
+        exceptions.InvalidArgument
+            See :any:`exceptions.InvalidArgument`.
         """
         self.a = docopt_args
         self._cli_header_blacklist = [self.a["--manual"]]
