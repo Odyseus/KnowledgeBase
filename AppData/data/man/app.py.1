@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH "APP.PY" "1" "Nov 27, 2018" "" "Knowledge Base"
+.TH "APP.PY" "1" "Nov 29, 2018" "" "Knowledge Base"
 .SH NAME
 app.py \- A CLI utility to generate and manage a personal and self-hosted *Knowledge Base* on GNU/Linux.
 .
@@ -41,7 +41,8 @@ This Python application can generate a system executable with Bash completions s
 .ft C
 
 app.py (\-h | \-\-help | \-\-manual | \-\-version)
-app.py run <func_name>... [\-\-dry\-run]
+app.py run <func_name>... [\-\-do\-not\-pull]
+                          [\-\-dry\-run]
                           [\-\-force\-download]
 app.py server (start | stop | restart)
               [\-\-host=<host>]
