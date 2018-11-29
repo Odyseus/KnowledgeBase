@@ -188,7 +188,8 @@ class RepositoriesHandler():
                 "p": os.path.join(self._get_sphinx_generated_pages_storage(repo_data),
                                   "html", repo_data.get("kb_index_filename", "index.html")),
                 # Icon name
-                "i": repo_data.get("kb_image", "html-external")
+                "i": repo_data.get("kb_image", "html-external"),
+                "s": self._get_repo_url(repo_data)
             })
         except Exception as err:
             self.logger.error("%s-%s" % (repo_data.get("repo_owner"), repo_data.get("repo_name")))
@@ -257,7 +258,8 @@ class RepositoriesHandler():
                         # Path to files relative to the www folder
                         "p": www_path,
                         # Icon name
-                        "i": repo_data.get("kb_image", "md")
+                        "i": repo_data.get("kb_image", "md"),
+                        "s": self._get_repo_url(repo_data)
                     })
 
                     # If copy_full_repo is True, there is no need to copy the actually used files.
@@ -401,15 +403,15 @@ class RepositoriesHandler():
 
         No used for now.
 
-        Returns
-        -------
-        list
-            The command to check the repository.
-
         Parameters
         ----------
         repo_type : str
             Repository type (git or hg).
+
+        Returns
+        -------
+        list
+            The command to check the repository.
         """
         if repo_type == "git":
             return ["Some command that's actually useful!!!!"]
@@ -423,6 +425,23 @@ class RepositoriesHandler():
             # return ["git", "ls-remote"]
         elif repo_type == "hg":
             return ["hg", "-R", ".", "root"]
+
+    def _get_repo_url(self, repo_data):
+        """Get repository URL.
+
+        Returns
+        -------
+        str
+            The repository URL.
+        """
+        repo_service = repo_data.get("repo_service", "github")
+        repo_url_template = "{}{}/{}.git" if repo_data.get("repo_type", "git") is "git" else "{}{}/{}"
+        repo_base_url = repo_service_url_map[repo_service] if \
+            repo_service in repo_service_url_map else repo_service
+
+        return repo_url_template.format(repo_base_url,
+                                        repo_data.get("repo_owner"),
+                                        repo_data.get("repo_name"))
 
     def _do_pull(self, repo_data):
         """Pull from the repository.
@@ -457,19 +476,11 @@ class RepositoriesHandler():
             Repository data.
         """
         repo_type = repo_data.get("repo_type", "git")
-        repo_service = repo_data.get("repo_service", "github")
-        repo_url_template = "{}{}/{}.git" if repo_type is "git" else "{}{}/{}"
-        repo_base_url = repo_service_url_map[repo_service] if \
-            repo_service in repo_service_url_map else repo_service
-
-        repo_url = repo_url_template.format(repo_base_url,
-                                            repo_data.get("repo_owner"),
-                                            repo_data.get("repo_name"))
 
         cmd = "{cmd} clone {depth} {url} {path}".format(
             cmd=repo_type,
             depth="--depth=1" if repo_type is "git" else "",
-            url=repo_url,
+            url=self._get_repo_url(repo_data),
             path=self._get_folder_name(repo_data)
         )
         cwd = self._get_storage_path(repo_data)
@@ -525,7 +536,7 @@ class RepositoriesHandler():
         self._generate_repositories_data_tables_json_file()
         self.logger.info("Finished handling all repositories.")
 
-    def update_all_repositories(self):
+    def update_all_repositories(self, do_not_pull=False):
         """Main function to update repositories.
 
         Raises
@@ -565,6 +576,11 @@ class RepositoriesHandler():
                                         (repo_data.get("repo_owner"), repo_data.get("repo_name")))
                     self.logger.info("Cloning repository...")
                     self._do_clone(repo_data)
+                    continue
+
+                if do_not_pull:
+                    self.logger.info("Pulling from <%s-%s> omitted." %
+                                     (repo_data.get("repo_owner"), repo_data.get("repo_name")))
                     continue
 
                 # Do the wrong thing until Git allows me to do the right thing.

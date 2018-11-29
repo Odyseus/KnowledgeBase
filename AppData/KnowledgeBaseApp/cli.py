@@ -31,7 +31,8 @@ docopt_doc = """{appname} {version} ({status})
 
 Usage:
     app.py (-h | --help | --manual | --version)
-    app.py run <func_name>... [--dry-run]
+    app.py run <func_name>... [--do-not-pull]
+                              [--dry-run]
                               [--force-download]
     app.py server (start | stop | restart)
                   [--host=<host>]
@@ -55,9 +56,9 @@ Options:
 --port=<port>
     Port number. [Default: 8888]
 
---force-download
-    Force the download of all archives, ignoring the frequency in which they
-    should be downloaded. Only used by the "download_all_archives" sub-command.
+--do-not-pull
+    Do not update repositories (do not pull), just initialize the ones that
+    weren't cloned yet. Only used by the "update_all_repositories" sub-command.
 
 --dry-run
     Do not perform file system changes. Only display messages informing of the
@@ -65,6 +66,10 @@ Options:
     WARNING! Some file system changes will be performed (e.g., temporary files
     creation) and some commands will be executed (e.g., checking if a directory
     belongs to a repository).
+
+--force-download
+    Force the download of all archives, ignoring the frequency in which they
+    should be downloaded. Only used by the "download_all_archives" sub-command.
 
 """.format(appname=__appname__,
            appdescription=__appdescription__,
@@ -207,7 +212,7 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
     def update_all_repositories(self):
         """See :any:`RepositoriesHandler.update_all_repositories`
         """
-        self._repositories_handler.update_all_repositories()
+        self._repositories_handler.update_all_repositories(do_not_pull=self.a["--do-not-pull"])
 
     def handle_all_repositories(self):
         """See :any:`RepositoriesHandler.handle_all_repositories`
