@@ -37,18 +37,18 @@ WWW_BASE_PATH = os.path.join(root_folder, "UserData", "www")
 
 CAT_LIST_ITEM_TEMPLATE = """{indent}<li class="nav-item">
 {indent}    <span class="btn-group" role="group">
-{indent}        <a class="nav-link {cat_class} cat-btn btn" href="#"><i class="cat-icon nf {cat_icon}"></i>{cat_title}</a>
+{indent}        <a class="nav-link {cat_class} KB_cat-btn btn" href="#"><i class="KB_cat-icon nf {cat_icon}"></i>{cat_title}</a>
 {indent}    </span>
 {indent}</li>"""
 
 
 CAT_MENU_TEMPLATE = """<li class="nav-item">
     <span class="btn-group" role="group">
-        <a class="nav-link cat-btn btn" href="#"><i class="cat-icon nf {cat_icon}">\
+        <a class="nav-link KB_cat-btn btn" href="#"><i class="KB_cat-icon nf {cat_icon}">\
 </i>{cat_title}</a>
-        <a class="toggle-cat-btn btn" href="#{cat_menu_id}" data-toggle="collapse" aria-expanded="false"></a>
+        <a class="KB_toggle-cat-btn btn" href="#{cat_menu_id}" data-toggle="collapse" aria-expanded="false"></a>
     </span>
-    <ul class="collapse list-unstyled subcats" id="{cat_menu_id}">
+    <ul class="collapse list-unstyled KB_subcats" id="{cat_menu_id}">
 {sub_cat_items}
     </ul>
 </li>"""
@@ -506,7 +506,7 @@ def generate_categories_html(dry_run=False, logger=None):
     categories_data = {}
     categories_html_list_items = [CAT_LIST_ITEM_TEMPLATE.format(
         cat_title="All Categories",
-        cat_class="cat-link",
+        cat_class="KB_cat-link",
         cat_icon="nf-fa-bars",
         indent=""
     )]
@@ -564,7 +564,7 @@ def generate_categories_html(dry_run=False, logger=None):
         if len(keys["subcategories"]) == 0:
             categories_html_list_items.append(CAT_LIST_ITEM_TEMPLATE.format(
                 cat_title=cat,
-                cat_class="cat-link",
+                cat_class="KB_cat-link",
                 cat_icon=keys["icon"],
                 indent=""
             ))
@@ -574,7 +574,7 @@ def generate_categories_html(dry_run=False, logger=None):
             for sub_cat in sorted(keys["subcategories"], key=lambda x: x["name"].lower()):
                 sub_cat_html_items.append(CAT_LIST_ITEM_TEMPLATE.format(
                     cat_title=sub_cat["name"],
-                    cat_class="sub-cat-link",
+                    cat_class="KB_sub-cat-link",
                     cat_icon=sub_cat["icon"],
                     indent="        "
                 ))
@@ -582,7 +582,7 @@ def generate_categories_html(dry_run=False, logger=None):
             categories_html_list_items.append(CAT_MENU_TEMPLATE.format(
                 cat_title=cat,
                 cat_icon=keys["icon"],
-                cat_menu_id="cat-menu-%s" % cat.lower(),
+                cat_menu_id="KB_cat-menu-%s" % cat.lower(),
                 sub_cat_items="\n".join(sub_cat_html_items),
             ))
 

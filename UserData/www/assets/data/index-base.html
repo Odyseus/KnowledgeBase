@@ -20,12 +20,12 @@
             <p><strong>This page uses JavaScript only to add extra functionality to it. There are no tracking services of any kind and never will be (at least, not from my side).</strong></p>
         </div>
     </noscript>
-    <div id="pseudo-body" style="opacity:0;">
-        <div class="modal fade" id="about-modal" tabindex="-1" role="dialog" aria-labelledby="about-modal-label" aria-hidden="true">
+    <div id="KB_pseudo-body" style="opacity:0;">
+        <div class="modal fade" id="KB_about-modal" tabindex="-1" role="dialog" aria-labelledby="KB_about-modal-label" aria-hidden="true">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="about-modal-label">About</h5>
+                        <h5 class="modal-title" id="KB_about-modal-label">About</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -63,36 +63,36 @@
         </div>
         <!-- ^ .modal end -->
         <header>
-            <nav id="top-navbar" class="py-0 py-md-0 navbar navbar-expand-md navbar-light fixed-top bg-light">
-                <button id="toggle-sidebar" class="sidebar-toggler" type="button" title="Toggle sidebar.">
+            <nav id="KB_top-navbar" class="py-0 py-md-0 navbar navbar-expand-md navbar-light fixed-top bg-light">
+                <button id="KB_toggle-sidebar" class="KB_sidebar-toggler" type="button" title="Toggle sidebar.">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <a id="home-link" class="navbar-brand" href="#">Knowledge Base</a>
-                <button class="navbar-toggler d-lg-none" type="button" data-toggle="collapse" data-target="#top-navbar-content" aria-controls="top-navbar-content" aria-expanded="false" aria-label="Toggle navigation">
+                <a id="KB_home-link" class="navbar-brand" href="#">Knowledge Base</a>
+                <button class="navbar-toggler d-lg-none" type="button" data-toggle="collapse" data-target="#KB_top-navbar-content" aria-controls="KB_top-navbar-content" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="collapse navbar-collapse" id="top-navbar-content">
+                <div class="collapse navbar-collapse" id="KB_top-navbar-content">
                     <ul class="list-unstyled navbar-nav mr-auto mt-2 mt-lg-0">
                         <li class="nav-item py-0">
-                            <a class="nav-link" href="#" data-toggle="modal" data-target="#about-modal">About</a>
+                            <a class="nav-link" href="#" data-toggle="modal" data-target="#KB_about-modal">About</a>
                         </li>
                         <!-- Do not use a dropdown menu for now since there is only About. -->
                         <!--
                         <li class="nav-item dropdown">
                             <div class="dropdown-menu" aria-labelledby="info-menu">
-                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#about-modal">About</a>
+                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#KB_about-modal">About</a>
                             </div>
                         </li>
                         -->
                     </ul>
-                    <form id="input-search-group" class="py-0 form-inline my-2 my-lg-0">
+                    <form id="KB_input-search-group" class="py-0 form-inline my-2 my-lg-0">
                         <div class="input-group input-group-sm">
-                            <div class="input-group-prepend" for="input-search">
+                            <div class="input-group-prepend" for="KB_input-search">
                                 <span class="input-group-text nf nf-fa-search"></span>
                             </div>
-                            <input id="input-search" type="search" class="form-control form-control-sm" placeholder="Search" autofocus="autofocus">
-                            <div class="input-group-append" for="input-search">
-                                <button id="clear-search-button" class="input-group-append btn btn-sm btn-primary text-white" title="Clear search input.">
+                            <input id="KB_input-search" type="search" class="form-control form-control-sm" placeholder="Search" autofocus="autofocus">
+                            <div class="input-group-append" for="KB_input-search">
+                                <button id="KB_clear-search-button" class="input-group-append btn btn-sm btn-primary text-white" title="Clear search input.">
                                     <i class="nf nf-fa-remove"></i>
                                 </button>
                             </div>
@@ -100,12 +100,12 @@
                     </form>
                     <ul class="list-unstyled navbar-nav mr-auto mt-2 mt-lg-0">
                     </ul>
-                    <form id="table-length-chooser" class="py-0 form-inline has-feedback">
+                    <form id="KB_table-length-chooser" class="py-0 form-inline has-feedback">
                         <div class="input-group input-group-sm">
                             <div class="input-group-prepend">
                                 <span class="input-group-text nf nf-fa-table"></span>
                             </div>
-                            <select class="custom-select custom-select-sm" id="table-length-chooser-select">
+                            <select class="custom-select custom-select-sm" id="KB_table-length-chooser-select">
                                 <option value="25">25</option>
                                 <option value="50">50</option>
                                 <option value="100">100</option>
@@ -118,33 +118,33 @@
                     </form>
                     <!--  <ul class="list-unstyled navbar-nav mr-auto mt-2 mt-lg-0">
                     </ul> -->
-                    <a id="edit-button" href="#" class="py-0 btn btn-sm text-success" title="Open file with external program.">
+                    <a id="KB_edit-button" href="#" class="py-0 btn btn-sm text-success" title="Open file with external program.">
                         <i class="nf nf-fa-edit"></i>
                     </a>
-                    <a id="reload-button" href="#" class="py-0 btn btn-sm text-success" title="Force reload of the current inline page.">
+                    <a id="KB_reload-button" href="#" class="py-0 btn btn-sm text-success" title="Force reload of the current inline page.">
                         <i class="nf nf-fa-refresh"></i>
                     </a>
                 </div>
             </nav>
-            <!-- ^ #top-navbar end -->
+            <!-- ^ #KB_top-navbar end -->
         </header>
         <!-- #content is the element used to insert rendered Markdown and HTML fragments. -->
-        <div id="content" class="container boxed"></div>
-        <div id="dashboard" class="container-fluid">
+        <div id="KB_content" class="container boxed"></div>
+        <div id="KB_dashboard" class="container-fluid">
             <div class="row">
-                <nav id="sidebar" role="navigation" class="collapse show navbar-collapse navbar-light bg-light col-sm-5 col-md-4 col-lg-3 col-xl-2">
-                    <ul id="categories-container" class="nav nav-pills flex-column">
+                <nav id="KB_sidebar" role="navigation" class="collapse show navbar-collapse navbar-light bg-light col-sm-5 col-md-4 col-lg-3 col-xl-2">
+                    <ul id="KB_categories-container" class="nav nav-pills flex-column">
                         <!-- {{categories}} -->
                     </ul>
                 </nav>
-                <main role="main" id="mainarea" class="col-sm-7 ml-sm-auto col-md-8 col-lg-9 col-xl-10 pt-3">
-                    <div id="main-index-wrapper">
-                        <table id="main-index" class="display table table-sm table-responsive-sm table-striped table-bordered table-hover" cellspacing="0" width="100%">
+                <main role="main" id="KB_mainarea" class="col-sm-7 ml-sm-auto col-md-8 col-lg-9 col-xl-10 pt-3">
+                    <div id="KB_main-index-wrapper">
+                        <table id="KB_main-index" class="display table table-sm table-responsive-sm table-striped table-bordered table-hover" cellspacing="0" width="100%">
                             <colgroup>
-                                <col class="img-col"></col>
-                                <col class="cat-col"></col>
-                                <col class="sub-cat-col"></col>
-                                <col class="title-col"></col>
+                                <col class="KB_img-col"></col>
+                                <col class="KB_cat-col"></col>
+                                <col class="KB_sub-cat-col"></col>
+                                <col class="KB_title-col"></col>
                             </colgroup>
                             <thead>
                                 <tr>
@@ -169,9 +169,9 @@
             </div>
             <!-- ^ .row end -->
         </div>
-        <!-- ^ #dashboard end -->
+        <!-- ^ #KB_dashboard end -->
     </div>
-    <!-- ^ #pseudo-body end -->
+    <!-- ^ #KB_pseudo-body end -->
     <!--
         If I use the ID back-to-top or back_to_top, nothing freaking works!!!
         All browsers seem to add the hidden attrinbute to these IDs. WTF!!!!!

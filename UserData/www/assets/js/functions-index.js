@@ -1,45 +1,44 @@
 const CONTEXT_COLOR = "success";
 
-let $catButtons = $("#sidebar a.nav-link");
-let $content = $("#content");
-let $dashboard = $("#dashboard");
-let $editButton = $("#edit-button");
-let $homeLink = $("#home-link");
-let $inputSearch = $("#input-search");
-let $inputSearchForm = $("#input-search-group");
-let $mainarea = $("#mainarea");
-let $mainindex = $("#main-index");
-let $pseudoBody = $("#pseudo-body");
-let $reloadButton = $("#reload-button");
-let $sidebar = $("#sidebar");
-let $tableLengthChooserForm = $("#table-length-chooser");
-let $tableLengthChooserSelect = $("#table-length-chooser-select");
+const $catButtons = $("#KB_sidebar a.nav-link");
+const $content = $("#KB_content");
+const $dashboard = $("#KB_dashboard");
+const $editButton = $("#KB_edit-button");
+const $homeLink = $("#KB_home-link");
+const $inputSearch = $("#KB_input-search");
+const $inputSearchForm = $("#KB_input-search-group");
+const $mainarea = $("#KB_mainarea");
+const $mainindex = $("#KB_main-index");
+const $pseudoBody = $("#KB_pseudo-body");
+const $reloadButton = $("#KB_reload-button");
+const $sidebar = $("#KB_sidebar");
+const $tableLengthChooserForm = $("#KB_table-length-chooser");
+const $tableLengthChooserSelect = $("#KB_table-length-chooser-select");
 
-let clearSearchButton = document.getElementById("clear-search-button");
-let topNavbar = document.getElementById("top-navbar");
-let toggleSidebarBtn = document.getElementById("toggle-sidebar");
+const clearSearchButton = document.getElementById("KB_clear-search-button");
+const topNavbar = document.getElementById("KB_top-navbar");
+const toggleSidebarBtn = document.getElementById("KB_toggle-sidebar");
 
-let dropdownTemplate = ` <div tabindex="-1" role="group" class="action-dropdown-menu dropdown" data-href="{dataHref}" data-type="{dataType}">
-    <button type="button" class="btn btn-${CONTEXT_COLOR} btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="nf custom-icon-{typeIcon}"></i></button>
+const sourceURLMDTemplate = "# [Source]({url})\n";
+
+const dropdownTemplate = ` <div tabindex="-1" role="group" class="KB_action-dropdown-menu dropdown" data-source="{dataSource}" data-href="{dataHref}" data-type="{dataType}">
+    <button type="button" class="btn btn-${CONTEXT_COLOR} btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="nf KB_custom-icon-{typeIcon}"></i></button>
     <div class="dropdown-menu">
         <h6 class="dropdown-header">Choose an action</h6>
-        <a data-action="file" href="#" class="dropdown-item action-item"><i class="nf nf-fa-edit"></i>&nbsp&nbspOpen file with external program</a>
-        <a data-action="folder" href="#" class="dropdown-item action-item"><i class="nf nf-fa-folder_open_o"></i>&nbsp&nbspOpen folder containing file</a>
-        <a data-action="new_tab" href="#" class="dropdown-item action-item"><i class="nf nf-fa-external_link_square"></i>&nbsp&nbspOpen page in new tab</a>
+        <a data-action="file" href="#" class="dropdown-item KB_action-item"><i class="nf nf-fa-edit"></i>&nbsp&nbspOpen file with external program</a>
+        <a data-action="folder" href="#" class="dropdown-item KB_action-item"><i class="nf nf-fa-folder_open_o"></i>&nbsp&nbspOpen folder containing file</a>
+        <a data-action="new_tab" href="#" class="dropdown-item KB_action-item"><i class="nf nf-fa-external_link_square"></i>&nbsp&nbspOpen page in new tab</a>
+        <a data-action="source_url" href="#" class="dropdown-item KB_action-item"><i class="nf nf-fa-link"></i>&nbsp&nbspOpen source URL</a>
     </div>
 </div>`;
 
-let titleTemplate = '<div onauxclick="titleClick(event, this)" \
+const titleTemplate = '<div onauxclick="titleClick(event, this)" \
 onclick="titleClick(event, this)" \
+data-source="{dataSource}" \
 data-type="{dataType}" \
 data-href="{dataHref}">{text}</div>';
 
-let currentPage = null;
-// Only categories are allowed, not sub-categories.
-let pref_DefaultCategory = null;
-let currentCategory = "All Categories";
-
-let delayedFocusSearchInput = utilThrottle(() => {
+const delayedFocusSearchInput = utilThrottle(() => {
     // GENERAL PROBLEM:
     // When the Firefox developer tools is open, the search input doesn't focus on page load.
     // It took me hours to discover this stupid behavior!!! )$(&$$)
@@ -50,7 +49,7 @@ let delayedFocusSearchInput = utilThrottle(() => {
     $inputSearch.focus();
 }, 500);
 
-let delayedSearchFunc = utilThrottle((aVal) => {
+const delayedSearchFunc = utilThrottle((aVal) => {
     doSearch(aVal);
 }, 500);
 
@@ -58,7 +57,7 @@ let delayedSearchFunc = utilThrottle((aVal) => {
  * Define and initialize markdown-it.
  * @type {markdownit}
  */
-let mdit = new window.markdownit({
+const mdit = new window.markdownit({
     html: true, // Enable HTML tags in source
     xhtmlOut: false, // Use '/' to close single tags (<br />).
     // This is only for full CommonMark compatibility.
@@ -120,7 +119,7 @@ mdit.renderer.rules.blockquote_open = () => {
     return '<blockquote class="blockquote">\n';
 };
 
-let btnActMap = {
+const btnActMap = {
     "html": {
         // Hidden because opening the HTML file as a local file instead of a "served file"
         // will simply break the page rendering.
@@ -153,15 +152,15 @@ let btnActMap = {
 };
 
 // Define and initialize the DataTables table.
-let table = $mainindex.DataTable({
+const table = $mainindex.DataTable({
     drawCallback: (settings) => { // jshint ignore:line
         delayedFocusSearchInput();
 
-        $(".action-dropdown-menu").on("show.bs.dropdown", function() {
+        $(".KB_action-dropdown-menu").on("show.bs.dropdown", function() {
             let $actionDropdownMenu = $(this);
             // All of this nonsense due to web developers being DUMASSES!!!
             $actionDropdownMenu.data("dropdown-opened", true);
-            let $actionButtons = $(this).find("a.action-item");
+            let $actionButtons = $(this).find("a.KB_action-item");
 
             for (let i = $actionButtons.length - 1; i >= 0; i--) {
                 let $actBtn = $($actionButtons[i]);
@@ -170,22 +169,32 @@ let table = $mainindex.DataTable({
                     continue;
                 }
 
+                let btnAction = $actBtn.data("action");
+                let sourceURL = $(this).data("source") || "";
                 let type = $(this).data("type");
 
-                $actBtn[btnActMap[type][$actBtn.data("action")]]();
+                if (btnAction === "source_url") {
+                    $actBtn[sourceURL ? "show" : "hide"]();
+                    // $actBtn[sourceURL ? "show" : "hide"](sourceURL ?  : 0);
+                } else {
+                    $actBtn[btnActMap[type][btnAction]]();
+                    // $actBtn[btnActMap[type][btnAction]](btnActMap[type][btnAction] ?  : 0);
+                }
+
+                $actBtn.data("href", $(this).data("href"));
+                $actBtn.data("type", type);
+                $actBtn.data("source", sourceURL);
 
                 // Attach click for the popover's action buttons.
-                $actBtn.on("click", function() {
+                $actBtn.on("click", function() { // jshint ignore:line
                     $actionDropdownMenu.dropdown("toggle");
                     $actionDropdownMenu.find("button.dropdown-toggle").trigger("blur");
-                    // The data-* attributes on the .action-item are set when the popover is shown.
+                    // The data-* attributes on the .KB_action-item are set when the popover is shown.
                     actionClick($(this));
 
                     return false;
                 });
 
-                $actBtn.data("href", $(this).data("href"));
-                $actBtn.data("type", type);
                 $actBtn.data("moronic-nonsense", true);
             }
         }).on("hide.bs.dropdown", function() {
@@ -230,7 +239,8 @@ let table = $mainindex.DataTable({
     // page layout.
     "fixedHeader": {
         "header": true,
-        "footer": true,
+        // Do not enable footer ever again. It causes more damage than good.
+        "footer": false,
         "headerOffset": topNavbar.offsetHeight
     },
     // Default number of rows to display on a single page when using pagination.
@@ -263,7 +273,7 @@ let table = $mainindex.DataTable({
         "orderable": false,
         "targets": 0,
         "data": "i",
-        "class": "img-cell-td",
+        "class": "KB_img-cell-td",
         render: (aData, aType, aRow) => {
             switch (aType) {
                 case "filter":
@@ -274,6 +284,7 @@ let table = $mainindex.DataTable({
                     return dropdownTemplate.format({
                         "dataHref": aRow.p,
                         "dataType": aRow.i,
+                        "dataSource": aRow.s || "",
                         "typeIcon": aData
                     });
             }
@@ -321,7 +332,7 @@ let table = $mainindex.DataTable({
     }, {
         "data": "t",
         "targets": 3,
-        "class": `title-link text-${CONTEXT_COLOR}`,
+        "class": `KB_title-link text-${CONTEXT_COLOR}`,
         // "Hard coding" the click event here to avoid problems when the event is added by jQuery.
         // One of the problems is that in every change of the table page, the event was added more than once.
         // I dimmed it infinitely easier to just hard code it here while modifying the "render".
@@ -331,6 +342,7 @@ let table = $mainindex.DataTable({
                     return titleTemplate.format({
                         "dataHref": aRow.p,
                         "dataType": aRow.i,
+                        "dataSource": aRow.s || "",
                         "text": aData
                     });
                 default:
@@ -341,6 +353,11 @@ let table = $mainindex.DataTable({
     // Not used for now.
     // initComplete: function() {}
 });
+
+let currentPage = null;
+// Only categories are allowed, not sub-categories.
+let pref_DefaultCategory = null;
+let currentCategory = "All Categories";
 
 /**************************************
  * From here up, variable declarations.
@@ -380,7 +397,7 @@ function setActiveCategory(aEl) {
     };
 
     if (aEl) {
-        let subCatColIndex = aEl.classList.contains("sub-cat-link") ? 2 : 1;
+        let subCatColIndex = aEl.classList.contains("KB_sub-cat-link") ? 2 : 1;
         searchtext = aEl.textContent;
 
         currentCategory = searchtext;
@@ -440,22 +457,22 @@ function displayMainSection(aEl) {
 
     switch (aEl) {
         case "content":
+            $dashboard.hide();
+            $content.show();
             // Disable the fixed headers so they don't show up when the table is hidden.
             table.fixedHeader.disable();
-            $dashboard.hide();
             $reloadButton.show();
             currentPage && currentPage.type && currentPage.type === "md" && $editButton.show();
-            $content.show();
             $inputSearchForm.hide();
             $tableLengthChooserForm.hide();
             break;
         case "table":
+            $dashboard.show();
+            $content.hide();
             $content[0].innerHTML = "";
             currentPage = null;
-            $dashboard.show();
             $reloadButton.hide();
             $editButton.hide();
-            $content.hide();
             // Re-enable the fixed table headers that were disabled when the table was hidden.
             table.fixedHeader.enable();
             $inputSearchForm.show();
@@ -463,6 +480,12 @@ function displayMainSection(aEl) {
             delayedFocusSearchInput();
             break;
     }
+
+    // Display body with a delay. This is to avoid seeing all the "functions initial workings".
+    $pseudoBody.animate({
+        opacity: 1
+    }, 500);
+
 }
 
 function loadPageInline(aCurrentPage) {
@@ -478,6 +501,12 @@ function loadPageInline(aCurrentPage) {
             let resp = request.responseText;
 
             if (aCurrentPage.type.toLowerCase() === "md") {
+                if (aCurrentPage.source) {
+                    resp = sourceURLMDTemplate.format({
+                        "url": aCurrentPage.source
+                    }) + resp;
+                }
+
                 resp = mdit.render(resp);
             }
 
@@ -580,11 +609,13 @@ function titleClick(aE, aPseudoLink) {
     let $pseudoLink = $(aPseudoLink);
     let href = $pseudoLink.data("href");
     let type = $pseudoLink.data("type");
+    let source = $pseudoLink.data("source");
 
     switch (getLoadActionFromType(type)) {
         case 0: // Load Markdown pages inline.
             currentPage = {
                 url: href,
+                source: source,
                 type: type
             };
 
@@ -593,7 +624,7 @@ function titleClick(aE, aPseudoLink) {
             } else if (aE.button === 1) { // Middle click
                 // Query string implementation.
                 loadInNewTab("index.html?currentPageURL=" + encodeURIComponent(href) +
-                    "&currentPageType=" + type);
+                    "&currentPageType=" + type + "&currentPageSource=" + encodeURIComponent(source));
             }
             break;
         case 1: // Load URI on new tab.
@@ -640,13 +671,16 @@ function actionClick(a$ActionBtn, aHrefPri, aActionPri) {
             switch (getLoadActionFromType(a$ActionBtn.data("type"))) {
                 case 0:
                     loadInNewTab("index.html?currentPageURL=" + encodeURIComponent(a$ActionBtn.data("href")) +
-                        "&currentPageType=" + a$ActionBtn.data("type"));
+                        "&currentPageType=" + a$ActionBtn.data("type") + "&currentPageSource=" + a$ActionBtn.data("source"));
                     break;
                 case 1:
                     loadInNewTab(a$ActionBtn.data("href"));
                     break;
             }
-        } else {
+        } else if (a$ActionBtn.data("action") === "source_url") {
+            loadInNewTab(a$ActionBtn.data("source"));
+        } else if (a$ActionBtn.data("action") === "file" ||
+            a$ActionBtn.data("action") === "folder") {
             ajaxCall(a$ActionBtn.data("href"), a$ActionBtn.data("action"));
         }
     } else {
@@ -730,21 +764,25 @@ function _init(aSettingsJSON) {
     });
 
     // Query strings implementation.
-    // So I can open the pages that are loaded inline (Markdown pages) in new tabs
-    // and/or pass settings/values.
+    // So I can open the pages that are loaded inline (Markdown pages or standalone HTML pages)
+    // in new tabs and/or pass settings/values.
     // Some query strings are set when middle clicking an item in the table.
     // It has several advantages:
-    //      - More than one page can be opened at the same time, instead of going
-    //        back and forward constantly.
+    //      - More than one page can be opened at the same time, instead of going constantly
+    //        back and forward.
     //      - Pages will persevere across browser sessions.
     //      - I can reload the pages with F5 instead of the "Force reload of the current
     //      in-line page" button.
+    //
     // Supported query strings:
     //     currentPageURL (String):
     //         This key is part of the currentPage object. It's the relative to the server URL
-    //         that points to the markdoiwn/html/pdf page to load.
+    //         that points to the markdown/html/pdf page to load.
     //     currentPageType (String):
     //         This key is part of the currentPage object.
+    //     currentPageSource (String):
+    //         This key is part of the currentPage object. It's the URL to the
+    //         content's on-line source.
     //     pref_DefaultCategory (String):
     //         Used to set the default category when the main index page is loaded.
     //         This query overrides the settings from the settings.json file.
@@ -754,6 +792,8 @@ function _init(aSettingsJSON) {
         if (query["currentPageURL"] && query["currentPageType"]) {
             currentPage = {
                 url: decodeURIComponent(query["currentPageURL"]),
+                source: query.hasOwnProperty("currentPageSource") ?
+                    decodeURIComponent(query["currentPageSource"]) : "",
                 type: query["currentPageType"]
             };
 
@@ -869,9 +909,10 @@ function _init(aSettingsJSON) {
     }
 
     // Display body with a delay. This is to avoid seeing all the "functions initial workings".
-    $pseudoBody.animate({
-        opacity: 1
-    }, 100);
+    // Moved to displayMainSection function to test annoyances.
+    // $pseudoBody.animate({
+    //     opacity: 1
+    // }, 1000);
 }
 
 function getLoadActionFromType(aPageType) {
@@ -885,8 +926,6 @@ function getLoadActionFromType(aPageType) {
     }
 }
 
-/* jshint varstmt: false */
-
 /* global utilThrottle,
           getQueryString,
           loadInNewTab,
@@ -894,6 +933,4 @@ function getLoadActionFromType(aPageType) {
           smoothScrollToTop
 */
 
-/* exported titleClick,
-            catClick,
-            actionClick */
+/* exported titleClick */
