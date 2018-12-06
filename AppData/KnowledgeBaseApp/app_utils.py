@@ -380,7 +380,7 @@ def convert_with_pandoc(input_file, output_path, from_format, to_format, logger)
                 "--from=%s" % from_options[from_format],
                 "%s" % ('"' + input_file + '"')
             ]),
-            working_directory=output_path,
+            cwd=output_path,
             logger=logger
         )
     except Exception as err:
