@@ -113,9 +113,9 @@ class RepositoriesHandler():
             for repo_data, error_type, error_data in invalid_repos:
                 self.logger.warning("Repository:\n%s" % json.dumps(repo_data, indent=4), date=False)
 
-                if error_type is "missing_fields":
+                if error_type == "missing_fields":
                     self.logger.warning("Missing fields: %s" % ", ".join(error_data), date=False)
-                elif error_type is "invalid_repo_type":
+                elif error_type == "invalid_repo_type":
                     self.logger.warning("Invalid repository type: %s" % error_data, date=False)
                     self.logger.warning("Valid values are: %s" %
                                         ", ".join(list(_allowed_repo_types)), date=False)
@@ -435,7 +435,7 @@ class RepositoriesHandler():
             The repository URL.
         """
         repo_service = repo_data.get("repo_service", "github")
-        repo_url_template = "{}{}/{}.git" if repo_data.get("repo_type", "git") is "git" else "{}{}/{}"
+        repo_url_template = "{}{}/{}.git" if repo_data.get("repo_type", "git") == "git" else "{}{}/{}"
         repo_base_url = repo_service_url_map[repo_service] if \
             repo_service in repo_service_url_map else repo_service
 
@@ -479,7 +479,7 @@ class RepositoriesHandler():
 
         cmd = "{cmd} clone {depth} {url} {path}".format(
             cmd=repo_type,
-            depth="--depth=1" if repo_type is "git" else "",
+            depth="--depth=1" if repo_type == "git" else "",
             url=self._get_repo_url(repo_data),
             path=self._get_folder_name(repo_data)
         )
@@ -622,7 +622,7 @@ class RepositoriesHandler():
         """Build Sphinx documentation.
         """
         for repo_data in [repo for repo in self._repositories_data
-                          if repo.get("repo_handler") is "sphinx_docs"]:
+                          if repo.get("repo_handler") == "sphinx_docs"]:
             self.logger.info(shell_utils.get_cli_separator("-"), date=False)
             self.logger.info("Attempting to build Sphinx docs.")
             self.logger.info("Repository: %s-%s" %
