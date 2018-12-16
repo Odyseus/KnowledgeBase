@@ -132,13 +132,13 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
         self.a = docopt_args
         self._cli_header_blacklist = [self.a["--manual"]]
 
-        super().__init__(__appname__, "UserData/logs")
+        super().__init__(__appname__)
 
         if self.a["--manual"]:
             self.action = self.display_manual_page
         elif self.a["server"]:
-            self.logger.info("Command: server")
-            self.logger.info("Arguments:")
+            self.logger.info("**Command:** server")
+            self.logger.info("**Arguments:**")
 
             if self.a["start"]:
                 self.logger.info("start")
@@ -150,8 +150,8 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
                 self.logger.info("restart")
                 self.action = self.http_server_restart
         elif self.a["run"]:
-            self.logger.info("Command: run")
-            self.logger.info("Arguments:")
+            self.logger.info("**Command:** run")
+            self.logger.info("**Arguments:**")
 
             try:
                 # Remove duplicates.
@@ -180,7 +180,7 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
                     self.logger.warning("Non existent function: %s" % func)
         elif self.a["generate"]:
             if self.a["system_executable"]:
-                self.logger.info("System executable generation...")
+                self.logger.info("**System executable generation...**")
                 self.action = self.system_executable_generation
 
     def run(self):
