@@ -1,8 +1,8 @@
 .\" Man page generated from reStructuredText.
 .
-.TH "APP.PY" "1" "Nov 29, 2018" "" "Knowledge Base"
+.TH "APP.PY" "1" "Dec 16, 2018" "" "Knowledge Base"
 .SH NAME
-app.py \- A CLI utility to generate and manage a personal and self-hosted *Knowledge Base* on GNU/Linux.
+app.py \- CLI utility to generate and manage a personal and self-hosted *Knowledge Base* on GNU/Linux.
 .
 .nr rst2man-indent-level 0
 .
@@ -190,11 +190,13 @@ All data keys are of type string and are optional unless specified otherwise.
 .INDENT 3.5
 .INDENT 0.0
 .IP \(bu 2
-\fBw\fP: Weekly.
+\fBd\fP (daily): An archive is downloaded every time that it is managed.
 .IP \(bu 2
-\fBm\fP: Monthly.
+\fBw\fP (weekly): An archive is downloaded only if at least 6 days have passed since the last download.
 .IP \(bu 2
-\fBs\fP: Semestrial.
+\fBm\fP (monthly): An archive is downloaded only if at least 28 days have passed since the last download.
+.IP \(bu 2
+\fBs\fP (semestrial): An archive is downloaded only if at least 87 days have passed since the last download.
 .UNINDENT
 .UNINDENT
 .UNINDENT
