@@ -520,8 +520,7 @@ def generate_categories_html(dry_run=False, logger=None):
     else:
         msg = "UserData/categories_data/categories.json non existent.\n"
         msg += "This file is used to add custom icons to each category.\n"
-        msg += "Can be created with `./app.py run generate_categories_html` command.\n"
-        msg += "Or let categories use a generic icon."
+        msg += "Without this file, categories will use a generic icon."
         logger.warning(msg)
 
     categories = {}
