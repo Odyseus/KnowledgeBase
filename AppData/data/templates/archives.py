@@ -9,7 +9,7 @@ data = [
         "arch_url": "http://github.com/lazka/pgi-docs/archive/master.zip",
         "kb_rel_path": "pgi-docs-master",
         "unzip_prog": "unzip",
-        "file_append": [
+        "kb_file_append": [
             ("pgi-docs-master/_static/css/theme.css", """
     /* CSS code that will be appended to the
        pgi-docs-master/_static/css/theme.css file*/
@@ -19,7 +19,7 @@ data = [
         "kb_title": "Bash Reference Manual",
         "kb_category": "Software|Documentation",
         "arch_url": "https://www.gnu.org/software/bash/manual/bash.html",
-        "frequency": "s"
+        "download_frequency": "s"
     }, {
         "kb_title": "ZSH Documentation",
         "kb_category": "Software|Documentation",
@@ -27,6 +27,6 @@ data = [
         "kb_rel_path": "zsh_html",
         "unzip_prog": "tar",
         "untar_arg": "--gzip",
-        "frequency": "s"
+        "download_frequency": "s"
     }
 ]
