@@ -512,9 +512,19 @@ def generate_categories_html(dry_run=False, logger=None):
     )]
 
     if os.path.exists(categories_data_json):
+        from .python_utils import json_schema_utils
+        from .schemas import categories_data_schema
+
         try:
             with open(categories_data_json, "r") as categories_data_file:
-                categories_data = json.loads((categories_data_file.read()))
+                categories_data = json.loads(categories_data_file.read())
+
+            json_schema_utils.validate(
+                categories_data, categories_data_schema,
+                error_message_extra_info="\n".join([
+                    "File: %s" % categories_data_json
+                ]),
+                logger=logger)
         except Exception as err:
             logger.error(err)
     else:

@@ -21,8 +21,10 @@ from . import app_utils
 from .python_utils import cmd_utils
 from .python_utils import exceptions
 from .python_utils import file_utils
+from .python_utils import json_schema_utils
 from .python_utils import shell_utils
 from .python_utils import string_utils
+from .schemas import repositories_schema
 
 root_folder = os.path.realpath(os.path.abspath(os.path.join(
     os.path.normpath(os.getcwd()))))
@@ -57,10 +59,6 @@ class RepositoriesHandler():
     logger : object
         See <class :any:`LogSystem`>.
     """
-    _common_mandatory_keys = {
-        "repo_owner",
-        "repo_name"
-    }
 
     def __init__(self, dry_run=False, logger=None):
         """Initialize.
@@ -93,34 +91,14 @@ class RepositoriesHandler():
         InvalidRepositoryData
             Invalid repository data.
         """
-        invalid_repos = []
-
-        for repo_data in self._repositories_data:
-            if not self._common_mandatory_keys.issubset(repo_data):
-                invalid_repos.append((repo_data,
-                                      "missing_fields",
-                                      [field for field in self._common_mandatory_keys
-                                       if field not in repo_data]))
-
-            if repo_data.get("repo_type", "git") not in _allowed_repo_types:
-                invalid_repos.append((repo_data,
-                                      "invalid_repo_type",
-                                      repo_data.get("repo_type")))
-
-        if invalid_repos:
-            self.logger.warning("The following repositories must be corrected:")
-
-            for repo_data, error_type, error_data in invalid_repos:
-                self.logger.warning("Repository:\n%s" % json.dumps(repo_data, indent=4), date=False)
-
-                if error_type == "missing_fields":
-                    self.logger.warning("Missing fields: %s" % ", ".join(error_data), date=False)
-                elif error_type == "invalid_repo_type":
-                    self.logger.warning("Invalid repository type: %s" % error_data, date=False)
-                    self.logger.warning("Valid values are: %s" %
-                                        ", ".join(list(_allowed_repo_types)), date=False)
-
-            raise InvalidRepositoryData("Operation aborted!")
+        json_schema_utils.validate(
+            self._repositories_data, repositories_schema,
+            error_message_extra_info="\n".join([
+                "File: %s" % os.path.join(root_folder, "UserData", "data_sources",
+                                          "archives.py"),
+                "Data key: data"
+            ]),
+            logger=self.logger)
 
     def _generate_repositories_data_tables_json_file(self):
         """Generate the JSON file for the repository.

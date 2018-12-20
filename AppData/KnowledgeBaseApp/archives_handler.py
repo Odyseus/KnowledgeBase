@@ -23,9 +23,11 @@ from subprocess import STDOUT
 from . import app_utils
 from .python_utils import cmd_utils
 from .python_utils import exceptions
+from .python_utils import json_schema_utils
 from .python_utils import shell_utils
 from .python_utils import string_utils
 from .python_utils import tqdm_wget
+from .schemas import archives_schema
 
 root_folder = os.path.realpath(os.path.abspath(os.path.join(
     os.path.normpath(os.getcwd()))))
@@ -39,19 +41,6 @@ class ArchivesHandler():
     logger : object
         See <class :any:`LogSystem`>.
     """
-    _tar_allowed_args = {
-        "--xz",
-        "-J",
-        "--gzip",
-        "-z",
-        "--bzip2",
-        "-j"
-    }
-    _source_mandatory_keys = [
-        "kb_title",
-        "kb_category",
-        "arch_url"
-    ]
 
     def __init__(self, dry_run=False, logger=None):
         """Initialize.
@@ -206,12 +195,7 @@ class ArchivesHandler():
                         cmd = ["tar", "--extract"]
 
                         if untar_arg:
-                            if untar_arg not in self._tar_allowed_args:
-                                self.logger.warning("untar_arg key ignored!")
-                                self.logger.warning("Allowed arguments are:\n%s" %
-                                                    ", ".join(list(self._tar_allowed_args)))
-                            else:
-                                cmd += [untar_arg]
+                            cmd += [untar_arg]
 
                         cmd += [
                             "--file",
@@ -360,19 +344,21 @@ class ArchivesHandler():
         exceptions.MalformedSources
             See <class :any:`exceptions.MalformedSources`>.
         """
+
+        json_schema_utils.validate(
+            self._archives_data, archives_schema,
+            error_message_extra_info="\n".join([
+                "File: %s" % os.path.join(root_folder, "UserData", "data_sources",
+                                          "archives.py"),
+                "Data key: data"
+            ]),
+            logger=self.logger)
+
         titles = set()
         errors = []
 
         for data in self._archives_data:
             source_title = data.get("kb_title", False)
-            report_source = source_title if source_title else data
-            source_keys = set(data.keys())
-
-            # Do not allow sources without mandatory keys.
-            for key in self._source_mandatory_keys:
-                if key not in source_keys:
-                    errors.append("Missing mandatory <%s> key!!! Source: <%s>" %
-                                  (key, report_source))
 
             if source_title:
                 # Do not allow more than one source with the same "kb_title".
