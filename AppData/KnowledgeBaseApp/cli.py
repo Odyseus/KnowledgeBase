@@ -34,6 +34,7 @@ Usage:
     app.py run <func_name>... [--do-not-pull]
                               [--dry-run]
                               [--force-download]
+                              [--input-path-storage=<path>]
     app.py server (start | stop | restart)
                   [--host=<host>]
                   [--port=<port>]
@@ -274,7 +275,8 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
     def epub_to_html(self):
         """See :any:`app_utils.convert_epub_to_html`
         """
-        app_utils.convert_epub_to_html(self.logger)
+        app_utils.convert_epub_to_html(input_path_storage=self.a["--input-path-storage"],
+                                       logger=self.logger)
 
     def open_main_webpage(self):
         """Self explanatory.

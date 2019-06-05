@@ -387,7 +387,7 @@ def convert_with_pandoc(input_file, output_path, from_format, to_format, logger)
         logger.error(err)
 
 
-def convert_epub_to_html(logger):
+def convert_epub_to_html(input_path_storage=None, logger=None):
     """Convert epub to html.
 
     Parameters
@@ -395,45 +395,47 @@ def convert_epub_to_html(logger):
     logger : object
         See <class :any:`LogSystem`>.
     """
-    output_path = os.path.join(root_folder, "UserData", "data_storage",
-                               "pandoc_convertions", "epub_to_html")
-
+    input_path = input_path_storage or os.path.join(root_folder, "UserData", "data_storage",
+                                                    "pandoc_convertions", "epub_to_html")
     header_include_path = os.path.join(root_folder, "AppData", "data",
                                        "includes", "epub_to_html_header_include.html")
+    html_template_path = os.path.join(root_folder, "AppData", "data",
+                                      "includes", "epub_to_html_template.html")
 
-    list_of_files = [entry.name for entry in os.scandir(output_path) if
-                     entry.is_file(follow_symlinks=False) and entry.name.endswith(".epub")]
+    for dirname, dirnames, filenames in os.walk(input_path, topdown=False):
+        for filename in filenames:
+            if filename.endswith(".epub"):
+                f_path = os.path.join(dirname, filename)
+                logger.info(shell_utils.get_cli_separator("-"), date=False)
+                logger.info("Converting:")
+                logger.info(f_path, date=False)
+                f_name = os.path.basename(f_path)
+                dst_name = os.path.splitext(f_name)[0]
+                dst_path = os.path.join(os.path.dirname(f_path), dst_name)
 
-    for f in list_of_files:
-        logger.info(shell_utils.get_cli_separator("-"), date=False)
-        logger.info("Converting:")
-        logger.info(f, date=False)
-        f_path = os.path.join(output_path, f)
-        dst_name = os.path.splitext(f)[0]
-        dst_path = os.path.join(output_path, dst_name)
+                os.makedirs(dst_path, mode=0o777, exist_ok=True)
 
-        os.makedirs(dst_path, mode=0o777, exist_ok=True)
+                cmd = [
+                    "pandoc",
+                    "--standalone",
+                    shell_quote(f_path),
+                    "--output",
+                    shell_quote("%s/index.html" % dst_path),
+                    "--extract-media=assets",
+                    "--include-in-header=%s" % shell_quote(header_include_path),
+                    "--template=%s" % shell_quote(html_template_path),
+                    "--wrap=none",
+                    "--table-of-contents",
+                    "--to=html5"
+                ]
 
-        cmd = [
-            "pandoc",
-            "--standalone",
-            shell_quote(f_path),
-            "--output",
-            shell_quote("%s/index.html" % dst_path),
-            "--extract-media=assets",
-            "--include-in-header=%s" % shell_quote(header_include_path),
-            "--wrap=none",
-            "--table-of-contents",
-            "--to=html5"
-        ]
+                try:
+                    logger.info(" ".join(cmd), date=False)
 
-        try:
-            logger.info(" ".join(cmd), date=False)
-
-            cmd_utils.run_cmd(" ".join(cmd), stdout=None, stderr=None,
-                              cwd=dst_path, shell=True, check=True)
-        except CalledProcessError as err:
-            logger.error(err)
+                    cmd_utils.run_cmd(" ".join(cmd), stdout=None, stderr=None,
+                                      cwd=dst_path, shell=True, check=True)
+                except CalledProcessError as err:
+                    logger.error(err)
 
 
 def create_main_json_file(dry_run=False, logger=None):
