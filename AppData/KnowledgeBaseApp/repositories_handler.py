@@ -591,10 +591,11 @@ class RepositoriesHandler():
         if errors:
             self.logger.error("The following error/s were encountered:")
 
-            for err, repo_path in errors:
+            for err, repo_data in errors:
                 self.logger.info(shell_utils.get_cli_separator("-"), date=False)
                 self.logger.error(err, date=False)
-                self.logger.error(repo_path, date=False)
+                self.logger.error(self._get_repo_url(repo_data), date=False)
+                self.logger.error(self._get_path(repo_data), date=False)
 
     def build_sphinx_docs(self):
         """Build Sphinx documentation.
