@@ -19,7 +19,7 @@ const clearSearchButton = document.getElementById("KB_clear-search-button");
 const topNavbar = document.getElementById("KB_top-navbar");
 const toggleSidebarBtn = document.getElementById("KB_toggle-sidebar");
 
-const sourceURLMDTemplate = "# [Source]({url})\n";
+const sourceURLHTMLTemplate = '<h1><a href="{url}">Source</a></h1>\n';
 
 const dropdownTemplate = ` <div tabindex="-1" role="group" class="KB_action-dropdown-menu dropdown" data-source="{dataSource}" data-href="{dataHref}" data-type="{dataType}">
     <button type="button" class="btn btn-${CONTEXT_COLOR} btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="nf KB_custom-icon-{typeIcon}"></i></button>
@@ -52,72 +52,6 @@ const delayedFocusSearchInput = utilThrottle(() => {
 const delayedSearchFunc = utilThrottle((aVal) => {
     doSearch(aVal);
 }, 500);
-
-/**
- * Define and initialize markdown-it.
- * @type {markdownit}
- */
-const mdit = new window.markdownit({
-    html: true, // Enable HTML tags in source
-    xhtmlOut: false, // Use '/' to close single tags (<br />).
-    // This is only for full CommonMark compatibility.
-    breaks: false, // Convert '\n' in paragraphs into <br>
-    // langPrefix: 'language-', // CSS language prefix for fenced blocks. Can be
-    langPrefix: "", // CSS language prefix for fenced blocks. Can be
-    // useful for external highlighters.
-    linkify: false, // Autoconvert URL-like text to links
-    // Enable some language-neutral replacement + quotes beautification
-    typographer: false,
-    // Double + single quotes replacement pairs, when typographer enabled,
-    // and smartquotes on. Could be either a String or an Array.
-    //
-    // For example, you can use '«»„“' for Russian, '„“‚‘' for German,
-    // and ['«\xA0', '\xA0»', '‹\xA0', '\xA0›'] for French (including nbsp).
-    quotes: "“”‘’",
-
-    // Highlighter function. Should return escaped HTML,
-    // or '' if the source string is not changed and should be escaped externally.
-    // If result starts with <pre... internal wrapper is skipped.
-    // highlight: function( /*str, lang*/ ) {
-    //     return '';
-    // }
-});
-
-/* IMPORTANT!!!
- * Desist at all cost from using any markdown-it plugin that add headings anchors.
- *     1. They are all incredibly dumb. They do not check at all if any other element on the
- *         document may have the same ID or not.
- *     2. None of them make use of a "slugify" function that creates the exact same
- *         slugified name as the one used on GitHub markdown files.
- *
- * Consequences of not using such plugin:
- *     1. Any internal links on markdown files with a TOC is non-functional.
- *
- * TODO:
- *     - Find a way to "flag" markdown files that might need auto generation of heading anchors and
- *         ignore the rest of the markdown files that handles internal links in their own way.
- *
- * IDEA:
- *     - Changing the markdown files "type" isn't an option. Strike it from your thoughts!!!
- *     - Since all markdown files that I create myself are already created with functional TOCs,
- *         maybe "flag" these files?
- *     - Or maybe "flag" the markdown files from repositories?
- *     - Or maybe forget of the whole thing? I don't think if a markdown-it plugin could be
- *         used "on demand".
- */
-
-// Use markdown-it emoji plugin.
-mdit.use(window.markdownitEmoji);
-
-// Override markdown-it's table rendering to add bootstrap classes.
-mdit.renderer.rules.table_open = () => {
-    return '<table class="table table-condensed table-striped table-bordered table-hover">\n';
-};
-
-// Override markdown-it's blockquote rendering to add bootstrap class.
-mdit.renderer.rules.blockquote_open = () => {
-    return '<blockquote class="blockquote">\n';
-};
 
 const btnActMap = {
     "html": {
@@ -484,47 +418,43 @@ function displayMainSection(aEl) {
     // Display body with a delay. This is to avoid seeing all the "functions initial workings".
     $pseudoBody.animate({
         opacity: 1
-    }, 500);
+    }, 250);
 
 }
 
 function loadPageInline(aCurrentPage) {
-    let request = new XMLHttpRequest();
-    request.open("GET", encodeURIComponent(aCurrentPage.url), true);
-    request.setRequestHeader("Pragma", "no-cache");
-    request.setRequestHeader("Cache-Control", "no-cache");
-
-    request.onload = () => {
-        if (request.status >= 200 && request.status < 400) {
+    let ajaxCall = () => {
+        $.ajax({
+            method: "POST",
+            // Non-existent location. It's used just to send POST requests.
+            url: "/handle_inline_content",
+            cache: false,
+            data: {
+                href: aCurrentPage.url,
+                type: aCurrentPage.type
+            }
+        }).done((aResponse) => { // jshint ignore:line
             displayMainSection("content");
-
-            let resp = request.responseText;
 
             if (aCurrentPage.type.toLowerCase() === "md") {
                 if (aCurrentPage.source) {
-                    resp = sourceURLMDTemplate.format({
+                    aResponse = sourceURLHTMLTemplate.format({
                         "url": aCurrentPage.source
-                    }) + resp;
+                    }) + aResponse;
                 }
-
-                resp = mdit.render(resp);
             }
 
             try {
-                $content[0].innerHTML = resp;
+                $content[0].innerHTML = aResponse;
             } finally {
                 setupHTMLInlineContent();
             }
-        } else {
-            console.error("Target server reached, but it returned an error.");
-        }
+        }).fail((aXHR, aStatusText) => {
+            console.error("Request failed: " + aStatusText);
+            console.error(aXHR);
+        });
     };
-
-    request.onerror = (aErr) => {
-        console.error(aErr);
-    };
-
-    request.send(null);
+    ajaxCall();
 }
 
 function contentLinkInternalTarget(aE) {
@@ -652,7 +582,7 @@ function actionClick(a$ActionBtn, aHrefPri, aActionPri) {
         $.ajax({
             method: "POST",
             // Non-existent location. It's used just to send POST requests.
-            url: "/local_files",
+            url: "/handle_local_files",
             cache: false,
             data: {
                 href: aHrefSec,

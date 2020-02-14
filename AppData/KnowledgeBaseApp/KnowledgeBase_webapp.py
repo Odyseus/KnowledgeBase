@@ -16,8 +16,10 @@ from subprocess import run
 
 try:
     from python_utils import bottle
+    from python_utils.mistune_utils import md
 except (ImportError, SystemError):
     from .python_utils import bottle
+    from .python_utils.mistune_utils import md
 
 root_folder = os.path.realpath(os.path.abspath(os.path.join(
     os.path.normpath(os.getcwd()))))
@@ -70,6 +72,28 @@ class KnowledgeBaseWebapp():
         """
         return bottle.static_file(filepath, root=root_folder)
 
+    @bottle_app.post("/handle_inline_content")
+    def handle_inline_content():
+        """Load files inline.
+
+        Returns
+        -------
+        sre
+            The content for the landing page.
+        """
+        file_path = os.path.abspath(os.path.join(root_folder, bottle.request.POST["href"]))
+
+        with open(file_path, "r", encoding="UTF-8") as f:
+            raw_data = f.read()
+
+        if bottle.request.POST["type"].lower() == "md":
+            try:
+                return md(raw_data)
+            except Exception:
+                return raw_data
+        else:
+            return raw_data
+
     @bottle_app.route("/")
     def index():
         """Serve the landing page.
@@ -88,7 +112,7 @@ class KnowledgeBaseWebapp():
             return "Something went horribly wrong!!!"
 
     # Non-existent location. It's used just to "catch" POST requests.
-    @bottle_app.post("/local_files")
+    @bottle_app.post("/handle_local_files")
     def handle_local_files():
         """Handle local files.
         """
