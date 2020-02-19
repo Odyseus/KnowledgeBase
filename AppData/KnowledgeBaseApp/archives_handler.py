@@ -344,6 +344,8 @@ class ArchivesHandler():
         exceptions.MalformedSources
             See <class :any:`exceptions.MalformedSources`>.
         """
+        if not json_schema_utils.JSONSCHEMA_INSTALLED:
+            return
 
         json_schema_utils.validate(
             self._archives_data, archives_schema,

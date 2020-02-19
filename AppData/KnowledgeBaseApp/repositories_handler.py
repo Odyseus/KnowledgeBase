@@ -91,6 +91,9 @@ class RepositoriesHandler():
         InvalidRepositoryData
             Invalid repository data.
         """
+        if not json_schema_utils.JSONSCHEMA_INSTALLED:
+            return
+
         json_schema_utils.validate(
             self._repositories_data, repositories_schema,
             error_message_extra_info="\n".join([
