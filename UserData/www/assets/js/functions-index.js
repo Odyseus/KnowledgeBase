@@ -1,4 +1,4 @@
-const CONTEXT_COLOR = "success";
+const CONTEXT_COLOR = "primary";
 
 const $catButtons = $("#KB_sidebar a.nav-link");
 const $content = $("#KB_content");
@@ -418,7 +418,7 @@ function displayMainSection(aEl) {
     // Display body with a delay. This is to avoid seeing all the "functions initial workings".
     $pseudoBody.animate({
         opacity: 1
-    }, 250);
+    }, 1000);
 
 }
 

@@ -1,6 +1,15 @@
-/*
+/*****************
  * General tweaks.
- */
+ *****************/
+
+/* Content body tweaks. */
+#KB_content {
+    /* To remove a padding-top that who in the hell knows who put it inline and HOW!!! */
+    padding-top: 0 !important;
+    /* To actually display the boxed layout. */
+    margin-top: 50px;
+    margin-bottom: 50px;
+}
 
 /* Set cursor pointers for title links and home link */
 .KB_title-link,
@@ -10,11 +19,12 @@
 
 /* For Back To Top Button */
 #to-top-of-page {
-    bottom: 1rem;
+    bottom: 0;
     display: none;
-    font-size: 2em;
-    font-weight: bold;
+    font-size: 2.5em;
+    margin: 0;
     outline: none;
+    padding: 0;
     position: fixed;
     right: 1rem;
     text-decoration: none;
@@ -22,21 +32,16 @@
 }
 
 #to-top-of-page:hover {
-    opacity: 0.4 !important;
+    opacity: 0.5 !important;
 }
 
 #KB_mainarea {
-    padding-bottom: 0.25em !important;
+    padding-bottom: 0.5em !important;
 }
 
-/*
- * General tweaks.
- */
-
-/*
+/***************
  * Table tweaks.
- */
-
+ ***************/
 #KB_main-index.table th,
 #KB_main-index.table td {
     vertical-align: middle !important;
@@ -47,6 +52,7 @@
    - And also helps to keep the image column width when hiding the sidebar.
 */
 th.KB_title-link,
+
 /* Attempt to expand the clickable area of title links */
 .KB_title-link div {
     width: 100% !important;
@@ -97,14 +103,9 @@ td.KB_title-link {
     text-decoration: none;
 }
 
-/*
- * Table tweaks.
- */
-
-/*
+/*****************
  * Sidebar tweaks.
- */
-
+ *****************/
 #KB_sidebar {
     border-right: 1px solid #eee;
     bottom: 0;
@@ -200,14 +201,10 @@ from categories. */
 #KB_sidebar .KB_toggle-cat-btn:focus {
     box-shadow: none !important;
 }
-/*
- * Sidebar tweaks.
- */
 
-/*
+/********
  * Icons.
- */
-
+ ********/
 .KB_custom-icon-md::before {
     content: "\f48a" !important;
     font-size: 1.3em !important;
@@ -238,13 +235,9 @@ from categories. */
     font-weight: bold !important;
 }
 
-/*
- * Icons.
- */
-
-/*
+/************************
  * Navigation bar tweaks.
- */
+ ************************/
 
 /* Get rid of the repugnant box-shadow when the search input is focused.
    Don't even ask me why this even works!!! ¬¬ */
@@ -311,36 +304,59 @@ from categories. */
     padding-left: 10px;
 }
 
-/*
- * Navigation bar tweaks.
- */
-
-/*
+/********************
  * Pagination tweaks.
- */
+ ********************/
 
-/* Shrink pagination style using bootstrap's "pagination" class CSS. */
-.dataTables_paginate > ul.pagination .page-link {
-    font-size: 0.875rem;
-    line-height: 1.5;
+/* Keep the pagination centered. */
+div.dataTables_wrapper div.dataTables_paginate ul.pagination {
+    justify-content: center !important;
+}
+
+/* Smaller pagination. */
+.pagination .page-link {
     padding: 0.25rem 0.5rem;
+    font-size: 0.8203125rem;
+    line-height: 1.5;
+}
+.pagination .page-item:first-child .page-link {
+    border-top-left-radius: 0.2rem !important;
+    border-bottom-left-radius: 0.2rem !important;
+}
+.pagination .page-item:last-child .page-link {
+    border-top-right-radius: 0.2rem !important;
+    border-bottom-right-radius: 0.2rem !important;
 }
 
-.dataTables_paginate > ul.pagination .page-item:first-child .page-link {
-    border-bottom-left-radius: 0.2rem;
-    border-top-left-radius: 0.2rem;
+/* Colors. */
+.pagination > li.page-item > .page-link {
+    background-color: white;
+    color: black;
+    border: 1px solid #dee2e6;
 }
 
-.dataTables_paginate > ul.pagination .page-item:last-child .page-link {
-    border-bottom-right-radius: 0.2rem;
-    border-top-right-radius: 0.2rem;
+.pagination > li.page-item > .page-link:hover {
+    background-color: #e9ecef;
 }
 
-/*
- * Pagination tweaks.
- */
+.pagination > li.page-item.active .page-link {
+    z-index: 3;
+    color: #fff;
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
 
-/* Because "geniuses" upstream removed this!!!!! */
-.KB_action-dropdown-menu > .btn {
+.pagination > li.page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    cursor: auto;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+/* Because "geniuses" upstream removed this!!!!!
+   It seems that they added it back. Keep it just in case. ¬¬ */
+/*.KB_action-dropdown-menu > .btn {
     white-space: nowrap;
 }
+*/
