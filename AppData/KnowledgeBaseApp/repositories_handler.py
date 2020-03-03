@@ -44,6 +44,12 @@ repo_service_url_map = {
 
 _allowed_repo_types = {"git", "hg"}
 
+global_repo_file_patterns_ignore = [
+    ".github/*",
+    ".gitlab/*",
+    ".travis/*"
+]
+
 
 class InvalidRepositoryData(exceptions.ExceptionWhitoutTraceBack):
     """InvalidRepositoryData
@@ -169,7 +175,7 @@ class RepositoriesHandler():
                 "p": os.path.join(self._get_sphinx_generated_pages_storage(repo_data),
                                   "html", repo_data.get("kb_index_filename", "index.html")),
                 # Icon name
-                "i": repo_data.get("kb_image", "html-external"),
+                "i": repo_data.get("kb_image", "ext"),
                 "s": self._get_repo_url(repo_data)
             })
         except Exception as err:
@@ -189,6 +195,7 @@ class RepositoriesHandler():
             repo_file_names = repo_data.get("repo_file_names", [])
             repo_file_patterns_include = repo_data.get("repo_file_patterns_include", [])
             repo_file_patterns_ignore = repo_data.get("repo_file_patterns_ignore", [])
+            repo_file_patterns_ignore.extend(global_repo_file_patterns_ignore)
             filenames = []
 
             # To have a default and to avoid having to specify repo_file_names in every

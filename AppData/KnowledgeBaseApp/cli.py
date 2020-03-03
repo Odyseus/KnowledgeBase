@@ -72,6 +72,11 @@ Options:
     Force the download of all archives, ignoring the frequency in which they
     should be downloaded. Only used by the "download_all_archives" sub-command.
 
+--input-path-storage=<path>
+    Path to a folder containing **.epub** files. If not specified, the folder at
+    **UserData/data_storage/pandoc_convertions/epub_to_html** will be used.
+    Only used by the "epub_to_html" sub-command.
+
 """.format(appname=__appname__,
            appdescription=__appdescription__,
            version=__version__,

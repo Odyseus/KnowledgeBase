@@ -9,6 +9,7 @@ bottle_app : object
 root_folder : str
     The path to the folder that will be served by the web server.
 """
+import json
 import os
 import sys
 
@@ -81,12 +82,12 @@ class KnowledgeBaseWebapp():
         sre
             The content for the landing page.
         """
-        file_path = os.path.abspath(os.path.join(root_folder, bottle.request.POST["href"]))
+        file_path = os.path.abspath(os.path.join(root_folder, bottle.request.POST["inlinePageURL"]))
 
         with open(file_path, "r", encoding="UTF-8") as f:
             raw_data = f.read()
 
-        if bottle.request.POST["type"].lower() == "md":
+        if bottle.request.POST["inlinePageType"].lower() == "md":
             try:
                 return md(raw_data)
             except Exception:

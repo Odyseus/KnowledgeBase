@@ -97,7 +97,7 @@ class ArchivesHandler():
                                       data.get("kb_filename", "index.html")),
                     # Hard-coded icon name. No need to be specified in the data source since,
                     # at the moment, all archives contain HTML files.
-                    "i": "html-external"
+                    "i": "ext"
                 })
             except Exception as err:
                 self.logger.error(data["kb_title"])

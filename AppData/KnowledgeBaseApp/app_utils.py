@@ -38,16 +38,15 @@ WWW_BASE_PATH = os.path.join(root_folder, "UserData", "www")
 
 CAT_LIST_ITEM_TEMPLATE = """{indent}<li class="nav-item">
 {indent}    <span class="btn-group" role="group">
-{indent}        <a class="nav-link {cat_class} KB_cat-btn btn" href="#"><i class="KB_cat-icon nf {cat_icon}"></i>{cat_title}</a>
+{indent}        <button class="nav-link {cat_class} KB_cat-btn btn" onauxclick="KB_Main.setActiveCategory(event, this);" onclick="KB_Main.setActiveCategory(event, this);" href="#"><i class="KB_cat-icon nf {cat_icon}"></i>{cat_title}</button>
 {indent}    </span>
 {indent}</li>"""
 
-
 CAT_MENU_TEMPLATE = """<li class="nav-item">
     <span class="btn-group" role="group">
-        <a class="nav-link KB_cat-btn btn" href="#"><i class="KB_cat-icon nf {cat_icon}">\
-</i>{cat_title}</a>
-        <a class="KB_toggle-cat-btn btn" href="#{cat_menu_id}" data-toggle="collapse" aria-expanded="false"></a>
+        <button class="nav-link KB_cat-btn btn" onauxclick="KB_Main.setActiveCategory(event, this);" onclick="KB_Main.setActiveCategory(event, this);" href="#"><i class="KB_cat-icon nf {cat_icon}">\
+</i>{cat_title}</button>
+        <button class="KB_toggle-cat-btn btn" href="#{cat_menu_id}" data-toggle="collapse" aria-expanded="false"></button>
     </span>
     <ul class="collapse list-unstyled KB_subcats" id="{cat_menu_id}">
 {sub_cat_items}
@@ -153,7 +152,7 @@ class DataTablesObject():
                                                 # Full path to files from the www folder.
                                                 "p": rel_epub,
                                                 # Icon name
-                                                "i": "html-external"
+                                                "i": "ext"
                                             })
                             except Exception as err:
                                 self.logger.error(filename)
@@ -179,7 +178,7 @@ class DataTablesObject():
                 for data in json_data:
                     data["p"] = "html_pages/{title}/{html_file}".format(title=data["t"],
                                                                         html_file=data["p"])
-                    data["i"] = "html-external"
+                    data["i"] = "ext"
 
                 self.data_tables_obj += json_data
         except Exception as err:
@@ -634,6 +633,7 @@ def generate_index_html(dry_run=False, logger=None):
     logger.info(shell_utils.get_cli_separator("-"), date=False)
     logger.info("Generating index.html file...")
     categories_html_file = os.path.join(WWW_BASE_PATH, "assets", "data", "categories.html")
+    modals_html_file = os.path.join(WWW_BASE_PATH, "assets", "data", "modals.html")
 
     try:
         with open(categories_html_file, "r") as html_file:
@@ -642,11 +642,19 @@ def generate_index_html(dry_run=False, logger=None):
         logger.error(err)
         raise SystemExit(1)
 
+    try:
+        with open(modals_html_file, "r") as html_file:
+            modals_data = html_file.read()
+    except Exception as err:
+        logger.error(err)
+        raise SystemExit(1)
+
     base_index_html_file = os.path.join(WWW_BASE_PATH, "assets", "data", "index-base.html")
 
     try:
         with open(base_index_html_file, "r") as html_file:
-            index_data = html_file.read().replace("<!-- {{categories}} -->", categories_data)
+            index_data = html_file.read().replace("<!-- {{categories}} -->", categories_data
+                                                  ).replace("<!-- {{modals}} -->", modals_data)
     except Exception as err:
         logger.error(err)
         raise SystemExit(1)
