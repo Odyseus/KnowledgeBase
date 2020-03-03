@@ -1,20 +1,27 @@
 /*****************
  * General tweaks.
  *****************/
+body {
+    margin-top: 50px;
+    margin-bottom: 0.7em;
+    /* Kepp scrollbars visible because I hate all the elements in the page dancing around. */
+    overflow-y: scroll;
+}
+
+div.boxed {
+    padding: 15px;
+}
+
+#KB_main-content-wrapper {
+    position: relative;
+    min-height: 100%;
+}
 
 /* Content body tweaks. */
 #KB_content {
-    /* To remove a padding-top that who in the hell knows who put it inline and HOW!!! */
-    padding-top: 0 !important;
     /* To actually display the boxed layout. */
-    margin-top: 50px;
     margin-bottom: 50px;
-}
-
-/* Set cursor pointers for title links and home link */
-.KB_title-link,
-#KB_home-link {
-    cursor: pointer;
+    height: 100%;
 }
 
 /* For Back To Top Button */
@@ -35,8 +42,34 @@
     opacity: 0.5 !important;
 }
 
+/* Add padding to the bottom so the pagination isn't at the edge of the page. */
 #KB_mainarea {
     padding-bottom: 0.5em !important;
+}
+
+/* The loading message centered on screen. */
+#KB_loading > .message {
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    color: white;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    font-size: 2rem;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    min-height: 100vh;
+    text-align: center;
 }
 
 /***************
@@ -47,34 +80,54 @@
     vertical-align: middle !important;
 }
 
+/* Expand the size of a link to the entire table cell. */
+.KB_title-link div,
+
 /* This seems to fix two absolutely annoying bugs:
    - It FINALLY fixed the image column width to randomly expand.
    - And also helps to keep the image column width when hiding the sidebar.
 */
-th.KB_title-link,
-
-/* Attempt to expand the clickable area of title links */
-.KB_title-link div {
+th.KB_title-link {
     width: 100% !important;
     height: 100% !important;
 }
 
-.KB_title-link div:after {
+/* Style the-"links" as anchors.
+ * "Boldify" them.
+ * Attempt to expand the clickable area.
+ */
+.KB_title-link div {
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+    color: var(--success);
+
+    /* Above ".KB_title-link div:before" so I can select text.*/
+    z-index: 1;
+
+    /* For debugging. DO NOT DELETE.*/
+    /*border: solid yellow;*/
+}
+
+.KB_title-link div:hover {
+    opacity: 0.75;
+    cursor: pointer;
+}
+
+.KB_title-link div:before {
     content: "";
-    height: 100%;
-    left: 0;
-    top: 0;
-    width: 100%;
-}
+    position: absolute;
+    top: -0.5em;
+    left: -0.5em;
+    right: -0.5em;
+    bottom: -0.5em;
+    cursor: pointer;
 
-/* Absolutely dirty trick. Remove the padding from the table
-and add it to the internal <div>. ¬¬ */
-.table-sm td.KB_title-link {
-    padding: 0 !important;
-}
+    /* Bellow ".KB_title-link div" so I can select text.*/
+    z-index: -1;
 
-.table-sm td.KB_title-link div {
-    padding: 0.3em !important;
+    /* For debugging. DO NOT DELETE.*/
+    /*border: solid red;*/
 }
 
 /* Set a fixed width for the first column (the image) of the table. */
@@ -97,25 +150,28 @@ and add it to the internal <div>. ¬¬ */
     padding: 2px 3px;
 }
 
-/* Set title links to bold and no decoration */
-td.KB_title-link {
-    font-weight: bold;
-    text-decoration: none;
-}
-
 /*****************
  * Sidebar tweaks.
  *****************/
-#KB_sidebar {
-    border-right: 1px solid #eee;
-    bottom: 0;
-    left: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
-    padding: 20px 0;
+#KB_sidebar-wrapper {
+    padding: 50px 0 0 0;
     position: fixed;
+    left: 0;
     top: 0;
-    z-index: 1000;
+    right: auto;
+    min-height: 100%;
+    overflow-y: auto;
+    white-space: nowrap;
+    height: 100%;
+    z-index: 10;
+}
+
+#KB_sidebar,
+#KB_sidebar div {
+    padding: 0;
+    border: none;
+    margin-left: 0;
+    background-color: transparent;
 }
 
 #KB_sidebar .nav-item {
@@ -128,16 +184,13 @@ td.KB_title-link {
     text-align: left !important;
 }
 
+/* Set a transparent background for sub-categories to easily differentiate them
+from categories. */
+#KB_sidebar .KB_subcats,
 #KB_sidebar .nav-item .KB_toggle-cat-btn:hover,
 #KB_sidebar .nav-item .KB_cat-btn:not(.active):hover,
 #KB_sidebar .nav-item > .nav-link:not(.active):hover {
-    background: rgba(0, 0, 0, 0.075) !important;
-}
-
-/* Set a transparent background for sub-categories to easily differentiate them
-from categories. */
-#KB_sidebar .KB_subcats {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.075) !important;
 }
 
 /* Bigger font size for categories. */
@@ -160,10 +213,10 @@ from categories. */
 }
 
 /* Remove border-radius from the categories that are actually buttons. */
-#KB_sidebar .nav-item a.KB_cat-btn,
-#KB_sidebar .nav-item a.KB_toggle-cat-btn,
-#KB_sidebar .nav-item a.KB_cat-btn:hover,
-#KB_sidebar .nav-item a.KB_toggle-cat-btn:hover {
+#KB_sidebar .nav-item button.KB_cat-btn,
+#KB_sidebar .nav-item button.KB_toggle-cat-btn,
+#KB_sidebar .nav-item button.KB_cat-btn:hover,
+#KB_sidebar .nav-item button.KB_toggle-cat-btn:hover {
     border-radius: 0 !important;
 }
 
@@ -199,7 +252,18 @@ from categories. */
 
 #KB_sidebar .KB_cat-btn:focus,
 #KB_sidebar .KB_toggle-cat-btn:focus {
+    -webkit-box-shadow: none !important;
     box-shadow: none !important;
+}
+
+.navbar-dark button.KB_cat-btn,
+.navbar-dark button.KB_toggle-cat-btn.btn::before {
+    color: var(--light);
+}
+
+.navbar-light button.KB_toggle-cat-btn.btn,
+.navbar-light button.KB_toggle-cat-btn.btn::before {
+    color: var(--dark);
 }
 
 /********
@@ -211,7 +275,7 @@ from categories. */
     font-weight: 500 !important;
 }
 
-.KB_custom-icon-html-external::before {
+.KB_custom-icon-ext::before {
     content: "\f14c" !important;
     font-size: 1.3em !important;
     font-weight: bold !important;
@@ -239,11 +303,38 @@ from categories. */
  * Navigation bar tweaks.
  ************************/
 
-/* Get rid of the repugnant box-shadow when the search input is focused.
-   Don't even ask me why this even works!!! ¬¬ */
-#KB_top-navbar select.custom-select,
-#KB_top-navbar input.form-control {
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075) !important;
+/* NOTE: KB_navbar-button class is a clone of Bootstrap's navbar-toggle class. */
+.KB_navbar-button {
+    vertical-align: middle !important;
+    padding: 0.25rem 0.75rem;
+    font-size: 1.5em;
+    line-height: 1;
+    background-color: transparent;
+    border: none;
+}
+
+.KB_navbar-button:hover,
+.KB_navbar-button:focus {
+    text-decoration: none;
+    border: none;
+}
+
+.KB_navbar-button-icon {
+    width: 1.5em;
+    height: 1.5em;
+    vertical-align: middle;
+    content: "";
+    background: no-repeat center center;
+    -webkit-background-size: 100% 100%;
+    background-size: 100% 100%;
+}
+
+.navbar-dark .KB_navbar-button {
+    color: var(--light);
+}
+
+.navbar-light .KB_navbar-button {
+    color: var(--dark);
 }
 
 /* Set to bold all links on the navigation bar */
@@ -256,25 +347,11 @@ from categories. */
 #KB_edit-button,
 #KB_reload-button {
     cursor: pointer;
-    font-size: 1.2em;
-    font-weight: bold;
 }
 
 #KB_edit-button[disabled],
 #KB_reload-button[disabled] {
     cursor: not-allowed;
-}
-
-#KB_edit-button:focus,
-#KB_edit-button.focus,
-#KB_reload-button:focus,
-#KB_reload-button.focus {
-    box-shadow: none !important;
-}
-
-#KB_edit-button:hover,
-#KB_reload-button:hover {
-    opacity: 0.4 !important;
 }
 
 /* Set and allow cursor pointers for the "Clear search input" button */
@@ -283,80 +360,72 @@ from categories. */
     pointer-events: auto;
 }
 
-/* Sidebar/Navbar toggler tweaks */
-.navbar-light .navbar-toggler,
-.navbar-light .KB_sidebar-toggler {
-    background: transparent;
-    border-radius: 0.25rem;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    font-size: 1rem;
-    line-height: 1;
-    padding: 0.25rem;
-}
-
-.navbar-light .navbar-toggler:hover,
-.navbar-light .KB_sidebar-toggler:hover {
-    opacity: 0.5 !important;
-}
-
-/* Set a padding for the home link to keep it away from the sidebar toggler. */
-#KB_home-link {
-    padding-left: 10px;
-}
-
 /********************
  * Pagination tweaks.
  ********************/
 
 /* Keep the pagination centered. */
-div.dataTables_wrapper div.dataTables_paginate ul.pagination {
+div.dataTables_wrapper div.dataTables_paginate:not(#KB_main-index_paginate) ul.pagination {
+    -webkit-box-pack: center !important;
+    -webkit-justify-content: center !important;
+    -ms-flex-pack: center !important;
     justify-content: center !important;
 }
 
-/* Smaller pagination. */
-.pagination .page-link {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.8203125rem;
-    line-height: 1.5;
-}
-.pagination .page-item:first-child .page-link {
-    border-top-left-radius: 0.2rem !important;
-    border-bottom-left-radius: 0.2rem !important;
-}
-.pagination .page-item:last-child .page-link {
-    border-top-right-radius: 0.2rem !important;
-    border-bottom-right-radius: 0.2rem !important;
+/* NOTE: The following three rules are to achieve the following.
+ * 1. Place the ".dataTables_info" and ".dataTables_paginate" elements next to each other
+ *    at the top of the table index.
+ * 2. Keep ".dataTables_info" to the left and ".dataTables_paginate" to the right.
+ * 3. Match the ".dataTables_info" padding to the ".dataTables_paginate" padding to compensate
+ *    not being able to use "vertical-align" in the ".KB_table-info-pagination-container" element.
+ * 4. The elements need to "swap" from next to each other to one over the other when there is no
+ * space to fit both next to each other.
+ *
+ * None of the above can be done with anything that I have tried.
+ * - "display: flex;" on ".KB_table-info-pagination-container" can display next to each other and
+ *   to the right and left respectively, but cannot be "swapped".
+ * - "display: inline-block;" on ".KB_table-info-pagination-container" children can display them
+ *   next to each other and can be "swapped", but cannot place them to the left/right.
+ *
+ * BEWERE: KB_table_info and KB_table_paginate are IDs generated by DataTables based on the table ID.
+ * KB_table-info-pagination-container is a class added when defining the "dom" option when
+ * creating the DataTables object.
+ */
+
+/* Table info and table pagination tweaks. */
+.KB_table-info-pagination-container {
+    width: 100% !important; /* vertical-align here would make no difference whatsoever since I'm using float. */
 }
 
-/* Colors. */
-.pagination > li.page-item > .page-link {
-    background-color: white;
-    color: black;
-    border: 1px solid #dee2e6;
+.KB_table-info-pagination-container > #KB_table_info {
+    clear: both; /* Match "pagination" class padding because using "float" sucks.*/
+    padding: 0.25rem 0 !important;
+    float: left !important;
 }
 
-.pagination > li.page-item > .page-link:hover {
-    background-color: #e9ecef;
-}
-
-.pagination > li.page-item.active .page-link {
-    z-index: 3;
-    color: #fff;
-    background-color: var(--primary);
-    border-color: var(--primary);
-}
-
-.pagination > li.page-item.disabled .page-link {
-    color: #6c757d;
-    pointer-events: none;
-    cursor: auto;
-    background-color: #fff;
-    border-color: #dee2e6;
+.KB_table-info-pagination-container > #KB_table_paginate {
+    float: right !important;
 }
 
 /* Because "geniuses" upstream removed this!!!!!
    It seems that they added it back. Keep it just in case. ¬¬ */
+
 /*.KB_action-dropdown-menu > .btn {
-    white-space: nowrap;
+white-space: nowrap;
 }
 */
+
+@media (max-width: 575px) {
+    /* To keep the elements in the same line when they are close to each other on small screens. */
+    #KB_top-navbar .container {
+        display: contents;
+    }
+}
+
+@media (max-width: 767px) {
+    /* Hide these elements on small screens. They are functionally useless at that sizes. */
+    #KB_toggle-sidebar,
+    #KB_sidebar-wrapper {
+        display: none;
+    }
+}

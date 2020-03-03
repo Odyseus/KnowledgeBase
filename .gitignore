@@ -19,6 +19,7 @@
 /UserData/www/assets/js/*
 !/UserData/www/assets/css/bootstrap.tweaks.css
 !/UserData/www/assets/data/index-base.html
+!/UserData/www/assets/js/debugManager.js
 !/UserData/www/assets/js/functions-generic-init.js
 !/UserData/www/assets/js/functions-index.js
 !/UserData/www/assets/js/functions-utils.js

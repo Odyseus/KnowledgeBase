@@ -20,135 +20,115 @@
             <p><strong>This page uses JavaScript only to add extra functionality to it. There are no tracking services of any kind and never will be (at least, not from my side).</strong></p>
         </div>
     </noscript>
-    <div id="KB_pseudo-body" style="opacity:0;">
-        <div class="modal fade" id="KB_about-modal" tabindex="-1" role="dialog" aria-labelledby="KB_about-modal-label" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="KB_about-modal-label">About</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <!-- ^ .modal-header end -->
-                    <div class="modal-body">
-                        <ul class="list-unstyled">
-                            <li>
-                                <p>Website created with <a href="https://getbootstrap.com"><b>Bootstrap</b></a>.</p>
-                            </li>
-                            <li>
-                                <p><a href="https://gitlab.com/Odyseus/bootswatch_themes_mods"><b>Boostrap theme</b></a> based on <a href="https://bootswatch.com"><b>Bootswatch</b></a>'s <a href="https://bootswatch.com/flatly"><b>Flatly theme</b></a>.</p>
-                            </li>
-                            <li>
-                                <p>Code syntax highlighting powered by <a href="https://highlightjs.org/"><b>highlight.js</b></a>.</p>
-                            </li>
-                            <li>
-                                <p>The index uses <a href="https://datatables.net"><b>DataTables</b></a> to display, sort and search content.</p>
-                            </li>
-                            <li>
-                                <p>Markdown files are rendered inline using <a href="https://github.com/lepture/mistune"><b>mistune</b></a>.</p>
-                            </li>
-                            <li>
-                                <p>Glyph icons are provided by <a href="https://nerdfonts.com"><b>Nerd Fonts</b></a>.</p>
-                            </li>
-                        </ul>
-                    </div>
-                    <!-- ^ .modal-body end -->
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    </div>
-                    <!-- ^ .modal-footer end -->
+    <div id="KB_pseudo-body" style="opacity: 0;">
+        <nav id="KB_top-navbar" class="px-2 py-0 navbar navbar-expand-sm navbar-dark bg-gradient-primary fixed-top">
+            <div class="container px-0 justify-content-start">
+                <div class="nav navbar-nav">
+                    <button tabindex="0" role="button" id="KB_toggle-sidebar" class="nav-item KB_navbar-button btn" onclick="KB_Main.elementsCallbacks(event, this.id);" type="button" aria-label="Toggle sidebar">
+                        <i class="KB_navbar-button-icon nf nf-fa-bars"></i>
+                    </button>
+                    <a id="KB_home-link" class="nav-item nav-link navbar-brand" onclick="KB_Main.elementsCallbacks(event, this.id);" href="#" title="Knowledge Base index">Index</a>
                 </div>
             </div>
-        </div>
-        <!-- ^ .modal end -->
-        <header>
-            <nav id="KB_top-navbar" class="py-0 py-md-0 navbar navbar-expand-md navbar-light fixed-top bg-light">
-                <button id="KB_toggle-sidebar" class="KB_sidebar-toggler" type="button" title="Toggle sidebar.">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <a id="KB_home-link" class="navbar-brand" href="#">Knowledge Base</a>
-                <button class="navbar-toggler d-lg-none" type="button" data-toggle="collapse" data-target="#KB_top-navbar-content" aria-controls="KB_top-navbar-content" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="KB_top-navbar-content">
-                    <ul class="list-unstyled navbar-nav mr-auto mt-2 mt-lg-0">
-                        <li class="nav-item py-0">
-                            <a class="nav-link" href="#" data-toggle="modal" data-target="#KB_about-modal">About</a>
-                        </li>
-                        <!-- Do not use a dropdown menu for now since there is only About. -->
-                        <!--
-                        <li class="nav-item dropdown">
-                            <div class="dropdown-menu" aria-labelledby="info-menu">
-                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#KB_about-modal">About</a>
-                            </div>
-                        </li>
-                        -->
-                    </ul>
-                    <form id="KB_input-search-group" class="py-0 form-inline my-2 my-lg-0">
-                        <div class="input-group input-group-sm">
-                            <div class="input-group-prepend" for="KB_input-search">
-                                <span class="input-group-text nf nf-fa-search"></span>
-                            </div>
-                            <input id="KB_input-search" type="search" class="form-control form-control-sm" placeholder="Search" autofocus="autofocus">
-                            <div class="input-group-append" for="KB_input-search">
-                                <button id="KB_clear-search-button" class="input-group-btn btn btn-sm btn-primary text-white" title="Clear search input.">
-                                    <i class="nf nf-fa-remove"></i>
-                                </button>
-                            </div>
+            <div class="container px-0 justify-content-center">
+                <form id="KB_input-search-group" class="nav-item navbar-form form-inline mx-auto">
+                    <div class="input-group input-group-sm">
+                        <div class="input-group-prepend" for="KB_input-search">
+                            <i class="input-group-text nf nf-fa-search"></i>
                         </div>
-                    </form>
-                    <ul class="list-unstyled navbar-nav mr-auto mt-2 mt-lg-0">
-                    </ul>
-                    <form id="KB_table-length-chooser" class="py-0 form-inline has-feedback">
-                        <div class="input-group input-group-sm">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text nf nf-fa-table"></span>
-                            </div>
-                            <select class="custom-select custom-select-sm" id="KB_table-length-chooser-select">
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                                <option value="100">100</option>
-                                <option value="200">200</option>
-                                <option value="200">200</option>
-                                <option value="400">400</option>
-                                <option value="-1">All</option>
-                            </select>
+                        <input id="KB_input-search" type="search" class="form-control form-control-sm" placeholder="Search" autofocus="autofocus">
+                        <div class="input-group-append" for="KB_input-search">
+                            <button id="KB_clear-search-button" onclick="KB_Main.elementsCallbacks(event, this.id);" class="input-group-btn btn btn-sm btn-secondary text-white" title="Clear search input">
+                                <i class="nf nf-fa-remove"></i>
+                            </button>
                         </div>
-                    </form>
-                    <!--  <ul class="list-unstyled navbar-nav mr-auto mt-2 mt-lg-0">
-                    </ul> -->
-                    <a id="KB_edit-button" href="#" class="py-0 btn btn-sm text-success" title="Open file with external program.">
-                        <i class="nf nf-fa-edit"></i>
-                    </a>
-                    <a id="KB_reload-button" href="#" class="py-0 btn btn-sm text-success" title="Force reload of the current inline page.">
-                        <i class="nf nf-fa-refresh"></i>
-                    </a>
+                    </div>
+                </form>
+            </div>
+            <button class="nav-item KB_navbar-button d-sm-none" type="button" data-toggle="collapse" data-target="#KB_top-navbar-content" aria-controls="KB_top-navbar-content" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="KB_navbar-button-icon nf nf-fa-bars"></i>
+            </button>
+            <div class="container px-0 justify-content-end ml-auto">
+                <div id="KB_top-navbar-content" class="collapse navbar-collapse">
+                    <div class="nav navbar-nav ml-auto">
+                        <form id="KB_table-length-chooser" class="nav-item navbar-form form-inline has-feedback mx-auto">
+                            <div class="input-group input-group-sm">
+                                <div class="input-group-prepend">
+                                    <i class="input-group-text nf nf-fa-bars"></i>
+                                </div>
+                                <select class="custom-select custom-select-sm" id="KB_table-length-chooser-select">
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                    <option value="200">200</option>
+                                    <option value="400">400</option>
+                                    <option value="-1">All</option>
+                                </select>
+                            </div>
+                        </form>
+                        <a id="KB_edit-button" class="nav-item nav-link d-none mx-auto" onclick="KB_Main.elementsCallbacks(event, this.id);" href="#" role="button" title="Force reload of the current inline page">
+                            <i class="nf nf-fa-edit"></i>
+                        </a>
+                        <a id="KB_reload-button" class="nav-item nav-link d-none mx-auto" onclick="KB_Main.elementsCallbacks(event, this.id);" href="#" role="button" title="Force reload of the current inline page">
+                            <i class="nf nf-fa-refresh"></i>
+                        </a>
+                        <a class="nav-item nav-link mx-auto" href="#" role="button" data-toggle="modal" data-trigger="focus" data-target="#KB_index-modal" title="Page options">
+                            <i class="nf nf-seti-config mx-auto"></i>
+                        </a>
+                    </div>
                 </div>
-            </nav>
-            <!-- ^ #KB_top-navbar end -->
-        </header>
-        <!-- #content is the element used to insert rendered Markdown and HTML fragments. -->
-        <div id="KB_content" class="container boxed"></div>
-        <div id="KB_dashboard" class="container-fluid">
-            <div class="row">
-                <nav id="KB_sidebar" role="navigation" class="collapse show navbar-collapse navbar-light bg-light col-sm-5 col-md-4 col-lg-3 col-xl-2">
-                    <ul id="KB_categories-container" class="nav nav-pills flex-column">
-                        <!-- {{categories}} -->
-                    </ul>
+            </div>
+        </nav>
+        <!--
+            NOTE: The use of row > col-* adds a lot of lateral paddings and margins.
+            All that padding/margin causes a lot of asymmetry throughout the layout.
+            The use of "mx-0" and "px-0" on "row"s and "col-*"s is to get rid of all of that.
+            Everything is beautifully symmetrical once again!!!
+            d-print-block class is used because Firefox is garbage.
+        -->
+        <div id="KB_dashboard" class="row flex-row mx-0 px-0 d-print-block">
+            <div id="KB_sidebar-wrapper" class="bg-gradient-primary col-lg-2 col-md-3">
+                <nav id="KB_sidebar" class="navbar navbar-dark" role="navigation">
+                    <div class="container-fluid">
+                        <ul class="nav nav-pills">
+                            <!-- NOTE: This is a placeholder. Do not modify nor remove. -->
+                            <!-- {{categories}} -->
+                        </ul>
+                    </div>
                 </nav>
-                <main role="main" id="KB_mainarea" class="col-sm-7 ml-sm-auto col-md-8 col-lg-9 col-xl-10 pt-3">
-                    <div id="KB_main-index-wrapper">
-                        <table id="KB_main-index" class="display table table-sm table-responsive-sm table-striped table-bordered table-hover" cellspacing="0" width="100%">
+            </div>
+            <!-- ^ #KB_sidebar-wrapper end -->
+            <div id="KB_main-content-wrapper" class="offset-0 offset-lg-2 offset-md-3  offset-sm-0 col-12 col-lg-10 col-md-9 col-sm-12">
+                <div class="row flex-row mx-0 px-0 d-print-block">
+                    <div class="col-12 mx-0 px-0">
+                        <div id="KB_content" class="container boxed"></div>
+                    </div>
+                    <!--
+                        NOTE: The pagination-sm is added to the wrapper so the paginations inside it
+                        are affected. ¬¬
+                        I WILL NOT add a f*cking call to a f*cking jQuery selector to add a class
+                        to elements every single f*cking time the table is drawn!!!
+                        F*cking web developers thinking that their shit of a bloated web page is
+                        the only page loaded in a browser and a f*cking browser the only software
+                        running in a f*cking system!!!
+                    -->
+                    <div id="KB_table-wrapper" class="col-12 mx-0 px-0">
+                        <table id="KB_table" class="display table table-sm table-responsive-sm table-striped table-bordered table-hover" cellspacing="0" width="100%">
                             <colgroup>
-                                <col class="KB_img-col"></col>
-                                <col class="KB_cat-col"></col>
-                                <col class="KB_sub-cat-col"></col>
-                                <col class="KB_title-col"></col>
+                                <col class="KB_img-col">
+                                </col>
+                                <col class="KB_cat-col">
+                                </col>
+                                <col class="KB_sub-cat-col">
+                                </col>
+                                <col class="KB_title-col">
+                                </col>
                             </colgroup>
                             <thead>
                                 <tr>
-                                    <th></th>
+                                    <th class="text-center text-bold px-0">
+                                        <i class="nf nf-fa-bars"></i>
+                                    </th>
                                     <th>Category</th>
                                     <th>Sub-category</th>
                                     <th>Title</th>
@@ -157,7 +137,9 @@
                             <tbody></tbody>
                             <tfoot>
                                 <tr>
-                                    <th></th>
+                                    <th class="text-center text-bold px-0">
+                                        <i class="nf nf-fa-bars"></i>
+                                    </th>
                                     <th>Category</th>
                                     <th>Sub-category</th>
                                     <th>Title</th>
@@ -165,24 +147,35 @@
                             </tfoot>
                         </table>
                     </div>
-                </main>
+                    <!-- ^ #KB_table-wrapper end -->
+                </div>
             </div>
-            <!-- ^ .row end -->
+            <!-- ^ #KB_main-content-wrapper end -->
         </div>
         <!-- ^ #KB_dashboard end -->
+        <!-- NOTE: This is a placeholder. Do not modify nor remove. -->
+        <!-- {{modals}} -->
     </div>
     <!-- ^ #KB_pseudo-body end -->
     <!--
         If I use the ID back-to-top or back_to_top, nothing freaking works!!!
         All browsers seem to add the hidden attrinbute to these IDs. WTF!!!!!
     -->
-    <span id="to-top-of-page" href="#top">
-            <i class="nf nf-fa-chevron_circle_up"></i>
+    <span id="to-top-of-page" href="#top" class="d-print-none">
+        <i class="nf nf-mdi-arrow_up_box"></i>
     </span>
+    <!--
+        This element makes use of Bootstrap's modal classes.
+        It is shown by default. It will be hidden by calling "hide()" on the element.
+    -->
+    <div id="KB_loading" class="modal-backdrop bg-primary">
+        <div class="message">Loading index...</div>
+    </div>
     <script type="text/javascript" src="assets/js/jquery.min.js"></script>
     <script type="text/javascript" src="assets/js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="assets/js/highlight.pack.js"></script>
     <script type="text/javascript" src="assets/js/datatables.min.js"></script>
+    <script type="text/javascript" src="assets/js/debugManager.js"></script>
     <script type="text/javascript" src="assets/js/functions-utils.js"></script>
     <script type="text/javascript" src="assets/js/functions-index.js"></script>
 </body>
