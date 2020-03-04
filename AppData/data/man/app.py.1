@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH "APP.PY" "1" "Feb 19, 2020" "" "Knowledge Base"
+.TH "APP.PY" "1" "Mar 04, 2020" "" "Knowledge Base"
 .SH NAME
 app.py \- CLI utility to generate and manage a personal and self-hosted *Knowledge Base* on GNU/Linux.
 .
@@ -66,8 +66,59 @@ No mayor requirements are needed to run this application other than Python 3.5+.
 \fB\-\-manual\fP: Display this application manual.
 .IP \(bu 2
 \fB\-\-version\fP: Show this application version.
+.IP \(bu 2
+\fB\-d\fP or \fB\-\-dry\-run\fP: Do not perform file system changes. Only display messages informing of the actions that will be performed or commands that will be executed.
 .UNINDENT
-.SS Commands
+.SS app.py run
+.SS Sub\-commands
+.INDENT 0.0
+.IP \(bu 2
+\fBupdate_all_repositories\fP: Pull from or clone all repositories defined in \fBUserData/data_sources/repositories.py\fP\&. See \fI\%repositories.py template\fP\&.
+.INDENT 2.0
+.INDENT 3.5
+.INDENT 0.0
+.IP \(bu 2
+Option \fB\-\-do\-not\-pull\fP: Do not update repositories (do not pull), just initialize the ones that weren\(aqt cloned yet.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+\fBhandle_all_repositories\fP: Handle the data defined in \fBUserData/data_sources/repositories.py\fP\&. See \fBKnowledgeBaseApp.repositories_handler.RepositoriesHandler.handle_all_repositories\fP\&.
+.IP \(bu 2
+\fBdownload_all_archives\fP:
+.INDENT 2.0
+.INDENT 3.5
+.INDENT 0.0
+.IP \(bu 2
+Option \fB\-\-force\-download\fP: Force the download of all archives, ignoring the frequency in which they should be downloaded.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+\fBcreate_main_json_file\fP:
+.IP \(bu 2
+\fBhtml_to_markdown_files\fP:
+.IP \(bu 2
+\fBhtml_to_markdown_clip\fP:
+.IP \(bu 2
+\fBepub_to_html\fP:
+.INDENT 2.0
+.INDENT 3.5
+.INDENT 0.0
+.IP \(bu 2
+Option \fB\-\-input\-path\-storage=<path>\fP: Path to a folder containing \fB\&.epub\fP files. If no specified, the folder at \fBUserData/data_storage/pandoc_convertions/epub_to_html\fP will be used.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
+\fBbuild_sphinx_docs\fP:
+.IP \(bu 2
+\fBgenerate_categories_html\fP:
+.IP \(bu 2
+\fBgenerate_index_html\fP:
+.IP \(bu 2
+\fBopen_main_webpage\fP:
+.UNINDENT
 .SS app.py server
 .sp
 The HTTP server started will host the folder at \fBUserData/www\fP\&.
@@ -127,6 +178,7 @@ Non\-compressed/Non\-tared files are directly downloaded into their final destin
 .sp
 .nf
 .ft C
+# START archives.py
 #!/usr/bin/python3
 # \-*\- coding: utf\-8 \-*\-
 """Archives data practical example.
@@ -159,6 +211,7 @@ data = [
         "download_frequency": "s"
     }
 ]
+# END archives.py
 
 .ft P
 .fi
@@ -225,6 +278,7 @@ Repositories are cloned into a temporary location (\fBUserData/data_storage/<rep
 .sp
 .nf
 .ft C
+# START repositories.py
 #!/usr/bin/python3
 # \-*\- coding: utf\-8 \-*\-
 """Repositories data practical example.
@@ -253,6 +307,7 @@ data = [
         "kb_title_prefix": "Devhints cheatsheets \- "
     }
 ]
+# END repositories.py
 
 .ft P
 .fi
@@ -316,6 +371,7 @@ This file is used to assign custom icons to the categories in the sidebar of the
 .sp
 .nf
 .ft C
+// START categories.json
 {
     "Bookmark": {
         "icon": "nf\-oct\-bookmark"
@@ -324,6 +380,7 @@ This file is used to assign custom icons to the categories in the sidebar of the
         "icon": "nf\-dev\-webplatform"
     }
 }
+// END categories.json
 
 .ft P
 .fi
