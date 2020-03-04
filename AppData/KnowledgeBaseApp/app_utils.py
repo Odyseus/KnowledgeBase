@@ -392,8 +392,10 @@ def convert_epub_to_html(input_path_storage=None, logger=None):
 
     Parameters
     ----------
-    logger : object
-        See <class :any:`LogSystem`>.
+    input_path_storage : None, optional
+        Path to where .epub files are stored.
+    logger : LogSystem
+        The logger.
     """
     input_path = input_path_storage or os.path.join(root_folder, "UserData", "data_storage",
                                                     "pandoc_convertions", "epub_to_html")

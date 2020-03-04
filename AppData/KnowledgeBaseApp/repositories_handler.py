@@ -4,6 +4,8 @@
 
 Attributes
 ----------
+global_repo_file_patterns_ignore : list
+    Repositories globally ignored patterns.
 repo_service_url_map : dict
     List of repositories service URLs.
 repositories_data_tables_json_path : str
@@ -92,10 +94,10 @@ class RepositoriesHandler():
     def _validate_repo_data(self):
         """Validate repository data.
 
-        Raises
-        ------
-        InvalidRepositoryData
-            Invalid repository data.
+        Returns
+        -------
+        None
+            Halt execution.
         """
         if not json_schema_utils.JSONSCHEMA_INSTALLED:
             return
@@ -311,45 +313,45 @@ class RepositoriesHandler():
     def _get_sphinx_generated_pages_storage(self, repo_data):
         """Get Sphinx generated pages storage.
 
-        Returns
-        -------
-        str
-            The path to the Sphinx generated pages storage.
-
         Parameters
         ----------
         repo_data : dict
             Repository data.
+
+        Returns
+        -------
+        str
+            The path to the Sphinx generated pages storage.
         """
         return os.path.join("sphinx_generated_pages", self._get_folder_name(repo_data))
 
     def _get_folder_name(self, repo_data):
         """Get the repository folder name.
 
-        Returns
-        -------
-        str
-            The repository folder name.
-
         Parameters
         ----------
         repo_data : dict
             Repository data.
+
+        Returns
+        -------
+        str
+            The repository folder name.
         """
         return repo_data.get("repo_owner") + "-" + repo_data.get("repo_name")
 
     def _get_storage_path(self, repo_data):
         """Get the storage path (were all the repositories are cloned into).
 
-        Returns
-        -------
-        str
-            The storage path.
-
         Parameters
         ----------
         repo_data : dict
             Repository data.
+
+        Returns
+        -------
+        str
+            The storage path.
         """
         return os.path.join(root_folder, "UserData", "data_storage",
                             "%s_repositories" % repo_data.get("repo_service", "github"))
@@ -357,15 +359,15 @@ class RepositoriesHandler():
     def _get_path(self, repo_data):
         """Get the repository path.
 
-        Returns
-        -------
-        str
-            The repository path.
-
         Parameters
         ----------
         repo_data : dict
             Repository data.
+
+        Returns
+        -------
+        str
+            The repository path.
         """
         return os.path.join(self._get_storage_path(repo_data),
                             self._get_folder_name(repo_data))
@@ -373,15 +375,15 @@ class RepositoriesHandler():
     def _get_repo_service_slug(self, repo_data):
         """Get the repository service slug.
 
-        Returns
-        -------
-        str
-            The repository path.
-
         Parameters
         ----------
         repo_data : dict
             Repository data.
+
+        Returns
+        -------
+        str
+            The repository path.
         """
         return os.path.join(self._get_storage_path(repo_data),
                             self._get_folder_name(repo_data))
@@ -417,13 +419,19 @@ class RepositoriesHandler():
     def _get_repo_url(self, repo_data):
         """Get repository URL.
 
+        Parameters
+        ----------
+        repo_data : dict
+            Repository data.
+
         Returns
         -------
         str
             The repository URL.
         """
         repo_service = repo_data.get("repo_service", "github")
-        repo_url_template = "{}{}/{}.git" if repo_data.get("repo_type", "git") == "git" else "{}{}/{}"
+        repo_url_template = "{}{}/{}.git" if repo_data.get(
+            "repo_type", "git") == "git" else "{}{}/{}"
         repo_base_url = repo_service_url_map[repo_service] if \
             repo_service in repo_service_url_map else repo_service
 
@@ -527,6 +535,12 @@ class RepositoriesHandler():
     def update_all_repositories(self, do_not_pull=False):
         """Main function to update repositories.
 
+        Parameters
+        ----------
+        do_not_pull : bool, optional
+            Just clone the repositories that where not handled before, do not pull from existent
+            repositories.
+
         Raises
         ------
         exceptions.KeyboardInterruption
@@ -537,6 +551,7 @@ class RepositoriesHandler():
 
         repos_count = len(self._repositories_data)
         repos_processed = 0
+        repos_omitted = 0
 
         for repo_data in self._repositories_data:
             repos_processed += 1
@@ -567,8 +582,7 @@ class RepositoriesHandler():
                     continue
 
                 if do_not_pull:
-                    self.logger.info("Pulling from <%s-%s> omitted." %
-                                     (repo_data.get("repo_owner"), repo_data.get("repo_name")))
+                    repos_omitted += 1
                     continue
 
                 # Do the wrong thing until Git allows me to do the right thing.
@@ -606,6 +620,9 @@ class RepositoriesHandler():
                 self.logger.error(err, date=False)
                 self.logger.error(self._get_repo_url(repo_data), date=False)
                 self.logger.error(self._get_path(repo_data), date=False)
+
+        if repos_omitted > 0:
+            self.logger.info("%d repositories omitted from pulling." % repos_omitted)
 
     def build_sphinx_docs(self):
         """Build Sphinx documentation.

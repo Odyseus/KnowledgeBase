@@ -1,6 +1,17 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 """Schemas for JSON data validation.
+
+Attributes
+----------
+archives_schema : dict
+    JSON schema.
+categories_data_schema : dict
+    JSON schema.
+common_keys : dict
+    JSON schema.
+repositories_schema : dict
+    JSON schema.
 """
 common_keys = {
     "kb_title": {

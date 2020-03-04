@@ -100,6 +100,8 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
         in the order they were defined (passed as arguments).
     run_args_order : list
         List used as a gude to execute functions in the order they need to.
+    www_root : str
+        Path to the folder that will be served by the web server.
     """
     run_args_order = [
         "update_all_repositories",

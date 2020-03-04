@@ -339,6 +339,11 @@ class ArchivesHandler():
     def _validate_archives_data(self):
         """Validate archives data.
 
+        Returns
+        -------
+        None
+            Halt execution.
+
         Raises
         ------
         exceptions.MalformedSources
