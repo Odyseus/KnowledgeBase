@@ -682,7 +682,7 @@ var KB_Table = null;
                         KB_Constants.tableWrapper.classList.add("d-none");
                         KB_Constants.content.classList.remove("d-none");
                         KB_Constants.reloadButton.classList.remove("d-none");
-                        this._URLParams.has("type") && this._URLParams.get("type") === "md" &&
+                        this._URLParams.has("inlinePageType") && this._URLParams.get("inlinePageType") === "md" &&
                             KB_Constants.editButton.classList.remove("d-none");
                         KB_Constants.inputSearchForm.classList.add("d-none");
                         KB_Constants.tableLengthChooserForm.classList.add("d-none");

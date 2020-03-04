@@ -282,7 +282,7 @@ from categories. */
 }
 
 .KB_custom-icon-pdf::before {
-    content: "\f1c1" !important;
+    content: "\f411" !important;
     font-size: 1.3em !important;
     font-weight: bold !important;
 }
