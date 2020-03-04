@@ -18,6 +18,7 @@ from .__init__ import __appdescription__
 from .__init__ import __appname__
 from .__init__ import __status__
 from .__init__ import __version__
+from .python_utils import bottle_utils
 from .python_utils import cli_utils
 from .python_utils import exceptions
 
@@ -120,6 +121,7 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
         "build_sphinx_docs"
     }
     func_names = []
+    www_root = os.path.join(root_folder, "UserData", "www")
     _repositories_handler = None
 
     def __init__(self, docopt_args):
@@ -241,16 +243,19 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
         action : str, optional
             Any of the following: start/stop/restart.
         """
-        www_root = os.path.join(root_folder, "UserData", "www")
-        os.chdir(www_root)
-        cmd_path = os.path.join(root_folder, "AppData", "data", "python_scripts", "http_server")
+        app_slug = "KnowledgeBase"
+        web_app_path = os.path.abspath(os.path.join(root_folder, "AppData",
+                                                    "%sApp" % app_slug,
+                                                    "%s_webapp.py" % app_slug))
 
-        # Use of os.execv() so at the end only one process is left executing.
-        # The "http_server" executable also uses os.execv() to launch the real web application.
-        os.execv(cmd_path, [" "] + [action,
-                                    "KnowledgeBase",
-                                    self.a["--host"],
-                                    self.a["--port"]])
+        bottle_utils.handle_server(action=action,
+                                   server_args={
+                                       "www_root": self.www_root,
+                                       "web_app_path": web_app_path,
+                                       "host": self.a["--host"],
+                                       "port": self.a["--port"]
+                                   },
+                                   logger=self.logger)
 
     def http_server_start(self):
         """Self explanatory.
@@ -287,7 +292,11 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
         """Self explanatory.
         """
         import webbrowser
-        webbrowser.open("http://0.0.0.0:8888", new=2, autoraise=True)
+        url = "http://%s:%s" % (self.a["--host"], self.a["--port"])
+        webbrowser.open(url, new=2)
+        # NOTE: The server is restarted AFTER launching the website because executing the web
+        # application will replace the current process.
+        self.http_server_restart()
 
     def build_sphinx_docs(self):
         """See :any:`RepositoriesHandler.build_sphinx_docs`

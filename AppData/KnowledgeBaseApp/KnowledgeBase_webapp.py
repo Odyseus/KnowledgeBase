@@ -4,58 +4,74 @@
 
 Attributes
 ----------
-bottle_app : object
-    Bottle application.
 root_folder : str
     The path to the folder that will be served by the web server.
 """
-import json
 import os
 import sys
 
 from subprocess import run
 
 try:
-    from python_utils import bottle
+    from docutils import core as docutils_core
+except (ImportError, SystemError):
+    docutils_core = None
+
+# NOTE: Failsafe imports due to this file being used as a script (when launching the server)
+# and as a module (when generating documentation with Sphinx).
+try:
+    from python_utils.bottle_utils import bottle
+    from python_utils.bottle_utils import bottle_app
+    from python_utils.bottle_utils import WebApp
     from python_utils.mistune_utils import md
 except (ImportError, SystemError):
-    from .python_utils import bottle
+    from .python_utils.bottle_utils import bottle
+    from .python_utils.bottle_utils import bottle_app
+    from .python_utils.bottle_utils import WebApp
     from .python_utils.mistune_utils import md
 
 root_folder = os.path.realpath(os.path.abspath(os.path.join(
     os.path.normpath(os.getcwd()))))
 
-bottle_app = bottle.Bottle()
 
+def parse_rst(input_string):
+    """Parse resTrructuredText.
 
-class KnowledgeBaseWebapp():
-    """Knowledge Base web server.
-
-    Attributes
+    Parameters
     ----------
-    host : str
-        The host name used by the web server.
-    port : str
-        The port number used by the web server.
-    """
+    input_string : str
+        The rST string to parse.
 
-    def __init__(self, host, port):
+    Returns
+    -------
+    str
+        The parsed rST string.
+    """
+    overrides = {
+        "input_encoding": "unicode",
+        "doctitle_xform": True,
+        "initial_header_level": 1
+    }
+    parts = docutils_core.publish_parts(source=input_string, source_path=None,
+                                        writer_name="html5", settings_overrides=overrides)
+
+    return parts["html_body"]
+
+
+class KnowledgeBaseWebapp(WebApp):
+    """Web server.
+    """
+    def __init__(self, *args, **kwargs):
         """Initialization.
 
         Parameters
         ----------
-        host : str
-            The host name used by the web server.
-        port : str
-            The port number used by the web server.
+        *args
+            Arguments.
+        **kwargs
+            Keyword arguments.
         """
-        self.host = host
-        self.port = port
-
-    def run(self):
-        """Run web application.
-        """
-        bottle_app.run(host=self.host, port=self.port)
+        super().__init__(*args, **kwargs)
 
     @bottle_app.route("/<filepath:path>")
     def server_static(filepath):
@@ -87,9 +103,15 @@ class KnowledgeBaseWebapp():
         with open(file_path, "r", encoding="UTF-8") as f:
             raw_data = f.read()
 
+        # TODO: Using "md" for .rst because I couldn't find an RST icon between the thousands of
+        # icon in NerdFont. Some day I might stumble upon one. LOL
         if bottle.request.POST["inlinePageType"].lower() == "md":
             try:
-                return md(raw_data)
+                # NOTE: Try to parse reStructuredText and fallback to Markdown.
+                if file_path.lower()[-4:] == ".rst" and docutils_core is not None:
+                    return parse_rst(raw_data)
+                else:
+                    return md(raw_data)
             except Exception:
                 return raw_data
         else:
