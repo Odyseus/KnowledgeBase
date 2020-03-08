@@ -39,7 +39,7 @@ build_sphinx_docs \
 generate_categories_html \
 generate_index_html \
 open_main_webpage \
---force-download --dry-run --do-not-pull" -- "${cur}") )
+--force-download --dry-run --do-not-pull --input-path-storage=" -- "${cur}") )
         ;;
     "server")
         COMPREPLY=( $(compgen -W "start stop restart --host= --port=" -- "${cur}") )
