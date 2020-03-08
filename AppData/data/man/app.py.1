@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH "APP.PY" "1" "Mar 04, 2020" "" "Knowledge Base"
+.TH "APP.PY" "1" "Mar 08, 2020" "" "Knowledge Base"
 .SH NAME
 app.py \- CLI utility to generate and manage a personal and self-hosted *Knowledge Base* on GNU/Linux.
 .
@@ -233,6 +233,24 @@ All data keys are of type string and are optional unless specified otherwise.
 .IP \(bu 2
 \fBarch_url\fP (\fBMadatory\fP): The url from which to download an archive.
 .IP \(bu 2
+\fBkb_handler\fP (\fBDefault\fP: \fBext\fP): A \fIhandler ID\fP used to decide how the web page will handle an entry. It also decides what image to use on an entry\(aqs action button. Possible values:
+.INDENT 2.0
+.INDENT 3.5
+.INDENT 0.0
+.IP \(bu 2
+\fBepub\fP: epub file handler. These files are always opened externally by the program that can handle them.
+.IP \(bu 2
+\fBext\fP: Standalone HTML pages. These pages will always be opened in a new tab.
+.IP \(bu 2
+\fBhtml\fP: Inline HTML pages. These pages are simply HTML markup (not an HTML document, just the content of the \fBbody\fP tag) that are dimmed to big or to complex to be converted to Markdown. These pages are rendered inline.
+.IP \(bu 2
+\fBmd\fP: Inline Markdown or reStructuredText documents.
+.IP \(bu 2
+\fBpdf\fP: PDF file handler. These files can be opened in a new browser tab or extenrnally by the program that can handle them. Whether they are opened in browser or externally can be configured from the page settings.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.IP \(bu 2
 \fBkb_rel_path\fP (\fBDefault\fP: empty): The path (relative to \fBUserData/www/html_pages_from_archives/<kb_title>\fP) to the a folder containing an HTML file (\fBkb_filename\fP) found inside the extracted content of an archive.
 .IP \(bu 2
 \fBkb_filename\fP (\fBDefault\fP: \fBindex.html\fP): The file name found inside the extracted content of an archive relative to \fBkb_rel_path\fP\&.
@@ -355,6 +373,8 @@ All data keys are of type string and are optional unless specified otherwise.
 .IP \(bu 2
 \fBkb_category\fP (\fBDefault\fP: \fBUncategorized\fP):
 .IP \(bu 2
+\fBkb_handler\fP (\fBDefault\fP: \fBmd\fP): A \fIhandler ID\fP used to decide how the web page will handle an entry. It also decides what image to use on an entry\(aqs action button. See \fBarchives.py\fP template > \fBdata keys\fP > \fBkb_handler\fP for details.
+.IP \(bu 2
 \fBkb_title_prefix\fP: If defined, this prefix will be used to generate a label that will be displayed in the web page index table. The final label will look like \fB<kb_title_prefix><file_name>\fP\&. \fB<file_name>\fP being the name of the file or files defined either by the \fBrepo_file_names\fP or the \fBrepo_file_patterns_include\fP keys. This key is more suitable for use when more than one file is used in a repository.
 .IP \(bu 2
 \fBkb_title\fP: If \fBkb_title_prefix\fP is not defined, this key will be used to display the label in the web page index table. This key is more suitable for use when only one file is used in a repository.
@@ -371,7 +391,7 @@ This file is used to assign custom icons to the categories in the sidebar of the
 .sp
 .nf
 .ft C
-// START categories.json
+# START categories.json
 {
     "Bookmark": {
         "icon": "nf\-oct\-bookmark"
@@ -380,7 +400,7 @@ This file is used to assign custom icons to the categories in the sidebar of the
         "icon": "nf\-dev\-webplatform"
     }
 }
-// END categories.json
+# END categories.json
 
 .ft P
 .fi
