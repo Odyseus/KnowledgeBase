@@ -4,7 +4,7 @@
 
 Attributes
 ----------
-root_folder : str
+www_root : str
     The path to the folder that will be served by the web server.
 """
 import os
@@ -18,20 +18,23 @@ try:
 except (ImportError, SystemError):
     docutils_core = None
 
-# NOTE: Failsafe imports due to this file being used as a script (when launching the server)
-# and as a module (when generating documentation with Sphinx).
 try:
-    from python_utils.bottle_utils import bottle
-    from python_utils.bottle_utils import bottle_app
-    from python_utils.bottle_utils import WebApp
-    from python_utils.mistune_utils import md
-except (ImportError, SystemError):
-    from .python_utils.bottle_utils import bottle
-    from .python_utils.bottle_utils import bottle_app
-    from .python_utils.bottle_utils import WebApp
-    from .python_utils.mistune_utils import md
+    # If executed as a script to start the web server.
+    host, port, app_dir_path = sys.argv[1:]
+except Exception:
+    # If imported as a module by Sphinx.
+    host, port = None, None
+    app_dir_path = os.path.realpath(os.path.abspath(os.path.join(
+        os.path.normpath(os.path.dirname(__file__)))))
 
-root_folder = os.path.realpath(os.path.abspath(os.path.join(
+sys.path.insert(0, app_dir_path)
+
+from python_utils.bottle_utils import WebApp
+from python_utils.bottle_utils import bottle
+from python_utils.bottle_utils import bottle_app
+from python_utils.mistune_utils import md
+
+www_root = os.path.realpath(os.path.abspath(os.path.join(
     os.path.normpath(os.getcwd()))))
 
 _title_template = "<h1>{page_title}</h1>\n"
@@ -91,7 +94,7 @@ class KnowledgeBaseWebapp(WebApp):
         object
             An instance of `bottle.HTTPResponse`.
         """
-        return bottle.static_file("bootstrap.min.css", root=os.path.join(root_folder, "assets", "css"))
+        return bottle.static_file("bootstrap.min.css", root=os.path.join(www_root, "assets", "css"))
 
     @bottle_app.route("/<filepath:path>")
     def server_static(filepath):
@@ -107,7 +110,7 @@ class KnowledgeBaseWebapp(WebApp):
         object
             An instance of bottle.HTTPResponse.
         """
-        return bottle.static_file(filepath, root=root_folder)
+        return bottle.static_file(filepath, root=www_root)
 
     @bottle_app.post("/handle_inline_content")
     def handle_inline_content():
@@ -121,7 +124,7 @@ class KnowledgeBaseWebapp(WebApp):
         html_data = ""
         handler = unquote(bottle.request.POST["inlinePageHandler"]).lower()
         file_path = os.path.abspath(os.path.join(
-            root_folder, unquote(bottle.request.POST["inlinePageURL"])))
+            www_root, unquote(bottle.request.POST["inlinePageURL"])))
 
         page_title = unquote(bottle.request.POST["inlinePageTitle"])
         page_source = unquote(bottle.request.POST["inlinePageSource"])
@@ -157,7 +160,7 @@ class KnowledgeBaseWebapp(WebApp):
         sre
             The content for the landing page.
         """
-        with open(os.path.join(root_folder, "index.html"), "r", encoding="UTF-8") as index_file:
+        with open(os.path.join(www_root, "index.html"), "r", encoding="UTF-8") as index_file:
             index_data = index_file.read()
 
         if index_data:
@@ -171,7 +174,7 @@ class KnowledgeBaseWebapp(WebApp):
         """Handle local files.
         """
         action = unquote(bottle.request.POST["action"])
-        file_path = os.path.abspath(os.path.join(root_folder, unquote(bottle.request.POST["href"])))
+        file_path = os.path.abspath(os.path.join(www_root, unquote(bottle.request.POST["href"])))
         file_folder = os.path.dirname(file_path)
         p = None
 
@@ -196,9 +199,6 @@ class KnowledgeBaseWebapp(WebApp):
 # FIXME: Convert this script into a module.
 # Just because it's the right thing to do.
 # As it is right now, everything works as "it should".
-if __name__ == "__main__":
-    args = sys.argv[1:]
-
-    if len(args) == 2:
-        app = KnowledgeBaseWebapp(args[0], args[1])
-        app.run()
+if __name__ == "__main__" and host and port:
+    app = KnowledgeBaseWebapp(host, port)
+    app.run()
