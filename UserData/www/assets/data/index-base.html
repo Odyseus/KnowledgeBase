@@ -6,7 +6,7 @@
     <title>Knowledge Base</title>
     <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.svg">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link type="text/css" rel="stylesheet" href="assets/css/flatly_mod.min.css">
+    <link type="text/css" rel="stylesheet" href="assets/css/bootstrap.min.css">
     <link type="text/css" rel="stylesheet" href="assets/css/nerdicons.min.css">
     <link type="text/css" rel="stylesheet" href="assets/css/highlight.min.css" />
     <link type="text/css" rel="stylesheet" href="assets/css/datatables.min.css">
@@ -24,10 +24,10 @@
         <nav id="KB_top-navbar" class="px-2 py-0 navbar navbar-expand-sm navbar-dark bg-gradient-primary fixed-top">
             <div class="container px-0 justify-content-start">
                 <div class="nav navbar-nav">
-                    <button tabindex="0" role="button" id="KB_toggle-sidebar" class="nav-item KB_navbar-button btn" onclick="KB_Main.elementsCallbacks(event, this.id);" type="button" aria-label="Toggle sidebar">
+                    <button tabindex="0" role="button" id="KB_toggle-sidebar" class="KB_nav-item nav-item KB_navbar-button btn" type="button" aria-label="Toggle sidebar">
                         <i class="KB_navbar-button-icon nf nf-fa-bars"></i>
                     </button>
-                    <a id="KB_home-link" class="nav-item nav-link navbar-brand" onclick="KB_Main.elementsCallbacks(event, this.id);" href="#" title="Knowledge Base index">Index</a>
+                    <a id="KB_home-link" class="KB_nav-item nav-item nav-link navbar-brand" href="#" title="Knowledge Base index">Index</a>
                 </div>
             </div>
             <div class="container px-0 justify-content-center">
@@ -38,10 +38,25 @@
                         </div>
                         <input id="KB_input-search" type="search" class="form-control form-control-sm" placeholder="Search" autofocus="autofocus">
                         <div class="input-group-append" for="KB_input-search">
-                            <button id="KB_clear-search-button" onclick="KB_Main.elementsCallbacks(event, this.id);" class="input-group-btn btn btn-sm btn-secondary text-white" title="Clear search input">
+                            <button id="KB_clear-search-button" class="KB_nav-item input-group-btn btn btn-sm btn-secondary text-white" title="Clear search input">
                                 <i class="nf nf-fa-remove"></i>
                             </button>
                         </div>
+                    </div>
+                </form>
+                <form id="KB_table-length-chooser-form" class="nav-item navbar-form form-inline has-feedback mx-auto">
+                    <div class="input-group input-group-sm">
+                        <div class="input-group-prepend">
+                            <i class="input-group-text nf nf-fa-bars"></i>
+                        </div>
+                        <select class="custom-select custom-select-sm" id="KB_table-length-chooser-select" title="Select table length">
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                            <option value="200">200</option>
+                            <option value="400">400</option>
+                            <option value="-1">All</option>
+                        </select>
                     </div>
                 </form>
             </div>
@@ -51,25 +66,10 @@
             <div class="container px-0 justify-content-end ml-auto">
                 <div id="KB_top-navbar-content" class="collapse navbar-collapse">
                     <div class="nav navbar-nav ml-auto">
-                        <form id="KB_table-length-chooser" class="nav-item navbar-form form-inline has-feedback mx-auto">
-                            <div class="input-group input-group-sm">
-                                <div class="input-group-prepend">
-                                    <i class="input-group-text nf nf-fa-bars"></i>
-                                </div>
-                                <select class="custom-select custom-select-sm" id="KB_table-length-chooser-select">
-                                    <option value="25">25</option>
-                                    <option value="50">50</option>
-                                    <option value="100">100</option>
-                                    <option value="200">200</option>
-                                    <option value="400">400</option>
-                                    <option value="-1">All</option>
-                                </select>
-                            </div>
-                        </form>
-                        <a id="KB_edit-button" class="nav-item nav-link d-none mx-auto" onclick="KB_Main.elementsCallbacks(event, this.id);" href="#" role="button" title="Force reload of the current inline page">
+                        <a id="KB_edit-button" class="KB_nav-item nav-item nav-link d-none mx-auto" href="#" role="button" title="Open inline page source with external program">
                             <i class="nf nf-fa-edit"></i>
                         </a>
-                        <a id="KB_reload-button" class="nav-item nav-link d-none mx-auto" onclick="KB_Main.elementsCallbacks(event, this.id);" href="#" role="button" title="Force reload of the current inline page">
+                        <a id="KB_reload-button" class="KB_nav-item nav-item nav-link d-none mx-auto" href="#" role="button" title="Force reload of the current inline page">
                             <i class="nf nf-fa-refresh"></i>
                         </a>
                         <a class="nav-item nav-link mx-auto" href="#" role="button" data-toggle="modal" data-trigger="focus" data-target="#KB_index-modal" title="Page options">
@@ -84,14 +84,15 @@
             All that padding/margin causes a lot of asymmetry throughout the layout.
             The use of "mx-0" and "px-0" on "row"s and "col-*"s is to get rid of all of that.
             Everything is beautifully symmetrical once again!!!
-            d-print-block class is used because Firefox is garbage.
+            d-print-block class is used because Firefox is garbage. Without this class,
+            the printed output has missing content.
         -->
         <div id="KB_dashboard" class="row flex-row mx-0 px-0 d-print-block">
             <div id="KB_sidebar-wrapper" class="bg-gradient-primary col-lg-2 col-md-3">
                 <nav id="KB_sidebar" class="navbar navbar-dark" role="navigation">
                     <div class="container-fluid">
                         <ul class="nav nav-pills">
-                            <!-- NOTE: This is a placeholder. Do not modify nor remove. -->
+                            <!-- WARNING: This is a placeholder. Do not modify nor remove. -->
                             <!-- {{categories}} -->
                         </ul>
                     </div>
@@ -101,17 +102,8 @@
             <div id="KB_main-content-wrapper" class="offset-0 offset-lg-2 offset-md-3  offset-sm-0 col-12 col-lg-10 col-md-9 col-sm-12">
                 <div class="row flex-row mx-0 px-0 d-print-block">
                     <div class="col-12 mx-0 px-0">
-                        <div id="KB_content" class="container boxed"></div>
+                        <div id="KB_inline-content" class="container boxed"></div>
                     </div>
-                    <!--
-                        NOTE: The pagination-sm is added to the wrapper so the paginations inside it
-                        are affected. ¬¬
-                        I WILL NOT add a f*cking call to a f*cking jQuery selector to add a class
-                        to elements every single f*cking time the table is drawn!!!
-                        F*cking web developers thinking that their shit of a bloated web page is
-                        the only page loaded in a browser and a f*cking browser the only software
-                        running in a f*cking system!!!
-                    -->
                     <div id="KB_table-wrapper" class="col-12 mx-0 px-0">
                         <table id="KB_table" class="display table table-sm table-responsive-sm table-striped table-bordered table-hover" cellspacing="0" width="100%">
                             <colgroup>
@@ -153,7 +145,7 @@
             <!-- ^ #KB_main-content-wrapper end -->
         </div>
         <!-- ^ #KB_dashboard end -->
-        <!-- NOTE: This is a placeholder. Do not modify nor remove. -->
+        <!-- WARNING: This is a placeholder. Do not modify nor remove. -->
         <!-- {{modals}} -->
     </div>
     <!-- ^ #KB_pseudo-body end -->
@@ -164,10 +156,6 @@
     <span id="to-top-of-page" href="#top" class="d-print-none">
         <i class="nf nf-mdi-arrow_up_box"></i>
     </span>
-    <!--
-        This element makes use of Bootstrap's modal classes.
-        It is shown by default. It will be hidden by calling "hide()" on the element.
-    -->
     <div id="KB_loading" class="modal-backdrop bg-primary">
         <div class="message">Loading index...</div>
     </div>
@@ -177,7 +165,7 @@
     <script type="text/javascript" src="assets/js/datatables.min.js"></script>
     <script type="text/javascript" src="assets/js/debugManager.js"></script>
     <script type="text/javascript" src="assets/js/functions-utils.js"></script>
-    <script type="text/javascript" src="assets/js/functions-index.js"></script>
+    <script type="text/javascript" defer src="assets/js/functions-index.js"></script>
 </body>
 
 </html>
