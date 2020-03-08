@@ -177,7 +177,7 @@ class RepositoriesHandler():
                 "p": os.path.join(self._get_sphinx_generated_pages_storage(repo_data),
                                   "html", repo_data.get("kb_index_filename", "index.html")),
                 # Icon name
-                "i": repo_data.get("kb_image", "ext"),
+                "h": repo_data.get("kb_handler", "ext"),
                 "s": self._get_repo_url(repo_data)
             })
         except Exception as err:
@@ -248,7 +248,7 @@ class RepositoriesHandler():
                         # Path to files relative to the www folder
                         "p": www_path,
                         # Icon name
-                        "i": repo_data.get("kb_image", "md"),
+                        "h": repo_data.get("kb_handler", "md"),
                         "s": self._get_repo_url(repo_data)
                     })
 

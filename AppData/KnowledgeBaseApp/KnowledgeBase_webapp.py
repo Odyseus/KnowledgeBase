@@ -11,6 +11,7 @@ import os
 import sys
 
 from subprocess import run
+from urllib.parse import unquote
 
 try:
     from docutils import core as docutils_core
@@ -32,6 +33,9 @@ except (ImportError, SystemError):
 
 root_folder = os.path.realpath(os.path.abspath(os.path.join(
     os.path.normpath(os.getcwd()))))
+
+_title_template = "<h1>{page_title}</h1>\n"
+_source_template = '<h3><a href="{page_source}">Source</a></h3>\n'
 
 
 def parse_rst(input_string):
@@ -61,6 +65,7 @@ def parse_rst(input_string):
 class KnowledgeBaseWebapp(WebApp):
     """Web server.
     """
+
     def __init__(self, *args, **kwargs):
         """Initialization.
 
@@ -72,6 +77,21 @@ class KnowledgeBaseWebapp(WebApp):
             Keyword arguments.
         """
         super().__init__(*args, **kwargs)
+
+    @bottle_app.route("/_assets_bootstrap_css")
+    def bootstrap_css_static():
+        """Serve the file found at ``UserData/www/assets/css/bootstrap.min.css``.
+
+        This allows me to use the Bootstrap CSS stylesheet from any HTML document located at any
+        directory depth. I can simply use ``<link rel="stylesheet" href="/_assets_bootstrap_css" />``
+        and the desired stylesheet will be used.
+
+        Returns
+        -------
+        object
+            An instance of `bottle.HTTPResponse`.
+        """
+        return bottle.static_file("bootstrap.min.css", root=os.path.join(root_folder, "assets", "css"))
 
     @bottle_app.route("/<filepath:path>")
     def server_static(filepath):
@@ -98,24 +118,35 @@ class KnowledgeBaseWebapp(WebApp):
         sre
             The content for the landing page.
         """
-        file_path = os.path.abspath(os.path.join(root_folder, bottle.request.POST["inlinePageURL"]))
+        html_data = ""
+        handler = unquote(bottle.request.POST["inlinePageHandler"]).lower()
+        file_path = os.path.abspath(os.path.join(
+            root_folder, unquote(bottle.request.POST["inlinePageURL"])))
+
+        page_title = unquote(bottle.request.POST["inlinePageTitle"])
+        page_source = unquote(bottle.request.POST["inlinePageSource"])
+
+        page_title = _title_template.format(page_title=page_title) if page_title else ""
+        page_source = _source_template.format(page_source=page_source) if page_source else ""
 
         with open(file_path, "r", encoding="UTF-8") as f:
             raw_data = f.read()
 
         # TODO: Using "md" for .rst because I couldn't find an RST icon between the thousands of
-        # icon in NerdFont. Some day I might stumble upon one. LOL
-        if bottle.request.POST["inlinePageType"].lower() == "md":
+        # icons in NerdFont. Some day I might stumble upon one. LOL
+        if handler == "md":
             try:
                 # NOTE: Try to parse reStructuredText and fallback to Markdown.
                 if file_path.lower()[-4:] == ".rst" and docutils_core is not None:
-                    return parse_rst(raw_data)
+                    html_data = parse_rst(raw_data)
                 else:
-                    return md(raw_data)
+                    html_data = md(raw_data)
             except Exception:
-                return raw_data
+                html_data = raw_data
         else:
-            return raw_data
+            html_data = raw_data
+
+        return page_title + page_source + html_data
 
     @bottle_app.route("/")
     def index():
@@ -139,8 +170,8 @@ class KnowledgeBaseWebapp(WebApp):
     def handle_local_files():
         """Handle local files.
         """
-        action = bottle.request.POST["action"]
-        file_path = os.path.abspath(os.path.join(root_folder, bottle.request.POST["href"]))
+        action = unquote(bottle.request.POST["action"])
+        file_path = os.path.abspath(os.path.join(root_folder, unquote(bottle.request.POST["href"])))
         file_folder = os.path.dirname(file_path)
         p = None
 

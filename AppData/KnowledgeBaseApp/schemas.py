@@ -30,6 +30,10 @@ common_keys = {
             "description": "A tuple. It must contain a path to a file (relative to **UserData/www/html_pages_from_archives/<kb_title>**) at index 0 (zero) and a string at index 1 (one)."
         }
     },
+    "kb_handler": {
+        "type": "string",
+        "description": "A \"handler ID\" used to decide how the web page will handle an entry.",
+    },
     "no_json": {
         "type": "boolean",
         "description": "Not implemented.",
@@ -51,6 +55,7 @@ archives_schema = {
         "properties": {
             "kb_title": common_keys["kb_title"],
             "kb_category": common_keys["kb_category"],
+            "kb_handler": common_keys["kb_handler"],
             "no_json": common_keys["no_json"],
             "arch_url": {
                 "type": "string",
@@ -166,6 +171,7 @@ repositories_schema = {
             "kb_title": common_keys["kb_title"],
             "kb_category": common_keys["kb_category"],
             "kb_file_append": common_keys["kb_file_append"],
+            "kb_handler": common_keys["kb_handler"],
             "no_json": common_keys["no_json"]
         }
     }

@@ -38,13 +38,15 @@ WWW_BASE_PATH = os.path.join(root_folder, "UserData", "www")
 
 CAT_LIST_ITEM_TEMPLATE = """{indent}<li class="nav-item">
 {indent}    <span class="btn-group" role="group">
-{indent}        <button class="nav-link {cat_class} KB_cat-btn btn" onauxclick="KB_Main.setActiveCategory(event, this);" onclick="KB_Main.setActiveCategory(event, this);" href="#"><i class="KB_cat-icon nf {cat_icon}"></i>{cat_title}</button>
+{indent}        <button class="nav-link {cat_class} KB_cat-btn btn" data-parent="{data_parent}" data-cat="{data_cat}" href="#">
+{indent}            <i class="KB_cat-icon nf {cat_icon}"></i>{cat_title}
+{indent}        </button>
 {indent}    </span>
 {indent}</li>"""
 
 CAT_MENU_TEMPLATE = """<li class="nav-item">
     <span class="btn-group" role="group">
-        <button class="nav-link KB_cat-btn btn" onauxclick="KB_Main.setActiveCategory(event, this);" onclick="KB_Main.setActiveCategory(event, this);" href="#"><i class="KB_cat-icon nf {cat_icon}">\
+        <button class="nav-link KB_cat-btn btn" data-cat="{data_cat}" href="#"><i class="KB_cat-icon nf {cat_icon}">\
 </i>{cat_title}</button>
         <button class="KB_toggle-cat-btn btn" href="#{cat_menu_id}" data-toggle="collapse" aria-expanded="false"></button>
     </span>
@@ -87,7 +89,7 @@ class DataTablesObject():
         self._get_data_by_file_extension()
         self._get_data_from_html_pages()
         self._get_data_from_repositories()
-        self._get_data_from_html_pages_from_archives()
+        self._get_data_from_archives()
 
     def _get_data_by_file_extension(self):
         """Generate JSON data depending on the file extensions stored in self._file_extensions.
@@ -137,7 +139,7 @@ class DataTablesObject():
                                         "p": os.path.join(file_extension, cat, sub_cat,
                                                           title + "." + file_extension),
                                         # Icon name
-                                        "i": file_extension
+                                        "h": file_extension
                                     })
 
                                     if file_extension == "epub":
@@ -152,7 +154,7 @@ class DataTablesObject():
                                                 # Full path to files from the www folder.
                                                 "p": rel_epub,
                                                 # Icon name
-                                                "i": "ext"
+                                                "h": "ext"
                                             })
                             except Exception as err:
                                 self.logger.error(filename)
@@ -178,9 +180,9 @@ class DataTablesObject():
                 for data in json_data:
                     data["p"] = "html_pages/{title}/{html_file}".format(title=data["t"],
                                                                         html_file=data["p"])
-                    data["i"] = "ext"
+                    data["h"] = "ext"
 
-                self.data_tables_obj += json_data
+                self.data_tables_obj.extend(json_data)
         except Exception as err:
             self.logger.error("get_data_from_html_pages")
             self.logger.error(err)
@@ -198,9 +200,9 @@ class DataTablesObject():
         data_tables_obj = handler.get_data_tables_obj()
 
         if data_tables_obj:
-            self.data_tables_obj += data_tables_obj
+            self.data_tables_obj.extend(data_tables_obj)
 
-    def _get_data_from_html_pages_from_archives(self):
+    def _get_data_from_archives(self):
         """Obtain the JSON data generated for downloaded archives.
         """
         from . import archives_handler
@@ -210,7 +212,7 @@ class DataTablesObject():
         data_tables_obj = handler.get_data_tables_obj()
 
         if data_tables_obj:
-            self.data_tables_obj += data_tables_obj
+            self.data_tables_obj.extend(data_tables_obj)
 
     def get_data_tables_obj(self):
         """Obtain self.data_tables_obj.
@@ -362,7 +364,7 @@ def convert_with_pandoc(input_file, output_path, from_format, to_format, logger)
         "rst": "rst"
     }
     to_options = {
-        "md": "markdown_github"
+        "md": "gfm"
     }
 
     try:
@@ -373,7 +375,6 @@ def convert_with_pandoc(input_file, output_path, from_format, to_format, logger)
                 "--email-obfuscation=none",
                 "--wrap=preserve",
                 "--to=%s" % to_options[to_format],
-                "--normalize",
                 "--output=%s" % ('"%s.%s"' %
                                  (os.path.splitext(os.path.basename(input_file))[0], to_format)),
                 "--no-highlight",
@@ -397,10 +398,8 @@ def convert_epub_to_html(input_path_storage=None, logger=None):
     logger : LogSystem
         The logger.
     """
-    input_path = input_path_storage or os.path.join(root_folder, "UserData", "data_storage",
-                                                    "pandoc_convertions", "epub_to_html")
-    header_include_path = os.path.join(root_folder, "AppData", "data",
-                                       "includes", "epub_to_html_header_include.html")
+    input_path = file_utils.expand_path(input_path_storage) if input_path_storage else \
+        os.path.join(root_folder, "UserData", "data_storage", "pandoc_convertions", "epub_to_html")
     html_template_path = os.path.join(root_folder, "AppData", "data",
                                       "includes", "epub_to_html_template.html")
 
@@ -408,12 +407,17 @@ def convert_epub_to_html(input_path_storage=None, logger=None):
         for filename in filenames:
             if filename.endswith(".epub"):
                 f_path = os.path.join(dirname, filename)
-                logger.info(shell_utils.get_cli_separator("-"), date=False)
-                logger.info("Converting:")
-                logger.info(f_path, date=False)
                 f_name = os.path.basename(f_path)
                 dst_name = os.path.splitext(f_name)[0]
                 dst_path = os.path.join(os.path.dirname(f_path), dst_name)
+                dst_file = os.path.join(dst_path, "index.html")
+
+                if file_utils.is_real_file(dst_file):
+                    continue
+
+                logger.info(shell_utils.get_cli_separator("-"), date=False)
+                logger.info("**Converting:**")
+                logger.info(f_path, date=False)
 
                 os.makedirs(dst_path, mode=0o777, exist_ok=True)
 
@@ -422,9 +426,9 @@ def convert_epub_to_html(input_path_storage=None, logger=None):
                     "--standalone",
                     shell_quote(f_path),
                     "--output",
-                    shell_quote("%s/index.html" % dst_path),
+                    shell_quote(dst_file),
+                    "--css=/_assets_bootstrap_css",
                     "--extract-media=assets",
-                    "--include-in-header=%s" % shell_quote(header_include_path),
                     "--template=%s" % shell_quote(html_template_path),
                     "--wrap=none",
                     "--table-of-contents",
@@ -512,6 +516,8 @@ def generate_categories_html(dry_run=False, logger=None):
         cat_title="All Categories",
         cat_class="KB_cat-link",
         cat_icon="nf-fa-bars",
+        data_parent="",
+        data_cat="All Categories",
         indent=""
     )]
 
@@ -579,6 +585,8 @@ def generate_categories_html(dry_run=False, logger=None):
                 cat_title=cat,
                 cat_class="KB_cat-link",
                 cat_icon=keys["icon"],
+                data_parent="",
+                data_cat=cat,
                 indent=""
             ))
         else:
@@ -589,12 +597,15 @@ def generate_categories_html(dry_run=False, logger=None):
                     cat_title=sub_cat["name"],
                     cat_class="KB_sub-cat-link",
                     cat_icon=sub_cat["icon"],
+                    data_parent="#KB_cat-menu-%s" % cat.lower(),
+                    data_cat="%s|%s" % (cat, sub_cat["name"]),
                     indent="        "
                 ))
 
             categories_html_list_items.append(CAT_MENU_TEMPLATE.format(
                 cat_title=cat,
                 cat_icon=keys["icon"],
+                data_cat=cat,
                 cat_menu_id="KB_cat-menu-%s" % cat.lower(),
                 sub_cat_items="\n".join(sub_cat_html_items),
             ))

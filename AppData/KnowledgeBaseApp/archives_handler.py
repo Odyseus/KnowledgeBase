@@ -68,7 +68,7 @@ class ArchivesHandler():
         self._archives_storage = os.path.join(
             root_folder, "UserData", "data_storage", "downloaded_archives")
         self._archives_destination = os.path.join(
-            app_utils.WWW_BASE_PATH, "html_pages_from_archives")
+            app_utils.WWW_BASE_PATH, "archives")
         self._archives_last_updated = os.path.join(self._archives_storage, "last_updated.json")
         self._current_date = time.strftime("%B %d %Y", time.gmtime())  # Format = January 1 2018
 
@@ -87,17 +87,18 @@ class ArchivesHandler():
 
         for data in self._archives_data:
             try:
+                cat_path = data["kb_category"].replace("|", os.sep)
                 data_tables_obj.append({
                     "t": data["kb_title"],
                     "c": data["kb_category"],
                     # Path to files relative to the www folder
-                    "p": os.path.join("html_pages_from_archives",
+                    "p": os.path.join("archives",
+                                      data.get("kb_handler", "ext"),
+                                      cat_path,
                                       data["kb_title"],
                                       data.get("kb_rel_path", ""),
                                       data.get("kb_filename", "index.html")),
-                    # Hard-coded icon name. No need to be specified in the data source since,
-                    # at the moment, all archives contain HTML files.
-                    "i": "ext"
+                    "h": data.get("kb_handler", "ext")
                 })
             except Exception as err:
                 self.logger.error(data["kb_title"])
@@ -398,11 +399,15 @@ class ArchivesHandler():
             self._last_update_data = {}
 
         for data in self._archives_data:
+            cat_path = data["kb_category"].replace("|", os.sep)
+
             # Generate and add "slugified_name".
             data["slugified_name"] = string_utils.slugify(data["kb_title"])
 
             # Generate and add the path to the extraction destination directory.
             data["extraction_destination"] = os.path.join(self._archives_destination,
+                                                          data.get("kb_handler", "ext"),
+                                                          cat_path,
                                                           data["kb_title"])
 
             # Generate and add the path for the downloaded file.
@@ -412,14 +417,14 @@ class ArchivesHandler():
                     self._archives_storage, data["slugified_name"])
             else:  # If it's an HTML file, download it directly into its final destination.
                 data["downloaded_filename"] = os.path.join(
-                    data["extraction_destination"], "index.html")
+                    data["extraction_destination"], data.get("kb_filename", "index.html"))
 
             # Insert the date in which the data was last updated.
             if self._last_update_data:
                 data["last_updated"] = self._last_update_data.get(data["slugified_name"], None)
 
         # Lastly, sort dictionaries by data names.
-        self._archives_data = sorted(self._archives_data, key=lambda title: title["kb_title"])
+        self._archives_data = sorted(self._archives_data, key=lambda arch: arch["kb_title"])
 
 
 if __name__ == "__main__":
