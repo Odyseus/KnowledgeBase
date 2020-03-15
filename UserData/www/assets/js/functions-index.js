@@ -151,7 +151,7 @@
                     let itemAction = $actItem.data("action");
 
                     $actItem.on("click", KB_Main.actionClick
-                        .bind(KB_Main, event, $actionDropdownMenu, null, itemAction));
+                        .bind(KB_Main, $actionDropdownMenu, null, itemAction));
 
                     if (itemAction === "source_url") {
                         $actItem[sourceURL ? "show" : "hide"]();
@@ -479,7 +479,7 @@
                     this.loadPageInline();
                     break;
                 case "KB_edit-button":
-                    this.actionClick(aE, null, decodeURIComponent(this._URLParams.get("inlinePageURL")), "file");
+                    this.actionClick(null, decodeURIComponent(this._URLParams.get("inlinePageURL")), "file", aE);
                     break;
                 case "KB_home-link":
                     switch (aE.button) {
@@ -993,7 +993,7 @@
                     this._URLParams = new URLSearchParams("");
 
                     if (handler === "epub" || (handler === "pdf" && this.pref_OpenPDFExternal)) {
-                        this.actionClick(aE, null, href, "file");
+                        this.actionClick(null, href, "file", aE);
                     } else {
                         KB_Utils.loadInNewTab(href);
                     }
@@ -1013,7 +1013,7 @@
          *
          * @return {Boolean} Stop propagation.
          */
-        actionClick(aE, a$ActionMenu, aHref, aAction) {
+        actionClick(a$ActionMenu, aHref, aAction, aE) {
             aE && aE.preventDefault();
 
             if (a$ActionMenu) {
