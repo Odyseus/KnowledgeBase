@@ -17,12 +17,21 @@
 /UserData/www/assets/css/*
 /UserData/www/assets/data/*
 /UserData/www/assets/js/*
+!/UserData/www/assets/css/bootstrap.min.css
 !/UserData/www/assets/css/bootstrap.tweaks.css
+!/UserData/www/assets/css/datatables.min.css
+!/UserData/www/assets/css/highlight.min.css
+!/UserData/www/assets/css/nerdicons.min.css
 !/UserData/www/assets/data/index-base.html
+!/UserData/www/assets/data/modals.html
+!/UserData/www/assets/js/bootstrap.bundle.min.js
+!/UserData/www/assets/js/datatables.min.js
 !/UserData/www/assets/js/debugManager.js
 !/UserData/www/assets/js/functions-generic-init.js
 !/UserData/www/assets/js/functions-index.js
 !/UserData/www/assets/js/functions-utils.js
+!/UserData/www/assets/js/highlight.pack.js
+!/UserData/www/assets/js/jquery.min.js
 
 ##################
 # Global ignores #

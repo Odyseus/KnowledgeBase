@@ -18,7 +18,7 @@ __knowledge_base_cli_{current_date}(){
     # Completion of commands and "first level options.
     if [[ $COMP_CWORD == 1 ]]; then
         COMPREPLY=( $(compgen -W \
-            "run server generate -h --help --manual --version" -- "${cur}") )
+            "run server generate repo -h --help --manual --version" -- "${cur}") )
         return 0
     fi
 
@@ -49,6 +49,28 @@ open_main_webpage \
         COMPREPLY=( $(compgen -W \
             "system_executable" -- "${cur}") )
         ;;
+    "repo")
+        COMPREPLY=( $(compgen -W "subtrees" -- "${cur}") )
+        ;;
     esac
+
+    # Completion of options and sub-commands.
+    cmd="${COMP_WORDS[2]}"
+
+    case $cmd in
+    "subtrees")
+        COMPREPLY=( $(compgen -W "init update" -- "${cur}") )
+        ;;
+    esac
+
+    # Completion of options and sub-commands.
+    cmd="${COMP_WORDS[3]}"
+
+    case $cmd in
+    "init"|"update")
+        COMPREPLY=( $(compgen -W " -y --dry-run" -- "${cur}") )
+        ;;
+    esac
+
 } &&
 complete -F __knowledge_base_cli_{current_date} {executable_name}
