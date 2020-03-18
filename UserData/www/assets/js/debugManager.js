@@ -1,26 +1,114 @@
 "use strict"; // jshint ignore:line
 
-var KB_LoggingLevel = {
-    NORMAL: 0,
-    VERBOSE: 1,
-    VERY_VERBOSE: 2
-};
-
-var KB_Debugger = null;
+var Ody_Debugger = null;
 
 (function() {
-    class KB_DebuggerClass {
-        constructor(aDebuggerEnabled = false, aLoggingLevel = null) {
-            this._loggingLevel = aLoggingLevel || KB_LoggingLevel.NORMAL;
-            this._debuggerEnabled = aDebuggerEnabled;
-            this._debugger_params = Object.freeze({
-                objectName: "Object",
-                methods: [],
-                blacklistMethods: false,
-                debug: true,
-                verbose: true,
-                threshold: 3
-            });
+    const LoggingLevel = {
+        NORMAL: 0,
+        VERBOSE: 1,
+        VERY_VERBOSE: 2
+    };
+    const DebuggerParams = Object.freeze({
+        objectName: "Object",
+        methods: [],
+        blacklistMethods: false,
+        debug: true,
+        verbose: true,
+        threshold: 3
+    });
+    const DEFAULT_PREFS = {
+        pref_LoggingLevel: LoggingLevel.NORMAL,
+        pref_DebuggerEnabled: "false"
+    };
+
+    class DebuggerClass {
+        constructor() {
+            this._winStorage = "localStorage" in window ? window.localStorage : null;
+
+            let prefs = this.getPrefsFromStorage();
+            for (let pref in prefs) {
+                this[pref] = prefs[pref];
+            }
+
+            this._initPreferenceHandlers();
+            this.pref_DebuggerEnabled && this._findDuplicatedIDs();
+        }
+
+        /**
+         * Find duplicated element IDs and log them.
+         */
+        _findDuplicatedIDs() {
+            let idsSet = new Set();
+            let duplicatedIDs = [];
+            let all = document.querySelectorAll("[id]");
+
+            for (let i = all.length - 1; i >= 0; i--) {
+                let id = all[i].id;
+
+                if (idsSet.has(id)) {
+                    duplicatedIDs.push(id);
+                } else {
+                    idsSet.add(id);
+                }
+            }
+
+            if (duplicatedIDs.length > 0) {
+                console.error("Duplicated IDs found: " + duplicatedIDs.length + "\n" + duplicatedIDs.join("\n"));
+            }
+        }
+
+        _initPreferenceHandlers() {
+            let enabledCheckbox = document.getElementById("ody-debugger-enabled");
+            let loggingLevelSelect = document.getElementById("ody-debugger-logging-level");
+
+            if (enabledCheckbox) {
+                enabledCheckbox.checked = this.pref_DebuggerEnabled;
+                enabledCheckbox.addEventListener("click", () => {
+                    this.pref_DebuggerEnabled = !this.pref_DebuggerEnabled;
+                    this.savePrefToStorage("Ody_Debugger_Enabled", this.pref_DebuggerEnabled);
+                }, false);
+            }
+
+            if (loggingLevelSelect) {
+                loggingLevelSelect.value = "" + this.pref_LoggingLevel;
+                loggingLevelSelect.addEventListener("change", (aE) => {
+                    this.savePrefToStorage("Ody_Debugger_LoggingLevel", aE.currentTarget.value);
+                }, false);
+            }
+        }
+
+        /**
+         * Get preferences from window.localStorage.
+         *
+         * @return {Object} Preferences stored in window.localStorage or the defaults if window.localStorage is not available.
+         */
+        getPrefsFromStorage() {
+            if (!this._winStorage) {
+                return DEFAULT_PREFS;
+            }
+
+            return {
+                pref_LoggingLevel: parseInt(this._winStorage.getItem("Ody_Debugger_LoggingLevel"), 10) ||
+                    DEFAULT_PREFS.pref_LoggingLevel,
+                pref_DebuggerEnabled: (this._winStorage.getItem("Ody_Debugger_Enabled") ||
+                    DEFAULT_PREFS.pref_DebuggerEnabled) === "true"
+            };
+        }
+
+        /**
+         * Save preference to window.localStorage.
+         *
+         * @param {String} aKey   - The window.localStorage key to save the preference into.
+         * @param {String} aValue - The value associated to aKey.
+         *
+         * @return {String} description
+         */
+        savePrefToStorage(aKey, aValue) {
+            if (!this._winStorage) {
+                return;
+            }
+
+            this._winStorage.setItem(aKey, aValue);
         }
 
         parseParams(aParams, aDefaults, aAllowExtras) {
@@ -47,7 +135,7 @@ var KB_Debugger = null;
         }
 
         methodWrapper(aObject, aParams) {
-            let options = this.parseParams(aParams, this._debugger_params);
+            let options = this.parseParams(aParams, DebuggerParams);
             let _obj = Object.getPrototypeOf(aObject) === Object.prototype ?
                 aObject :
                 aObject.prototype;
@@ -137,12 +225,12 @@ var KB_Debugger = null;
 
         wrapObjectMethods(aProtos, aExtraOptions = {}) {
             try {
-                if (this._loggingLevel === KB_LoggingLevel.VERY_VERBOSE || this._debuggerEnabled) {
+                if (this.pref_LoggingLevel === LoggingLevel.VERY_VERBOSE || this.pref_DebuggerEnabled) {
                     for (let name in aProtos) {
                         let options = {
                             objectName: name,
-                            verbose: this._loggingLevel === KB_LoggingLevel.VERY_VERBOSE,
-                            debug: this._debuggerEnabled
+                            verbose: this.pref_LoggingLevel === LoggingLevel.VERY_VERBOSE,
+                            debug: this.pref_DebuggerEnabled
                         };
 
                         if (name in aExtraOptions) {
@@ -160,13 +248,10 @@ var KB_Debugger = null;
                 console.error(aErr);
             }
         }
-    };
+    }
 
-    KB_Debugger = new KB_DebuggerClass(true, KB_LoggingLevel.NORMAL);
-    // KB_Debugger = new KB_DebuggerClass(true, KB_LoggingLevel.VERY_VERBOSE);
+    Ody_Debugger = new DebuggerClass();
 })();
 
-/* exported KB_DebuggerClass,
-            KB_LoggingLevel,
-            KB_Debugger
+/* exported Ody_Debugger
  */

@@ -1,30 +1,95 @@
 "use strict"; // jshint ignore:line
 
-var KB_Utils = null;
+var Ody_Utils = null;
 
 (function() {
-    class KB_UtilsClass {
+    const ElementsOffsetParams = Object.freeze({
+        extraPercent: 0,
+        offsetPosition: "Top",
+        margin: true,
+        padding: false
+    });
+
+    class UtilsClass {
         constructor() {
             this._toTopOfPageBtn = document.getElementById("to-top-of-page");
+
+            this.OffsetPosition = {
+                top: "Top",
+                right: "Right",
+                bottom: "Bottom",
+                left: "Left"
+            };
+
             this.delayedToggleBackToTopButtonVisibility = this.debounce(
                 this.toggleBackToTopButtonVisibility, 200, true, true);
 
-            this._toTopOfPageBtn && this._toTopOfPageBtn.addEventListener("click", (aE) => { // jshint ignore:line
-                this.smoothScrollToTop();
-                return false;
-            }, false);
+            if (this._toTopOfPageBtn) {
+                this._toTopOfPageBtn.addEventListener("click", (aE) => { // jshint ignore:line
+                    this.smoothScrollToTop();
+                    return false;
+                }, false);
 
-            // The call to `delayedToggleBackToTopButtonVisibility` uses debounce to
-            // avoid overhead when scrolling.
-            window.addEventListener("scroll", (aE) => { // jshint ignore:line
-                this.delayedToggleBackToTopButtonVisibility();
-            }, false);
+                // The call to `delayedToggleBackToTopButtonVisibility` uses debounce to
+                // avoid overhead when scrolling.
+                window.addEventListener("scroll", (aE) => { // jshint ignore:line
+                    this.delayedToggleBackToTopButtonVisibility();
+                }, false);
+            }
+        }
+
+        /**
+         * Set elements top/right/bottom/left padding and/or margin (offset) based on another element height.
+         *
+         * @param {Object} aOffsetElement - The DOMM element from which to calculate the offset.
+         * @param {Map}  aElements        - A map of elements to which to apply the offset.
+         *                                Each key of the map should be a DOM element and their values
+         *                                should be an object with options (see ElementsOffsetParams).
+         */
+        setElementsOffset(aOffsetElement, aElements) {
+            let offset = parseInt(this.getElementOuterHeight(aOffsetElement, true), 10);
+
+            for (let [el, options] of aElements) {
+                let params = this.parseParams(options, ElementsOffsetParams);
+                let extraPercent = (Math.max(0, Math.min(parseInt(params.extraPercent, 10), 100)) / 100) + 1.0;
+                offset = Math.ceil(offset * extraPercent);
+
+                if (params.margin) {
+                    el.style["margin" + params.offsetPosition] = offset + "px";
+                }
+
+                if (params.padding) {
+                    el.style["padding" + params.offsetPosition] = offset + "px";
+                }
+            }
+        }
+
+        /**
+         * Get the outer height of an element.
+         *
+         * @param {Object}  aEl            - The DOM element to calculate the height of.
+         * @param {Boolean} aIncludeMargin - Whether to include the margin when calculating aEl's height.
+         *
+         * @return {Number} The calculated aEl's height.
+         */
+        getElementOuterHeight(aEl, aIncludeMargin = false) {
+            let height = aEl.offsetHeight;
+
+            if (aIncludeMargin) {
+                let style = getComputedStyle(aEl);
+                height += parseInt(style.marginTop, 10) + parseInt(style.marginBottom, 10);
+            }
+
+            return height;
         }
 
         loadInNewTab(aHref) {
             window.open(decodeURIComponent(aHref), "_blank");
         }
 
+        /**
+         * Toggle visibility of the Back to top button if exists.
+         */
         toggleBackToTopButtonVisibility() {
             if (this._toTopOfPageBtn) {
                 if (window.scrollY > 100) {
@@ -80,6 +145,9 @@ var KB_Utils = null;
             };
         }
 
+        /**
+         * Clear current page URL of all queries.
+         */
         clearQueryString() {
             let newurl = window.location.protocol + "//" + window.location.host + window.location.pathname;
             window.history.pushState && window.history.pushState({
@@ -87,16 +155,10 @@ var KB_Utils = null;
             }, "", newurl);
         }
 
-        ends_with(aStr1, aStr2) {
-            return aStr1.slice(-aStr2.length) == aStr2;
-        }
-
+        /**
+         * Smoothly scroll the page to the top.
+         */
         smoothScrollToTop() {
-            // THIS IS GARBAGE!!! The animation is jerky on Firefox 62+ (ANOTHER GARBAGE!!!).
-            // $("html, body").animate({
-            //     scrollTop: 0
-            // }, 400);
-
             // Forget the browser specific garbage. I don't need the headache.
             if (window.requestAnimationFrame) {
                 try {
@@ -114,52 +176,8 @@ var KB_Utils = null;
             }
         }
 
-        smoothScrollInternalTarget(aAdditionalOffset, aE) {
-            aE.preventDefault();
-            KB_Utils.delayedToggleBackToTopButtonVisibility();
-            let href = aE.currentTarget.getAttribute("href");
-
-            if (href) {
-                href = href.slice(1);
-
-                let targetElement = document.getElementById(href);
-
-                if (!targetElement) {
-                    try {
-                        // For ancient web pages that still use the deprecated "name" attribute. ¬¬
-                        targetElement = document.querySelector('[name="' + href + '"]');
-                    } catch (aErr) {
-                        targetElement = null;
-                    }
-                }
-
-                try {
-                    if (targetElement) {
-                        // This didn't show signs of "jerkyness" when animated (yet).
-                        $("html, body").animate({
-                            scrollTop: targetElement.getBoundingClientRect().top +
-                                // I suppose that this is why jQuery was born, because of retarded
-                                // corporations that cannot get their shit together!!!
-                                // In some browsers, document.documentElement.scrollTop is used to store
-                                // the page scrolled position, in some others, document.body.scrollTop
-                                // is used instead. ¬¬
-                                (document.documentElement.scrollTop || document.body.scrollTop) -
-                                (aAdditionalOffset ?
-                                    // NOTE: I add targetElement.offsetHeight in both instances so the
-                                    // scroll destination is separated from the edge of the top of the
-                                    // page or top element (aAdditionalOffset).
-                                    aAdditionalOffset + targetElement.offsetHeight :
-                                    targetElement.offsetHeight)
-                        }, 400);
-                    }
-                } catch (aErr) {
-                    console.error(aErr);
-                }
-            }
-        }
-
         /**
-         * Escape string to be able to use it in a regular expresion.
+         * Escape string to be able to use it in a regular expression.
          *
          * Source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions#Escaping
          *
@@ -170,20 +188,59 @@ var KB_Utils = null;
         escapeRegExp(aString) {
             return aString.replace(/[.*+\-?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
         }
+
+        /**
+         * Parse parameters.
+         *
+         * Examines aParams and fills in default values from aDefaults for any properties in
+         * aDefaults that don't appear in aParams. If aAllowExtras is not true, it will throw
+         * an error if aParams contains any properties that aren't in aDefaults.
+         *
+         * If aParams is null, this returns the values from aDefaults.
+         *
+         * @param {Object}  aParams      - Caller-provided parameter object, or null.
+         * @param {Object}  aDefaults    - Function-provided defaults object.
+         * @param {Boolean} aAllowExtras - Whether or not to allow properties not in aDefaults.
+         *
+         * @return {Object} A new object, containing the merged parameters from aParams and aDefaults.
+         */
+        parseParams(aParams, aDefaults, aAllowExtras) {
+            let ret = {};
+
+            if (!aParams) {
+                return Object.assign({}, aDefaults);
+            }
+
+            for (let prop in aParams) {
+                if (!(prop in aDefaults) && !aAllowExtras) {
+                    throw new Error('Unrecognized parameter "' + prop + '"');
+                }
+                ret[prop] = aParams[prop];
+            }
+
+            for (let prop in aDefaults) {
+                if (!(prop in aParams)) {
+                    ret[prop] = aDefaults[prop];
+                }
+            }
+
+            return ret;
+        }
+
     }
 
     // NOTE: I only use the debugger in the functions-index.js file.
-    if (typeof KB_Debugger === "object") {
-        KB_Debugger.wrapObjectMethods({
-            KB_UtilsClass: KB_UtilsClass
+    if (typeof Ody_Debugger === "object") {
+        Ody_Debugger.wrapObjectMethods({
+            UtilsClass: UtilsClass
         });
     }
 
-    KB_Utils = new KB_UtilsClass();
+    Ody_Utils = new UtilsClass();
 })();
 
-/* global KB_Debugger
+/* global Ody_Debugger
  */
 
-/* exported KB_Utils
+/* exported Ody_Utils
  */

@@ -22,6 +22,20 @@
         pref_DisplaySubCatCol: "false",
         pref_TablePageLength: "25"
     };
+    const SIDEBAR_WRAPPER_CLASSES = [
+        "col-lg-2",
+        "col-md-3"
+    ];
+    const CONTENT_WRAPPER_CLASSES = [
+        "offset-0",
+        "offset-lg-2",
+        "offset-md-3",
+        "offset-sm-0",
+        "col-12",
+        "col-lg-10",
+        "col-md-9",
+        "col-sm-12"
+    ];
 
     // jQuery objects.
     const $IndexModal = $("#KB_index-modal");
@@ -122,7 +136,7 @@
      *
      * @param {Function} () - Debounced function.
      */
-    const DelayedTableDrawCallback = KB_Utils.debounce(() => {
+    const DelayedTableDrawCallback = Ody_Utils.debounce(() => {
         KB_Main && KB_Main.focusSearchInput();
 
         $Table.find(".KB_action-dropdown-menu").each((aIndex, aEl) => {
@@ -385,14 +399,14 @@
             if (this._URLParams.has("currentCategoryName")) {
                 this._currentCategory = this._URLParams.get("currentCategoryName");
 
-                KB_Utils.clearQueryString();
+                Ody_Utils.clearQueryString();
                 this._ignoreDefaultCategory = true;
             }
 
-            this.filterTable = KB_Utils.debounce(this.doFilter);
+            this.filterTable = Ody_Utils.debounce(this.doFilter);
             // NOTE: Needs the time out. Otherwise, it wouldn't focus the freaking input field!!!
             // Check if a greater amount of table elements affects this.
-            this.focusSearchInput = KB_Utils.debounce(() => {
+            this.focusSearchInput = Ody_Utils.debounce(() => {
                 InputSearch.focus();
             }, 500);
 
@@ -491,7 +505,7 @@
                             this.displayMainSection("table");
                             break;
                         case 1:
-                            KB_Utils.loadInNewTab("");
+                            Ody_Utils.loadInNewTab("");
                             break;
                     }
                     break;
@@ -511,37 +525,23 @@
         toggleSidebar(aShow = null) {
             // All this trouble is so I don't have to use hardcoded sizes/margins/paddings nor
             // idiotic animations. I just let all elements fit the available space.
-            let showSidebar = aShow !== null ? aShow : SidebarWrapper.classList.contains("d-none");
-            let sidebarWrapperClasses = [
-                "col-lg-2",
-                "col-md-3"
-            ];
-            let contentWrapperClasses = [
-                "offset-0",
-                "offset-lg-2",
-                "offset-md-3",
-                "offset-sm-0",
-                "col-12",
-                "col-lg-10",
-                "col-md-9",
-                "col-sm-12"
-            ];
+            let showSidebar = aShow === null ? SidebarWrapper.classList.contains("d-none") : aShow;
 
             if (showSidebar) { // Show sidebar.
                 // Remove the d-none class to the sidebar wrapper so it can be shown...
                 SidebarWrapper.classList.remove("d-none");
                 // ...add back all layout classes to the sidebar and content wrappers so
                 // they can be laid out depending on the view port size.
-                SidebarWrapper.classList.add(...sidebarWrapperClasses);
-                MainContentWrapper.classList.add(...contentWrapperClasses);
+                SidebarWrapper.classList.add(...SIDEBAR_WRAPPER_CLASSES);
+                MainContentWrapper.classList.add(...CONTENT_WRAPPER_CLASSES);
             } else { // Hide sidebar.
                 // Add the d-none class to hide sidebar wrapper...
                 SidebarWrapper.classList.add("d-none");
                 // ...remove all layout classes from the sidebar and content wrappers and
                 // add only the col-12 class to the content wrapper so it occupy the
                 // full width.
-                SidebarWrapper.classList.remove(...sidebarWrapperClasses);
-                MainContentWrapper.classList.remove(...contentWrapperClasses);
+                SidebarWrapper.classList.remove(...SIDEBAR_WRAPPER_CLASSES);
+                MainContentWrapper.classList.remove(...CONTENT_WRAPPER_CLASSES);
                 MainContentWrapper.classList.add("col-12");
             }
         }
@@ -616,7 +616,7 @@
                     case 1:
                         let query = new URLSearchParams("");
                         query.set("currentCategoryName", searchtext);
-                        KB_Utils.loadInNewTab(`?${query.toString()}`);
+                        Ody_Utils.loadInNewTab(`?${query.toString()}`);
                         return;
                     case 2:
                         return;
@@ -692,9 +692,9 @@
             } else {
                 let [cat, sub] = aCategory.split("|");
 
-                cat && KB_Table.column("category:name").search("^" + KB_Utils.escapeRegExp(cat) + "$",
+                cat && KB_Table.column("category:name").search("^" + Ody_Utils.escapeRegExp(cat) + "$",
                     true, false, true).draw();
-                sub && KB_Table.column("sub-category:name").search("^" + KB_Utils.escapeRegExp(sub) + "$",
+                sub && KB_Table.column("sub-category:name").search("^" + Ody_Utils.escapeRegExp(sub) + "$",
                     true, false, true).draw();
             }
         }
@@ -724,13 +724,13 @@
 
                         if (cat && cat.length > 1) {
                             KB_Table.columns().search("");
-                            KB_Table.column("category:name").search("^" + KB_Utils.escapeRegExp(cat),
+                            KB_Table.column("category:name").search("^" + Ody_Utils.escapeRegExp(cat),
                                 true, false, true).draw();
                         }
 
                         if (sub && sub.length > 1) {
                             KB_Table.columns().search("");
-                            KB_Table.column("sub-category:name").search("^" + KB_Utils.escapeRegExp(sub),
+                            KB_Table.column("sub-category:name").search("^" + Ody_Utils.escapeRegExp(sub),
                                 true, false, true).draw();
                         }
 
@@ -744,7 +744,7 @@
 
                         if (handler && handler.length > 1) {
                             this.filterCategories(this._currentCategory);
-                            KB_Table.column("handler:name").search("^" + KB_Utils.escapeRegExp(handler),
+                            KB_Table.column("handler:name").search("^" + Ody_Utils.escapeRegExp(handler),
                                 true, false, true).draw();
                         }
 
@@ -885,7 +885,7 @@
          */
         contentLinkLoadInNewTab(aE) {
             aE.preventDefault();
-            KB_Utils.loadInNewTab(aE.target.getAttribute("href"));
+            Ody_Utils.loadInNewTab(aE.target.getAttribute("href"));
         }
 
         /**
@@ -899,7 +899,7 @@
 
                 if (targetHref[0] === "#") {
                     contentLinks[i].addEventListener("click",
-                        KB_Utils.smoothScrollInternalTarget.bind(null, $TopNavbar.outerHeight(true)),
+                        this.smoothScrollInternalTarget.bind(null, $TopNavbar.outerHeight(true)),
                         false);
                 } else {
                     // Nothing freaking works in the un-configurable crap called Firefox Quantum (57+)!!!
@@ -912,6 +912,50 @@
                 let codeBlocks = InlineContent.querySelectorAll("pre code");
                 for (let i = codeBlocks.length - 1; i >= 0; i--) {
                     hljs.highlightBlock(codeBlocks[i]);
+                }
+            }
+        }
+
+        smoothScrollInternalTarget(aAdditionalOffset, aE) {
+            aE.preventDefault();
+            Ody_Utils.delayedToggleBackToTopButtonVisibility();
+            let href = aE.currentTarget.getAttribute("href");
+
+            if (href) {
+                href = href.slice(1);
+
+                let targetElement = document.getElementById(href);
+
+                if (!targetElement) {
+                    try {
+                        // For ancient web pages that still use the deprecated "name" attribute. ¬¬
+                        targetElement = document.querySelector('[name="' + href + '"]');
+                    } catch (aErr) {
+                        targetElement = null;
+                    }
+                }
+
+                try {
+                    if (targetElement) {
+                        // This didn't show signs of "jerkyness" when animated (yet).
+                        $("html, body").animate({
+                            scrollTop: targetElement.getBoundingClientRect().top +
+                                // I suppose that this is why jQuery was born, because of retarded
+                                // corporations that cannot get their shit together!!!
+                                // In some browsers, document.documentElement.scrollTop is used to store
+                                // the page scrolled position, in some others, document.body.scrollTop
+                                // is used instead. ¬¬
+                                (document.documentElement.scrollTop || document.body.scrollTop) -
+                                (aAdditionalOffset ?
+                                    // NOTE: I add targetElement.offsetHeight in both instances so the
+                                    // scroll destination is separated from the edge of the top of the
+                                    // page or top element (aAdditionalOffset).
+                                    aAdditionalOffset + targetElement.offsetHeight :
+                                    targetElement.offsetHeight)
+                        }, 400);
+                    }
+                } catch (aErr) {
+                    console.error(aErr);
                 }
             }
         }
@@ -986,7 +1030,7 @@
                         this.loadPageInline();
                     } else if (aE.button === 1) { // Middle click
                         // Query string implementation.
-                        KB_Utils.loadInNewTab(`?${this._URLParams.toString()}`);
+                        Ody_Utils.loadInNewTab(`?${this._URLParams.toString()}`);
                     }
                     break;
                 case LOAD_IN_NEW_TAB:
@@ -995,7 +1039,7 @@
                     if (handler === "epub" || (handler === "pdf" && this.pref_OpenPDFExternal)) {
                         this.actionClick(null, href, "file", aE);
                     } else {
-                        KB_Utils.loadInNewTab(href);
+                        Ody_Utils.loadInNewTab(href);
                     }
                     break;
             }
@@ -1026,14 +1070,14 @@
                             query.set("inlinePageHandler", a$ActionMenu.data("handler"));
                             query.set("inlinePageSource", a$ActionMenu.data("source"));
                             query.set("inlinePageTitle", a$ActionMenu.data("title"));
-                            KB_Utils.loadInNewTab(`?${query.toString()}`);
+                            Ody_Utils.loadInNewTab(`?${query.toString()}`);
                             break;
                         case LOAD_IN_NEW_TAB:
-                            KB_Utils.loadInNewTab(a$ActionMenu.data("href"));
+                            Ody_Utils.loadInNewTab(a$ActionMenu.data("href"));
                             break;
                     }
                 } else if (aAction === "source_url") {
-                    KB_Utils.loadInNewTab(a$ActionMenu.data("source"));
+                    Ody_Utils.loadInNewTab(a$ActionMenu.data("source"));
                 } else if (aAction === "file" || aAction === "folder") {
                     this.actionClickAjaxCall(a$ActionMenu.data("href"), aAction);
                 }
@@ -1147,13 +1191,13 @@
         }
     }
 
-    KB_Debugger.wrapObjectMethods({
+    Ody_Debugger.wrapObjectMethods({
         KB_MainClass: KB_MainClass
     });
 
     KB_Table = $Table.DataTable(TableOptions);
 })();
 
-/* global KB_Utils,
-          KB_Debugger
+/* global Ody_Utils,
+          Ody_Debugger
  */
