@@ -40,6 +40,7 @@ Usage:
                   [--host=<host>]
                   [--port=<port>]
     app.py generate system_executable
+    app.py repo subtrees (init | update) [-y | --dry-run]
 
 Options:
 
@@ -117,6 +118,7 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
         "open_main_webpage",
     ]
     action = None
+    repo_action = None
     args_to_init_repo_handler = {
         "update_all_repositories",
         "handle_all_repositories",
@@ -192,6 +194,12 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
             if self.a["system_executable"]:
                 self.logger.info("**System executable generation...**")
                 self.action = self.system_executable_generation
+        elif self.a["repo"]:
+            self.repo_action = "init" if self.a["init"] else "update" if self.a["update"] else ""
+
+            if self.a["subtrees"]:
+                self.logger.info("**Managing repository sub-trees...**")
+                self.action = self.manage_repo_subtrees
 
     def run(self):
         """Run tasks depending on the arguments passed.
@@ -207,6 +215,24 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
 
                 if f:
                     f()
+
+    def manage_repo_subtrees(self):
+        """See :any:`git_utils.manage_repo`
+        """
+        from .python_utils import git_utils
+
+        subtrees = [{
+            "url": "git@gitlab.com:Odyseus/js_web_utils.git",
+            "path": "UserData/www/assets/js/js_web_utils"
+        }]
+        git_utils.manage_repo(
+            "subtree",
+            self.repo_action,
+            cwd=root_folder,
+            subtrees=subtrees,
+            dry_run=self.a["--dry-run"],
+            logger=self.logger
+        )
 
     def download_all_archives(self):
         """See :any:`archives_handler.ArchivesHandler`

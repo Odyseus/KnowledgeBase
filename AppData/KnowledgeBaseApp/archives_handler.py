@@ -239,6 +239,23 @@ class ArchivesHandler():
                                                       check=True)
                             except CalledProcessError as err:
                                 self.logger.error(err)
+
+                            dir_list = [entry.path for entry in os.scandir(
+                                ext_dst) if entry.is_dir(follow_symlinks=False)]
+
+                            if len(dir_list) == 1:
+                                extracted_dir = dir_list[0]
+                                desired_dir = os.path.join(ext_dst, source["kb_rel_path"])
+
+                                if extracted_dir != desired_dir:
+                                    if self._dry_run:
+                                        self.logger.log_dry_run(
+                                            "The extracted directory\n%s\nwill be renamed to\n%s" % (extracted_dir, desired_dir))
+                                    else:
+                                        self.logger.info(
+                                            "Renaming extracted folder from\n%s\nto\n%s" % (extracted_dir, desired_dir))
+
+                                        os.rename(extracted_dir, desired_dir)
                 except Exception as err:
                     self.logger.error(err)
         except (KeyboardInterrupt, SystemExit):
