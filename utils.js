@@ -26,6 +26,8 @@ var Ody_Utils = null;
                 this.toggleBackToTopButtonVisibility, 200, true, true);
 
             this.handleToTopOfPageButton();
+
+            document.addEventListener("click", this.emptyLinksHandler.bind(this), false);
         }
 
         get toTopOfPageButton() {
@@ -262,6 +264,18 @@ var Ody_Utils = null;
             return ret;
         }
 
+        emptyLinksHandler(aE) {
+            let source = aE.target;
+
+            // If source is a ghost, move on.
+            if (!source ||
+                // Ignore all non-anchors.
+                source.tagName.toLowerCase() !== "a") {
+                return;
+            }
+
+            source.getAttribute("href") === "#" && aE.preventDefault();
+        }
     }
 
     if (typeof Ody_Debugger === "object") {
