@@ -48,6 +48,7 @@ div.boxed {
 }
 
 /* The loading message centered on screen. */
+/* stylelint-disable declaration-block-no-duplicate-properties */
 #KB_loading > .message {
     -webkit-box-align: center;
     -webkit-align-items: center;
@@ -71,6 +72,7 @@ div.boxed {
     min-height: 100vh;
     text-align: center;
 }
+/* stylelint-enable declaration-block-no-duplicate-properties */
 
 /***************
  * Table tweaks.

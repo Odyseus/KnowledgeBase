@@ -858,12 +858,6 @@
                 cache: false,
                 data: this._URLParams.toString()
             }).done((aResponse) => {
-                // if (this._URLParams.get("inlinePageHandler").toLowerCase() === "md") {
-                //     if (this._URLParams.get("inlinePageSource")) {
-                //         aResponse = `<h1><a href="${this._URLParams.get("inlinePageSource")}">Source</a></h1>${aResponse}`;
-                //     }
-                // }
-
                 InlineContent.innerHTML = aResponse;
             }).always((aXHR, aStatusText) => { // jshint ignore:line
                 try {
