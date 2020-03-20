@@ -6,8 +6,8 @@ var Ody_Utils = null;
     const ElementsOffsetParams = Object.freeze({
         extraPercent: 0,
         offsetPosition: "Top",
-        margin: true,
-        padding: false
+        setMargin: true,
+        setPadding: false
     });
 
     class UtilsClass {
@@ -92,18 +92,18 @@ var Ody_Utils = null;
          *                                should be an object with options (see ElementsOffsetParams).
          */
         setElementsOffset(aOffsetElement, aElements) {
-            let offset = parseInt(this.getElementOuterHeight(aOffsetElement, true), 10);
+            let baseOffset = parseInt(this.getElementOuterHeight(aOffsetElement, true), 10);
 
             for (let [el, options] of aElements) {
                 let params = this.parseParams(options, ElementsOffsetParams);
                 let extraPercent = (Math.max(0, Math.min(parseInt(params.extraPercent, 10), 100)) / 100) + 1.0;
-                offset = Math.ceil(offset * extraPercent);
+                let offset = baseOffset * extraPercent;
 
-                if (params.margin) {
+                if (params.setMargin) {
                     el.style["margin" + params.offsetPosition] = offset + "px";
                 }
 
-                if (params.padding) {
+                if (params.setPadding) {
                     el.style["padding" + params.offsetPosition] = offset + "px";
                 }
             }
