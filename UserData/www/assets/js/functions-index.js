@@ -1,14 +1,38 @@
-"use strict"; // jshint ignore:line
-
 /* NOTES:
  *
  * - "Interesting" fact. If the Firefox setting called browser.zoom.full is set to false
- *  the zooming of the page will not trigger breakpoint changes.
+ *      the zooming of the page will not trigger breakpoint changes.
  * - When the Firefox developer tools is open, the search input doesn't focus on page load.
- *  It took me hours to discover this stupid behavior!!! )$(&$$)
+ *      It took me hours to discover this stupid behavior!!! )$(&$$)
+ * - Input search nightmare!! I wanted something simple. To store search terms when pressing Enter
+ *      without the input search being cleared and without submitting the form. Simple, right?!?
+ *      Nothing is ever so with shit "designed" by f*cking web developers!!! The way that I made it
+ *      work is as follows:
+ *      - Added `action="javascript:void(0)"` attribute to the form.
+ *      - Added `name="input-id"` attribute to the input of type search.
+ *      - On the `keypress` event for the input I prevent default and return false when pressing the
+ *          Enter key. In the middle of these calls I call the form's `submit` method.
+ *      - Why all of this works (in Firefox based browsers only, because in Shitmium based browsers
+ *          nothing f*cking works!!!), and which part of these changes actually made it work,
+ *          I have no idea. Like with everything derived from "web technologies",
+ *          I will keep "enjoying" it while it last. It's pointless to expect any kind of stability
+ *          or congruency from any of these "technologies".
+ * - Reasons (other than them being shit) for autocomplete not working on Shitmium based browsers:
+ *     - The input isn't the first child of the form. Typical Google shit, to tell everybody how
+ *         things should be designed!!!
+ *     - Autocomplete is disabled when not using SSL in Shitmium based browsers. Typical web
+ *         developers shit mentality, EVERYTHING in the f*cking cloud! Local HTML files can't be
+ *         viewed in a f*cking HTML viewer!!! And SSL forced on locally hosted sites without
+ *         internet access that DO NOT handle ANY data that needs to be securely handled!!!
+ *     - Lastly, Google's design decision that the current behavior is the desired behavior by ALL
+ *         Chrome users. This is the most likely problem. 90% of Chrome's users are morons that
+ *         installed the browser without even knowing while blindly clicking Next in a wizard that
+ *         they didn't even knew WTF they were installing, like every single f*cking Windows user!!!
  */
 
 (function() {
+    "use strict"; // jshint ignore:line
+
     let KB_Main = null;
     let KB_Table = null;
 
@@ -22,6 +46,14 @@
         pref_DisplaySubCatCol: "false",
         pref_TablePageLength: "25"
     };
+    const SEARCH_INPUT_EVENTS = [
+        "keyup",
+        "search",
+        "input",
+        "paste",
+        "cut",
+        "keypress"
+    ];
     const SIDEBAR_WRAPPER_CLASSES = [
         "col-lg-2",
         "col-md-3"
@@ -58,6 +90,9 @@
     const TableLengthChooserForm = document.getElementById("KB_table-length-chooser-form");
     const TableLengthChooserSelect = document.getElementById("KB_table-length-chooser-select");
     const TableWrapper = document.getElementById("KB_table-wrapper");
+    const NavbarOffsetElements = new Map(Array.prototype.slice.call(
+        document.getElementsByClassName("KB_needs-navbar-offset")).map((aEl) => [aEl, {}]));
+
     /**
      * Action buttons data map.
      *
@@ -124,7 +159,7 @@
 </div>`;
     };
     const TitleTemplate = (aDataHref, aDataHandler, aDataSource, aTitle) => {
-        return `<div data-source="${encodeURIComponent(aDataSource)}" data-handler="${encodeURIComponent(aDataHandler)}" data-href="${encodeURIComponent(aDataHref)}">${aTitle}</div>`;
+        return `<div class="KB_title-link" data-source="${encodeURIComponent(aDataSource)}" data-handler="${encodeURIComponent(aDataHandler)}" data-href="${encodeURIComponent(aDataHref)}">${aTitle}</div>`;
     };
     /**
      * Delayed function called by DataTables.drawCallback().
@@ -269,7 +304,7 @@
             name: "handler",
             targets: 0,
             sortable: false,
-            class: "KB_img-cell-td",
+            class: "KB_image",
             render: (aData, aType, aRow) => {
                 switch (aType) {
                     case "filter":
@@ -331,7 +366,7 @@
             data: "t",
             name: "title",
             targets: 3,
-            class: `KB_title-link text-bold`,
+            class: "KB_title text-bold",
             render: (aData, aType, aRow) => {
                 switch (aType) {
                     case "display":
@@ -362,6 +397,7 @@
             this._ignoreDefaultCategory = false;
             this._currentSection = "table";
             this._URLParams = new URLSearchParams(window.location.search);
+            this.delayedSetElementsOffset = Ody_Utils.debounce(this.doSetElementsOffset, 50);
 
             // Query strings implementation.
             // So I can open the pages that are loaded inline (Markdown pages or standalone HTML pages)
@@ -458,8 +494,10 @@
             });
 
             // Replicate the DataTables search function used by its native search input.
-            $(InputSearch).on("keyup search input paste cut keypress",
-                this.inputSearchEventHandler);
+            for (let i = SEARCH_INPUT_EVENTS.length - 1; i >= 0; i--) {
+                InputSearch.addEventListener(SEARCH_INPUT_EVENTS[i],
+                    this.inputSearchEventHandler, false);
+            }
 
             if (!this._URLParams.has("inlinePageURL")) {
                 this.displayMainSection("table");
@@ -467,12 +505,27 @@
 
             $Sidebar.on("click auxclick", "button.KB_cat-btn",
                 this.setActiveCategory.bind(this));
-            $Table.on("click auxclick", "td.KB_title-link div",
+            $Table.on("click auxclick", ".KB_title-link",
                 this.handleTitleClick.bind(this));
             $IndexModal.on("click change", ".KB_pref-handler",
                 this.handlePreferences.bind(this));
             $TopNavbar.on("click", ".KB_nav-item",
                 this.handleNavItemsClick.bind(this));
+
+            if ("Ody_SmoothScroll" in window) {
+                Ody_SmoothScroll.topElementOffset = $TopNavbar.outerHeight(true);
+                Ody_SmoothScroll.initLinksHandler();
+            }
+
+            window.addEventListener("resize", () => {
+                this.delayedSetElementsOffset();
+            }, false);
+
+            this.delayedSetElementsOffset();
+        }
+
+        doSetElementsOffset() {
+            Ody_Utils.setElementsOffset($TopNavbar[0], NavbarOffsetElements);
         }
 
         /**
@@ -552,6 +605,13 @@
          * @param {Object} aE - Event that triggered the function.
          */
         inputSearchEventHandler(aE) {
+            // Prevent form submission.
+            if (aE.type === "keypress" && aE.keyCode === 13) {
+                aE.preventDefault();
+                InputSearchGroup.submit();
+                return false;
+            }
+
             switch (aE.type) {
                 case "keyup":
                 case "search":
@@ -581,13 +641,6 @@
                         if (triggerSearch) {
                             KB_Main.filterTable(aE.target.value.trim());
                         }
-                    }
-
-                    return false;
-                case "keypress":
-                    // Prevent form submission.
-                    if (aE.keyCode === 13) {
-                        return false;
                     }
                     break;
             }
@@ -891,11 +944,7 @@
             for (let i = contentLinks.length - 1; i >= 0; i--) {
                 let targetHref = contentLinks[i].getAttribute("href");
 
-                if (targetHref[0] === "#") {
-                    contentLinks[i].addEventListener("click",
-                        this.smoothScrollInternalTarget.bind(null, $TopNavbar.outerHeight(true)),
-                        false);
-                } else {
+                if (targetHref[0] !== "#") {
                     // Nothing freaking works in the un-configurable crap called Firefox Quantum (57+)!!!
                     // So, I have to hard code it!!!
                     contentLinks[i].addEventListener("click", this.contentLinkLoadInNewTab, false);
@@ -906,50 +955,6 @@
                 let codeBlocks = InlineContent.querySelectorAll("pre code");
                 for (let i = codeBlocks.length - 1; i >= 0; i--) {
                     hljs.highlightBlock(codeBlocks[i]);
-                }
-            }
-        }
-
-        smoothScrollInternalTarget(aAdditionalOffset, aE) {
-            aE.preventDefault();
-            Ody_Utils.delayedToggleBackToTopButtonVisibility();
-            let href = aE.currentTarget.getAttribute("href");
-
-            if (href) {
-                href = href.slice(1);
-
-                let targetElement = document.getElementById(href);
-
-                if (!targetElement) {
-                    try {
-                        // For ancient web pages that still use the deprecated "name" attribute. ¬¬
-                        targetElement = document.querySelector('[name="' + href + '"]');
-                    } catch (aErr) {
-                        targetElement = null;
-                    }
-                }
-
-                try {
-                    if (targetElement) {
-                        // This didn't show signs of "jerkyness" when animated (yet).
-                        $("html, body").animate({
-                            scrollTop: targetElement.getBoundingClientRect().top +
-                                // I suppose that this is why jQuery was born, because of retarded
-                                // corporations that cannot get their shit together!!!
-                                // In some browsers, document.documentElement.scrollTop is used to store
-                                // the page scrolled position, in some others, document.body.scrollTop
-                                // is used instead. ¬¬
-                                (document.documentElement.scrollTop || document.body.scrollTop) -
-                                (aAdditionalOffset ?
-                                    // NOTE: I add targetElement.offsetHeight in both instances so the
-                                    // scroll destination is separated from the edge of the top of the
-                                    // page or top element (aAdditionalOffset).
-                                    aAdditionalOffset + targetElement.offsetHeight :
-                                    targetElement.offsetHeight)
-                        }, 400);
-                    }
-                } catch (aErr) {
-                    console.error(aErr);
                 }
             }
         }
@@ -1193,5 +1198,6 @@
 })();
 
 /* global Ody_Utils,
-          Ody_Debugger
+          Ody_Debugger,
+          Ody_SmoothScroll
  */

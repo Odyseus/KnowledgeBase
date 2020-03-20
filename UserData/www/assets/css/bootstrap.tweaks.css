@@ -2,7 +2,6 @@
  * General tweaks.
  *****************/
 body {
-    margin-top: 50px;
     margin-bottom: 0.7em;
     /* Kepp scrollbars visible because I hate all the elements in the page dancing around. */
     overflow-y: scroll;
@@ -83,13 +82,13 @@ div.boxed {
 }
 
 /* Expand the size of a link to the entire table cell. */
-.KB_title-link div,
+.KB_title-link,
 
 /* This seems to fix two absolutely annoying bugs:
    - It FINALLY fixed the image column width to randomly expand.
    - And also helps to keep the image column width when hiding the sidebar.
 */
-th.KB_title-link {
+th.KB_title {
     width: 100% !important;
     height: 100% !important;
 }
@@ -98,25 +97,25 @@ th.KB_title-link {
  * "Boldify" them.
  * Attempt to expand the clickable area.
  */
-.KB_title-link div {
+.KB_title-link {
     display: inline-block;
     position: relative;
     cursor: pointer;
     color: var(--success);
 
-    /* Above ".KB_title-link div:before" so I can select text.*/
+    /* Above ".KB_title-link:before" so I can select text.*/
     z-index: 1;
 
     /* For debugging. DO NOT DELETE.*/
     /*border: solid yellow;*/
 }
 
-.KB_title-link div:hover {
+.KB_title-link:hover {
     opacity: 0.75;
     cursor: pointer;
 }
 
-.KB_title-link div:before {
+.KB_title-link:before {
     content: "";
     position: absolute;
     top: -0.5em;
@@ -125,7 +124,7 @@ th.KB_title-link {
     bottom: -0.5em;
     cursor: pointer;
 
-    /* Bellow ".KB_title-link div" so I can select text.*/
+    /* Bellow ".KB_title-link" so I can select text.*/
     z-index: -1;
 
     /* For debugging. DO NOT DELETE.*/
@@ -140,12 +139,12 @@ th.KB_title-link {
 }
 
 /* Keep the first column of the table (the image) centered. */
-.KB_img-cell-td {
+.KB_image {
     text-align: center !important;
 }
 
 /* Slim a bit the styling of the buttons in the first column. */
-.KB_img-cell-td .btn-sm {
+.KB_image .btn-sm {
     border-radius: 3px;
     width: 100% !important;
     vertical-align: middle !important;
@@ -156,7 +155,7 @@ th.KB_title-link {
  * Sidebar tweaks.
  *****************/
 #KB_sidebar-wrapper {
-    padding: 50px 0 0 0;
+    padding: 0;
     position: fixed;
     left: 0;
     top: 0;
