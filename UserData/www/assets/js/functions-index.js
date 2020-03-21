@@ -2,6 +2,8 @@
  *
  * - "Interesting" fact. If the Firefox setting called browser.zoom.full is set to false
  *      the zooming of the page will not trigger breakpoint changes.
+ * - Another "interesting" fact. With the Firefox preference "privacy.resistFingerprinting" set
+ *     to true animations using window.requestAnimationFrame are jerky. Retarded, right!?!?!?!
  * - When the Firefox developer tools is open, the search input doesn't focus on page load.
  *      It took me hours to discover this stupid behavior!!! )$(&$$)
  * - Input search nightmare!! I wanted something simple. To store search terms when pressing Enter
@@ -36,7 +38,7 @@
     let KB_Main = null;
     let KB_Table = null;
 
-    const ALL_CATEGORIES = "All Categories";
+    const ALL_CATEGORIES = "All";
     const LOAD_INLINE = 0;
     const LOAD_IN_NEW_TAB = 1;
     const DEFAULT_PREFS = {
@@ -740,7 +742,7 @@
             KB_Table.search("");
             KB_Table.columns().search("");
 
-            if (aCategory === "All Categories") {
+            if (aCategory === ALL_CATEGORIES) {
                 KB_Table.columns().search("").draw();
             } else {
                 let [cat, sub] = aCategory.split("|");
