@@ -48,7 +48,7 @@ CAT_MENU_TEMPLATE = """<li class="nav-item">
     <span class="btn-group" role="group">
         <button class="nav-link KB_cat-btn btn" data-cat="{data_cat}" href="#"><i class="KB_cat-icon nf {cat_icon}">\
 </i>{cat_title}</button>
-        <button class="KB_toggle-cat-btn btn" href="#{cat_menu_id}" data-toggle="collapse" aria-expanded="false"></button>
+        <button class="dropdown-toggle btn" href="#{cat_menu_id}" data-toggle="collapse" aria-expanded="false"></button>
     </span>
     <ul class="collapse list-unstyled KB_subcats" id="{cat_menu_id}">
 {sub_cat_items}
@@ -513,11 +513,11 @@ def generate_categories_html(dry_run=False, logger=None):
     raw_categories = list(temp_set)
     categories_data = {}
     categories_html_list_items = [CAT_LIST_ITEM_TEMPLATE.format(
-        cat_title="All Categories",
+        cat_title="All",
         cat_class="KB_cat-link",
         cat_icon="nf-fa-bars",
         data_parent="",
-        data_cat="All Categories",
+        data_cat="All",
         indent=""
     )]
 
