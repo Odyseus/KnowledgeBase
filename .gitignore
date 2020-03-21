@@ -13,6 +13,7 @@
 /UserData/www/assets/*
 !/UserData/www/assets/css
 !/UserData/www/assets/data
+!/UserData/www/assets/fonts
 !/UserData/www/assets/js
 /UserData/www/assets/css/*
 /UserData/www/assets/data/*
