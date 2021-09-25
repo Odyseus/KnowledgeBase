@@ -598,7 +598,7 @@ class RepositoriesHandler():
                     self.logger.warning("The following path doesn't seem to be a repository:")
                     self.logger.warning(repo_path)
             except Exception as err:
-                errors.append((err, repo_path))
+                errors.append((err, repo_data))
                 self.logger.error(err)
                 self.logger.error(repo_path)
                 continue
