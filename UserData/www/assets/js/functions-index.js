@@ -1,37 +1,3 @@
-/* NOTES:
- *
- * - "Interesting" fact. If the Firefox setting called browser.zoom.full is set to false
- *      the zooming of the page will not trigger breakpoint changes.
- * - Another "interesting" fact. With the Firefox preference "privacy.resistFingerprinting" set
- *     to true animations using window.requestAnimationFrame are jerky. Retarded, right!?!?!?!
- * - When the Firefox developer tools is open, the search input doesn't focus on page load.
- *      It took me hours to discover this stupid behavior!!! )$(&$$)
- * - Input search nightmare!! I wanted something simple. To store search terms when pressing Enter
- *      without the input search being cleared and without submitting the form. Simple, right?!?
- *      Nothing is ever so with shit "designed" by f*cking web developers!!! The way that I made it
- *      work is as follows:
- *      - Added `action="javascript:void(0)"` attribute to the form.
- *      - Added `name="input-id"` attribute to the input of type search.
- *      - On the `keypress` event for the input I prevent default and return false when pressing the
- *          Enter key. In the middle of these calls I call the form's `submit` method.
- *      - Why all of this works (in Firefox based browsers only, because in Shitmium based browsers
- *          nothing f*cking works!!!), and which part of these changes actually made it work,
- *          I have no idea. Like with everything derived from "web technologies",
- *          I will keep "enjoying" it while it last. It's pointless to expect any kind of stability
- *          or congruency from any of these "technologies".
- * - Reasons (other than them being shit) for autocomplete not working on Shitmium based browsers:
- *     - The input isn't the first child of the form. Typical Google shit, to tell everybody how
- *         things should be designed!!!
- *     - Autocomplete is disabled when not using SSL in Shitmium based browsers. Typical web
- *         developers shit mentality, EVERYTHING in the f*cking cloud! Local HTML files can't be
- *         viewed in a f*cking HTML viewer!!! And SSL forced on locally hosted sites without
- *         internet access that DO NOT handle ANY data that needs to be securely handled!!!
- *     - Lastly, Google's design decision that the current behavior is the desired behavior by ALL
- *         Chrome users. This is the most likely problem. 90% of Chrome's users are morons that
- *         installed the browser without even knowing while blindly clicking Next in a wizard that
- *         they didn't even knew WTF they were installing, like every single f*cking Windows user!!!
- */
-
 (function() {
     "use strict"; // jshint ignore:line
 
@@ -42,12 +8,13 @@
     const LOAD_INLINE = 0;
     const LOAD_IN_NEW_TAB = 1;
     const DEFAULT_PREFS = {
-        pref_DefaultCategory: ALL_CATEGORIES,
-        pref_OpenPDFExternal: "true",
-        pref_DisplayCatCol: "false",
-        pref_DisplaySubCatCol: "false",
-        pref_TablePageLength: "25"
+        default_category: ALL_CATEGORIES,
+        open_pdf_external: true,
+        display_cat_col: false,
+        display_subcat_col: false,
+        table_page_length: 25
     };
+    const Ody_Prefs = new Ody_PrefsClass(DEFAULT_PREFS);
     const SEARCH_INPUT_EVENTS = [
         "keyup",
         "search",
@@ -71,16 +38,12 @@
         "col-sm-12"
     ];
 
-    // jQuery objects.
-    const $IndexModal = $("#KB_index-modal");
-    const $LoadingOverlay = $("#KB_loading");
-    const $PseudoBody = $("#KB_pseudo-body");
-    const $Sidebar = $("#KB_sidebar");
-    const $SidebarCatButtons = $Sidebar.find("button.KB_cat-btn");
-    const $Table = $("#KB_table");
-    const $TopNavbar = $("#KB_top-navbar");
-
     // DOM elements.
+    const PseudoBody = document.getElementById("KB_pseudo-body");
+    const LoadingOverlay = document.getElementById("KB_loading");
+    const TopNavbar = document.getElementById("KB_top-navbar");
+    const Table = document.getElementById("KB_table");
+    const IndexModal = document.getElementById("KB_index-modal");
     const InlineContent = document.getElementById("KB_inline-content");
     const MainContentWrapper = document.getElementById("KB_main-content-wrapper");
     const EditButton = document.getElementById("KB_edit-button");
@@ -88,12 +51,25 @@
     const InputSearchGroup = document.getElementById("KB_input-search-group");
     const ReloadButton = document.getElementById("KB_reload-button");
     const ResetSettingsButton = document.getElementById("KB_reset-settings-button");
+    const Sidebar = document.getElementById("KB_sidebar");
     const SidebarWrapper = document.getElementById("KB_sidebar-wrapper");
     const TableLengthChooserForm = document.getElementById("KB_table-length-chooser-form");
     const TableLengthChooserSelect = document.getElementById("KB_table-length-chooser-select");
     const TableWrapper = document.getElementById("KB_table-wrapper");
-    const NavbarOffsetElements = new Map(Array.prototype.slice.call(
-        document.getElementsByClassName("KB_needs-navbar-offset")).map((aEl) => [aEl, {}]));
+    const NavbarOffsetElements = new Map([
+        ...document.getElementsByClassName("KB_needs-navbar-offset")
+    ].map((aEl) => [aEl, {}]));
+    const TopNavbarItems = [
+        ...TopNavbar.getElementsByClassName("KB_nav-item")
+    ];
+    const SidebarCatButtons = [
+        ...Sidebar.getElementsByClassName("KB_cat-btn")
+    ];
+    const PrefHandlers = [
+        ...document.getElementsByClassName("KB_pref-handler")
+    ];
+    // jQuery objects.
+    const $Table = $(Table);
 
     /**
      * Action buttons data map.
@@ -146,7 +122,7 @@
     const DropdownTemplate = (a) => {
         return `
 <div tabindex="-1" role="group" class="KB_action-dropdown-menu dropdown" data-source="${encodeURIComponent(a.dataSource)}" data-title="${encodeURIComponent(a.dataTitle)}" data-href="${encodeURIComponent(a.dataHref)}" data-handler="${encodeURIComponent(a.dataHandler)}">
-    <button type="button" class="btn btn-${BtnActMap[a.dataHandler].color} btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="nf KB_custom-icon-${a.dataHandler}"></i></button>
+    <button type="button" class="btn btn-${BtnActMap[a.dataHandler].color} btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="nf KB_custom-icon-${a.dataHandler}"></i></button>
     <div class="dropdown-menu">
         <h6 class="dropdown-header">Choose an action</h6>
         <a data-action="file" href="#" class="dropdown-item">
@@ -173,54 +149,53 @@
      *
      * @param {Function} () - Debounced function.
      */
-    const DelayedTableDrawCallback = Ody_Utils.debounce(() => {
+    const DelayedTableDrawCallback = Ody_Core.debounce(() => {
         KB_Main && KB_Main.focusSearchInput();
 
-        $Table.find(".KB_action-dropdown-menu").each((aIndex, aEl) => {
-            let $el = $(aEl);
-
+        Ody_Core.arrayEach([...Table.getElementsByClassName("KB_action-dropdown-menu")], (aEl) => {
             // NOTE: This is to ensure that the events are attached to each dropdown menu just ONCE.
-            if ($el.data("action-menu-handled")) {
+            if (aEl.getAttribute("data-action-menu-handled")) {
                 return;
             }
 
-            $el.on("show.bs.dropdown", (aE) => {
-                let $actionDropdownMenu = $(aE.currentTarget);
+            aEl.addEventListener("show.bs.dropdown", (aE) => {
+                let actionDropdownMenu = aE.currentTarget;
 
                 // NOTE: Again, this is to ensure that the events are attached to each menu items
                 // just ONCE.
-                if ($actionDropdownMenu.data("action-menuitem-handled")) {
+                if (actionDropdownMenu.getAttribute("data-action-menuitem-handled")) {
                     return;
                 }
 
-                let $actionItems = $actionDropdownMenu.find("a.dropdown-item");
-                let sourceURL = $actionDropdownMenu.data("source") || "";
-                let handler = $actionDropdownMenu.data("handler");
+                let actionItems = actionDropdownMenu.getElementsByClassName("dropdown-item");
+                let sourceURL = actionDropdownMenu.getAttribute("data-source") || "";
+                let handler = actionDropdownMenu.getAttribute("data-handler");
 
-                for (let i = $actionItems.length - 1; i >= 0; i--) {
-                    let $actItem = $($actionItems[i]);
-                    let itemAction = $actItem.data("action");
-
-                    $actItem.on("click", KB_Main.actionClick
-                        .bind(KB_Main, $actionDropdownMenu, null, itemAction));
+                for (let i = actionItems.length - 1; i >= 0; i--) {
+                    let actItem = actionItems[i];
+                    let itemAction = actItem.getAttribute("data-action");
 
                     if (itemAction === "source_url") {
-                        $actItem[sourceURL ? "show" : "hide"]();
+                        actItem.style.display = sourceURL ? "" : "none";
                     } else {
-                        $actItem[BtnActMap[handler][itemAction]]();
+                        actItem.style.display = BtnActMap[handler][itemAction] === "show" ? "" : "none";
                     }
                 }
 
-                $actionDropdownMenu.data("action-menuitem-handled", true);
-            }).on("keyup.td", (aE) => {
+                actionDropdownMenu.setAttribute("data-action-menuitem-handled", true);
+            });
+
+            // NOTE: The keyup.td event won't work. Using jQuery, the keyup.td does work.
+            aEl.addEventListener("keyup", (aE) => {
                 // NOTE: Workaround for Firefox in Linux. ¬¬
                 // All of this nonsense due to web developers being DUMBASSES!!!
                 if (aE.keyCode === 27) { // Escape key.
-                    $(aE.target).dropdown("hide");
+                    const dropdown = bootstrap.Dropdown.getOrCreateInstance(aE.target);
+                    dropdown && dropdown.hide();
                 }
             });
 
-            $el.data("action-menu-handled", true);
+            aEl.setAttribute("data-action-menu-handled", true);
         });
     }, 500);
 
@@ -378,28 +353,21 @@
                 }
             }
         }],
-        // Not used for now.
         initComplete: function() {
-            KB_Main = new KB_MainClass();
+            LoadingOverlay.classList.add("d-none");
+            PseudoBody.classList.replace("hide", "show");
         }
     };
 
     class KB_MainClass {
         constructor() {
-            this._winStorage = window.localStorage;
-
-            let prefs = this.getPrefsFromStorage();
-            for (let pref in prefs) {
-                this[pref] = prefs[pref];
-            }
-
             this._currentCategory = ALL_CATEGORIES;
             this._mainScrollPosition = 0;
             // NOTE: This is set only when the "currentCategoryName" URL parameter is set.
             this._ignoreDefaultCategory = false;
             this._currentSection = "table";
             this._URLParams = new URLSearchParams(window.location.search);
-            this.delayedSetElementsOffset = Ody_Utils.debounce(this.doSetElementsOffset, 50);
+            this.delayedSetElementsOffset = Ody_Core.debounce(this.doSetElementsOffset, 50);
 
             // Query strings implementation.
             // So I can open the pages that are loaded inline (Markdown pages or standalone HTML pages)
@@ -420,44 +388,122 @@
             //         on its action button on the table.
             //     inlinePageSource:
             //         It's the URL to the content's on-line source.
-            //     pref_DefaultCategory:
+            //     default_category:
             //         Used to set the default category when the main index page is loaded.
             if (this._URLParams.has("inlinePageURL") && this._URLParams.has("inlinePageHandler")) {
                 this.loadPageInline();
             }
 
-            // NOTE:These are mostly useful for bookmarking the page with specific page settings in case
-            // local storage isn't available or it's cleared constantly.
-            for (let pref in DEFAULT_PREFS) {
-                if (this._URLParams.has(pref)) {
-                    this[pref] = decodeURIComponent(this._URLParams.get(pref));
-                }
-            }
-
             if (this._URLParams.has("currentCategoryName")) {
                 this._currentCategory = this._URLParams.get("currentCategoryName");
 
-                Ody_Utils.clearQueryString();
+                Ody_Core.clearQueryString();
                 this._ignoreDefaultCategory = true;
             }
 
-            this.filterTable = Ody_Utils.debounce(this.doFilter);
+            this.filterTable = Ody_Core.debounce(this.doFilter);
             // NOTE: Needs the time out. Otherwise, it wouldn't focus the freaking input field!!!
             // Check if a greater amount of table elements affects this.
-            this.focusSearchInput = Ody_Utils.debounce(() => {
+            this.focusSearchInput = Ody_Core.debounce(() => {
                 InputSearch.focus();
             }, 500);
 
-            ResetSettingsButton.addEventListener("click", function(aE) { // jshint ignore:line
-                this.clearPrefsInStorage();
-                return false;
-            }.bind(this), false);
-
-            this.setActiveCategory();
 
             // Replicate the behavior of the DataTables native table length chooser.
-            KB_Table.page.len(this.pref_TablePageLength).draw();
-            TableLengthChooserSelect.value = this.pref_TablePageLength;
+            KB_Table.page.len(this.getPref("table_page_length")).draw();
+            TableLengthChooserSelect.value = this.getPref("table_page_length");
+            KB_Table.column("category:name").visible(this.getPref("display_cat_col"));
+            KB_Table.column("sub-category:name").visible(this.getPref("display_subcat_col"));
+
+            if (!this._URLParams.has("inlinePageURL")) {
+                this.displayMainSection("table");
+            }
+
+            if ("Ody_SmoothScroll" in window) {
+                Ody_SmoothScroll.topElementOffset = TopNavbar.offsetHeight;
+                Ody_SmoothScroll.initLinksHandler();
+            }
+
+            this.setActiveCategory();
+            this.delayedSetElementsOffset();
+            Ody_Utils.initializeBaseBootstrapComponents();
+            this.attachListeners();
+        }
+
+        attachListeners() {
+            window.addEventListener("resize", () => {
+                this.delayedSetElementsOffset();
+            }, false);
+
+            // NOTE: The elements handled by the following listeners are the ones added by the
+            // DataTables table. Adding these two listeners instead of one for each of the
+            // thousands of elements a table has seems to be more performant.
+            // WARNING: Pay attention not to add siblings to the handled elements. It WILL
+            // screw up the event.target references that are needed.
+            Ody_Core.arrayEach(["click", "auxclick"], (aEvent) => {
+                PseudoBody.addEventListener(aEvent, (aE) => {
+                    const target = aE.target;
+                    const classList = target.classList;
+
+                    if (classList.contains("KB_title-link")) {
+                        this.handleTitleClick(aE);
+                    } else if (classList.contains("dropdown-item")) {
+                        const actionMenu = aE.target.parentNode.parentNode;
+
+                        if (actionMenu.hasAttribute("data-handler")) {
+                            this.actionClick(actionMenu, null, aE.target.getAttribute("data-action"));
+                        }
+                    }
+                });
+            });
+
+            Ody_Core.arrayEach(PrefHandlers, (aEl) => {
+                switch (aEl.tagName.toLowerCase()) {
+                    case "button":
+                    case "a":
+                    case "input":
+                        aEl.addEventListener("click", this.handlePreferences.bind(this));
+                        break;
+                    case "select":
+                        aEl.addEventListener("change", this.handlePreferences.bind(this));
+                        break;
+                }
+            });
+
+            IndexModal.addEventListener("show.bs.modal", () => {
+                Ody_Core.arrayEach(PrefHandlers, (aEl) => {
+                    const pref = aEl.getAttribute("data-pref");
+                    switch (pref) {
+                        case "display_cat_col":
+                        case "display_subcat_col":
+                        case "open_pdf_external":
+                            aEl.checked = Ody_Prefs[pref];
+                            break;
+                        case "table_page_length":
+                            aEl.value = Ody_Prefs[pref];
+                            break;
+                    }
+                });
+            });
+
+            // Replicate the DataTables search function used by its native search input.
+            for (let i = SEARCH_INPUT_EVENTS.length - 1; i >= 0; i--) {
+                InputSearch.addEventListener(SEARCH_INPUT_EVENTS[i],
+                    this.inputSearchEventHandler.bind(this), false);
+            }
+
+            Ody_Core.arrayEach(SidebarCatButtons, (aEl) => {
+                Ody_Core.arrayEach(["click", "auxclick"], (aE) => {
+                    aEl.addEventListener(aE, this.setActiveCategory.bind(this));
+                });
+            });
+
+            Ody_Core.arrayEach(TopNavbarItems, (aEl) => {
+                Ody_Core.arrayEach(["click", "auxclick"], (aE) => {
+                    aEl.addEventListener(aE, this.handleNavItemsClick.bind(this));
+                });
+            });
+
             TableLengthChooserSelect.addEventListener("change", (aE) => { // jshint ignore:line
                 KB_Table.page.len(aE.target.value).draw();
 
@@ -470,64 +516,14 @@
                 }
             });
 
-            KB_Table.column("category:name").visible(this.pref_DisplayCatCol);
-            KB_Table.column("sub-category:name").visible(this.pref_DisplaySubCatCol);
-
-            // NOTE: No need to optimize this. And use arrow function to preserve "this".
-            $IndexModal.on("show.bs.modal", () => {
-                $IndexModal.find(".KB_pref-handler").each((aIndex, aEl) => {
-                    let pref = aEl.getAttribute("data-pref");
-                    switch (pref) {
-                        case "pref_DisplayCatCol":
-                        case "pref_DisplaySubCatCol":
-                        case "pref_OpenPDFExternal":
-                            aEl.checked = this[pref];
-                            break;
-                        case "pref_TablePageLength":
-                            aEl.value = this[pref];
-                            break;
-                    }
-                });
-            }).on("keyup", (aE) => {
-                // NOTE: Workaround for Firefox in Linux. ¬¬
-                if (aE.keyCode === 27) { // Escape key.
-                    $(aE.target).modal("hide");
-                }
-            });
-
-            // Replicate the DataTables search function used by its native search input.
-            for (let i = SEARCH_INPUT_EVENTS.length - 1; i >= 0; i--) {
-                InputSearch.addEventListener(SEARCH_INPUT_EVENTS[i],
-                    this.inputSearchEventHandler, false);
-            }
-
-            if (!this._URLParams.has("inlinePageURL")) {
-                this.displayMainSection("table");
-            }
-
-            $Sidebar.on("click auxclick", "button.KB_cat-btn",
-                this.setActiveCategory.bind(this));
-            $Table.on("click auxclick", ".KB_title-link",
-                this.handleTitleClick.bind(this));
-            $IndexModal.on("click change", ".KB_pref-handler",
-                this.handlePreferences.bind(this));
-            $TopNavbar.on("click", ".KB_nav-item",
-                this.handleNavItemsClick.bind(this));
-
-            if ("Ody_SmoothScroll" in window) {
-                Ody_SmoothScroll.topElementOffset = $TopNavbar.outerHeight(true);
-                Ody_SmoothScroll.initLinksHandler();
-            }
-
-            window.addEventListener("resize", () => {
-                this.delayedSetElementsOffset();
+            ResetSettingsButton.addEventListener("click", () => {
+                Ody_Prefs.clear();
+                return false;
             }, false);
-
-            this.delayedSetElementsOffset();
         }
 
         doSetElementsOffset() {
-            Ody_Utils.setElementsOffset($TopNavbar[0], NavbarOffsetElements);
+            Ody_Utils.setElementsOffset(TopNavbar, NavbarOffsetElements);
         }
 
         /**
@@ -547,6 +543,10 @@
                 case "KB_reload-button":
                     this.loadPageInline();
                     break;
+                case "KB_index-modal-button":
+                    const modal = bootstrap.Modal.getOrCreateInstance(IndexModal);
+                    modal && modal.show();
+                    break;
                 case "KB_edit-button":
                     this.actionClick(null, decodeURIComponent(this._URLParams.get("inlinePageURL")), "file", aE);
                     break;
@@ -560,7 +560,7 @@
                             this.displayMainSection("table");
                             break;
                         case 1:
-                            Ody_Utils.loadInNewTab("");
+                            Ody_Core.loadInNewTab("");
                             break;
                     }
                     break;
@@ -583,21 +583,26 @@
             let showSidebar = aShow === null ? SidebarWrapper.classList.contains("d-none") : aShow;
 
             if (showSidebar) { // Show sidebar.
-                // Remove the d-none class to the sidebar wrapper so it can be shown...
-                SidebarWrapper.classList.remove("d-none");
-                // ...add back all layout classes to the sidebar and content wrappers so
-                // they can be laid out depending on the view port size.
-                SidebarWrapper.classList.add(...SIDEBAR_WRAPPER_CLASSES);
-                MainContentWrapper.classList.add(...CONTENT_WRAPPER_CLASSES);
+                Ody_Core.toggleElementsClasses(MainContentWrapper, [], CONTENT_WRAPPER_CLASSES);
+                Ody_Core.toggleElementsClasses(
+                    SidebarWrapper,
+                    // Remove the d-none class from the sidebar wrapper so it can be shown...
+                    ["d-none"],
+                    // ...add back all layout classes to the sidebar and content wrappers so
+                    // they can be laid out depending on the view port size.
+                    SIDEBAR_WRAPPER_CLASSES
+                );
             } else { // Hide sidebar.
-                // Add the d-none class to hide sidebar wrapper...
-                SidebarWrapper.classList.add("d-none");
-                // ...remove all layout classes from the sidebar and content wrappers and
-                // add only the col-12 class to the content wrapper so it occupy the
-                // full width.
-                SidebarWrapper.classList.remove(...SIDEBAR_WRAPPER_CLASSES);
-                MainContentWrapper.classList.remove(...CONTENT_WRAPPER_CLASSES);
-                MainContentWrapper.classList.add("col-12");
+                Ody_Core.toggleElementsClasses(MainContentWrapper, CONTENT_WRAPPER_CLASSES, ["col-12"]);
+                Ody_Core.toggleElementsClasses(
+                    SidebarWrapper,
+                    // Remove all layout classes from the sidebar and content wrappers and
+                    // add only the col-12 class to the content wrapper so it occupys the
+                    // full width.
+                    SIDEBAR_WRAPPER_CLASSES,
+                    // ...add the d-none class to hide sidebar wrapper...
+                    ["d-none"]
+                );
             }
         }
 
@@ -638,10 +643,10 @@
                         aE.which === 13;
 
                     if (aE.which === 27) { // Escape key
-                        KB_Main.clearSearchInput(this);
+                        this.clearSearchInput(aE.target);
                     } else {
                         if (triggerSearch) {
-                            KB_Main.filterTable(aE.target.value.trim());
+                            this.filterTable(aE.target.value.trim());
                         }
                     }
                     break;
@@ -664,14 +669,14 @@
             let searchtext = null;
 
             // When selecting a category from the sidebar.
-            if (aE && aE.currentTarget) {
-                searchtext = aE.currentTarget.getAttribute("data-cat");
+            if (aE && aE.target) {
+                searchtext = aE.target.getAttribute("data-cat");
 
                 switch (aE.button) {
                     case 1:
                         let query = new URLSearchParams("");
                         query.set("currentCategoryName", searchtext);
-                        Ody_Utils.loadInNewTab(`?${query.toString()}`);
+                        Ody_Core.loadInNewTab(`?${query.toString()}`);
                         return;
                     case 2:
                         return;
@@ -684,7 +689,8 @@
                 this.filterCategories(searchtext);
             } else { // When selecting a category from initial page load.
                 this.resetScrollPosition();
-                searchtext = (this.pref_DefaultCategory && !this._ignoreDefaultCategory) ? this.pref_DefaultCategory :
+                searchtext = (this.getPref("default_category") && !this._ignoreDefaultCategory) ?
+                    this.getPref("default_category") :
                     this._currentCategory;
 
                 this._ignoreDefaultCategory = false;
@@ -703,18 +709,20 @@
          */
         highlightCategoryInSidebar(aCategory) {
             let currentCatButton = null;
-            for (let i = $SidebarCatButtons.length - 1; i >= 0; i--) {
-                if ($SidebarCatButtons[i].getAttribute("data-cat") === aCategory) {
-                    $SidebarCatButtons[i].classList.add("active");
-                    currentCatButton = $SidebarCatButtons[i];
+            for (let i = SidebarCatButtons.length - 1; i >= 0; i--) {
+                if (SidebarCatButtons[i].getAttribute("data-cat") === aCategory) {
+                    SidebarCatButtons[i].classList.add("active");
+                    currentCatButton = SidebarCatButtons[i];
                 } else {
-                    $SidebarCatButtons[i].classList.remove("active");
+                    SidebarCatButtons[i].classList.remove("active");
                 }
             }
 
             if (currentCatButton !== null && !!currentCatButton.getAttribute("data-parent")) {
-                let $collapseEl = $(currentCatButton.getAttribute("data-parent"));
-                $collapseEl && $collapseEl.collapse().show();
+                let collapse = bootstrap.Collapse.getOrCreateInstance(
+                    document.querySelector(currentCatButton.getAttribute("data-parent"))
+                );
+                collapse && collapse.show();
             }
         }
 
@@ -747,9 +755,9 @@
             } else {
                 let [cat, sub] = aCategory.split("|");
 
-                cat && KB_Table.column("category:name").search("^" + Ody_Utils.escapeRegExp(cat) + "$",
+                cat && KB_Table.column("category:name").search("^" + Ody_Core.escapeRegExp(cat) + "$",
                     true, false, true).draw();
-                sub && KB_Table.column("sub-category:name").search("^" + Ody_Utils.escapeRegExp(sub) + "$",
+                sub && KB_Table.column("sub-category:name").search("^" + Ody_Core.escapeRegExp(sub) + "$",
                     true, false, true).draw();
             }
         }
@@ -779,13 +787,13 @@
 
                         if (cat && cat.length > 1) {
                             KB_Table.columns().search("");
-                            KB_Table.column("category:name").search("^" + Ody_Utils.escapeRegExp(cat),
+                            KB_Table.column("category:name").search("^" + Ody_Core.escapeRegExp(cat),
                                 true, false, true).draw();
                         }
 
                         if (sub && sub.length > 1) {
                             KB_Table.columns().search("");
-                            KB_Table.column("sub-category:name").search("^" + Ody_Utils.escapeRegExp(sub),
+                            KB_Table.column("sub-category:name").search("^" + Ody_Core.escapeRegExp(sub),
                                 true, false, true).draw();
                         }
 
@@ -799,7 +807,7 @@
 
                         if (handler && handler.length > 1) {
                             this.filterCategories(this._currentCategory);
-                            KB_Table.column("handler:name").search("^" + Ody_Utils.escapeRegExp(handler),
+                            KB_Table.column("handler:name").search("^" + Ody_Core.escapeRegExp(handler),
                                 true, false, true).draw();
                         }
 
@@ -820,85 +828,45 @@
         /**
          * Display one of the main sections of the index page.
          *
+         * NOTE: Never, EVER AGAIN, implement animations to show/hide sections.
+         *
          * @param {Object} aEl - String representing the desired element.
          */
         displayMainSection(aEl) {
-            try {
-                switch (aEl) {
-                    case "content":
-                        this.toggleSidebar(false);
-                        this._currentSection = "content";
-                        document.documentElement.scrollTop = 0;
+            switch (aEl) {
+                case "content":
+                    this.toggleSidebar(false);
+                    this._currentSection = "content";
+                    document.documentElement.scrollTop = 0;
 
-                        this.customFadeOut(TableWrapper);
-                        this.customFadeOut(InputSearchGroup);
-                        this.customFadeOut(TableLengthChooserForm);
+                    TableWrapper.classList.add("d-none");
+                    InputSearchGroup.classList.add("d-none");
+                    TableLengthChooserForm.classList.add("d-none");
 
-                        this.customFadeIn(InlineContent);
-                        this.customFadeIn(ReloadButton);
-                        this._URLParams.has("inlinePageHandler") &&
-                            this._URLParams.get("inlinePageHandler") === "md" &&
-                            this.customFadeIn(EditButton);
-                        break;
-                    case "table":
-                        this.toggleSidebar(true);
-                        this._currentSection = "table";
-                        InlineContent.innerHTML = "";
-                        this._URLParams = new URLSearchParams("");
+                    InlineContent.classList.remove("d-none");
+                    ReloadButton.classList.remove("d-none");
+                    this._URLParams.has("inlinePageHandler") &&
+                        this._URLParams.get("inlinePageHandler") === "md" &&
+                        EditButton.classList.remove("d-none");
+                    break;
+                case "table":
+                    TableWrapper.classList.remove("d-none");
+                    this.toggleSidebar(true);
+                    this._currentSection = "table";
+                    InlineContent.innerHTML = "";
+                    this._URLParams = new URLSearchParams("");
 
-                        this.customFadeIn(TableWrapper);
-                        this.customFadeIn(InputSearchGroup);
-                        this.customFadeIn(TableLengthChooserForm);
+                    InlineContent.classList.add("d-none");
+                    ReloadButton.classList.add("d-none");
+                    EditButton.classList.add("d-none");
+                    InputSearchGroup.classList.remove("d-none");
+                    TableLengthChooserForm.classList.remove("d-none");
 
-                        this.customFadeOut(ReloadButton);
-                        this.customFadeOut(EditButton);
-                        // NOTE: Do not fade it out!
-                        InlineContent.classList.add("d-none");
-
-                        this.focusSearchInput();
-                        // When going back to the index, restore the scroll position.
-                        document.documentElement.scrollTop = this._mainScrollPosition;
-                        break;
-                }
-            } finally {
-                $PseudoBody.animate({
-                    opacity: "1"
-                }, {
-                    duration: 200,
-                    start: () => {
-                        $LoadingOverlay.animate({
-                            opacity: "0"
-                        }, {
-                            duration: 200,
-                            done: () => {
-                                $LoadingOverlay.addClass("d-none");
-                            }
-                        });
-                    }
-                });
+                    this.focusSearchInput();
+                    // When going back to the index, restore the scroll position.
+                    document.documentElement.scrollTop = this._mainScrollPosition;
+                    break;
             }
-        }
-
-        customFadeIn(aEl) {
-            $(aEl).animate({
-                opacity: "1"
-            }, {
-                duration: 200,
-                start: () => {
-                    aEl.classList.remove("d-none");
-                }
-            });
-        }
-
-        customFadeOut(aEl) {
-            $(aEl).animate({
-                opacity: "0"
-            }, {
-                duration: 200,
-                done: () => {
-                    aEl.classList.add("d-none");
-                }
-            });
         }
 
         /**
@@ -906,25 +874,25 @@
          */
         loadPageInline() {
             let self = this;
-            $.ajax({
-                method: "POST",
-                // NOTE: Non-existent location. It's used just to send POST requests.
-                url: "/handle_inline_content",
-                cache: false,
-                data: this._URLParams.toString()
-            }).done((aResponse) => {
-                InlineContent.innerHTML = aResponse;
-            }).always((aXHR, aStatusText) => { // jshint ignore:line
-                try {
-                    self.displayMainSection("content");
-                } finally {
-                    self.setupHTMLInlineContent();
-                }
-            }).fail((aXHR, aStatusText) => {
-                console.error("Request failed: " + aStatusText);
-                console.error(aXHR);
-                InlineContent.innerHTML = aXHR.responseText;
-            });
+            fetch("/handle_inline_content", {
+                    method: "POST",
+                    cache: "no-cache",
+                    body: this._URLParams.toString()
+                })
+                .then((aResponse) => {
+                    return aResponse.text();
+                })
+                .then((aData) => {
+                    InlineContent.innerHTML = aData;
+
+                    try {
+                        self.displayMainSection("content");
+                    } finally {
+                        self.setupHTMLInlineContent();
+                    }
+
+                })
+                .catch(aError => console.error(aError));
         }
 
         /**
@@ -934,7 +902,7 @@
          */
         contentLinkLoadInNewTab(aE) {
             aE.preventDefault();
-            Ody_Utils.loadInNewTab(aE.target.getAttribute("href"));
+            Ody_Core.loadInNewTab(aE.target.getAttribute("href"));
         }
 
         /**
@@ -953,12 +921,9 @@
                 }
             }
 
-            if (typeof hljs === "object") {
-                let codeBlocks = InlineContent.querySelectorAll("pre code");
-                for (let i = codeBlocks.length - 1; i >= 0; i--) {
-                    hljs.highlightBlock(codeBlocks[i]);
-                }
-            }
+            window.setTimeout(() => {
+                Ody_Core.highlightAllCodeBlocks(InlineContent);
+            }, 10);
         }
 
         /**
@@ -971,26 +936,25 @@
             switch (aE.type) {
                 case "click":
                     switch (pref) {
-                        case "pref_DisplayCatCol":
-                        case "pref_DisplaySubCatCol":
-                        case "pref_OpenPDFExternal":
-                            this[pref] = !this[pref];
-                            this.savePrefToStorage(pref, this[pref]);
+                        case "display_cat_col":
+                        case "display_subcat_col":
+                        case "open_pdf_external":
+                            Ody_Prefs[pref] = !Ody_Prefs[pref];
 
-                            pref === "pref_DisplayCatCol" &&
-                                KB_Table.column("category:name").visible(this.pref_DisplayCatCol);
-                            pref === "pref_DisplaySubCatCol" &&
-                                KB_Table.column("sub-category:name").visible(this.pref_DisplaySubCatCol);
+                            pref === "display_cat_col" &&
+                                KB_Table.column("category:name").visible(Ody_Prefs.display_cat_col);
+                            pref === "display_subcat_col" &&
+                                KB_Table.column("sub-category:name").visible(Ody_Prefs.display_subcat_col);
                             break;
-                        case "pref_DefaultCategory":
-                            this.savePrefToStorage(pref, this._currentCategory);
+                        case "default_category":
+                            Ody_Prefs[pref] = this._currentCategory;
                             break;
                     }
                     break;
                 case "change":
                     switch (pref) {
-                        case "pref_TablePageLength":
-                            this.savePrefToStorage(pref, aE.currentTarget.value);
+                        case "table_page_length":
+                            Ody_Prefs[pref] = aE.currentTarget.value;
                             break;
                     }
                     break;
@@ -1015,10 +979,10 @@
 
             aE.preventDefault();
 
-            let href = aE.currentTarget.getAttribute("data-href");
-            let handler = aE.currentTarget.getAttribute("data-handler");
-            let source = aE.currentTarget.getAttribute("data-source");
-            let title = aE.currentTarget.textContent;
+            let href = aE.target.getAttribute("data-href");
+            let handler = aE.target.getAttribute("data-handler");
+            let source = aE.target.getAttribute("data-source");
+            let title = aE.target.textContent;
 
             switch (this.getLoadActionFromHandler(handler)) {
                 case LOAD_INLINE:
@@ -1031,16 +995,16 @@
                         this.loadPageInline();
                     } else if (aE.button === 1) { // Middle click
                         // Query string implementation.
-                        Ody_Utils.loadInNewTab(`?${this._URLParams.toString()}`);
+                        Ody_Core.loadInNewTab(`?${this._URLParams.toString()}`);
                     }
                     break;
                 case LOAD_IN_NEW_TAB:
                     this._URLParams = new URLSearchParams("");
 
-                    if (handler === "epub" || (handler === "pdf" && this.pref_OpenPDFExternal)) {
+                    if (handler === "epub" || (handler === "pdf" && this.getPref("open_pdf_external"))) {
                         this.actionClick(null, href, "file", aE);
                     } else {
-                        Ody_Utils.loadInNewTab(href);
+                        Ody_Core.loadInNewTab(href);
                     }
                     break;
             }
@@ -1052,40 +1016,42 @@
          * Action when clicking an action icon inside the dropdown menus attached to the table icons.
          *
          * @param {Object} aE           - Event that triggered the function.
-         * @param {String} a$ActionMenu - The dropdown menu where the data is stored.
+         * @param {String} aActionMenu  - The dropdown menu where the data is stored.
          * @param {String} aHref        - The relative path to a file.
          * @param {String} aAction      - The type of action that will be used to decide what to do with the path.
          *
          * @return {Boolean} Stop propagation.
          */
-        actionClick(a$ActionMenu, aHref, aAction, aE) {
+        actionClick(aActionMenu, aHref, aAction, aE) {
             aE && aE.preventDefault();
 
-            if (a$ActionMenu) {
+            if (aActionMenu) {
                 if (aAction === "new_tab") {
-                    switch (this.getLoadActionFromHandler(a$ActionMenu.data("handler"))) {
+                    switch (this.getLoadActionFromHandler(aActionMenu.getAttribute("data-handler"))) {
                         case LOAD_INLINE:
                             // NOTE: Create a new query and leave the current one untouched.
                             let query = new URLSearchParams("");
-                            query.set("inlinePageURL", a$ActionMenu.data("href"));
-                            query.set("inlinePageHandler", a$ActionMenu.data("handler"));
-                            query.set("inlinePageSource", a$ActionMenu.data("source"));
-                            query.set("inlinePageTitle", a$ActionMenu.data("title"));
-                            Ody_Utils.loadInNewTab(`?${query.toString()}`);
+                            query.set("inlinePageURL", aActionMenu.getAttribute("data-href"));
+                            query.set("inlinePageHandler", aActionMenu.getAttribute("data-handler"));
+                            query.set("inlinePageSource", aActionMenu.getAttribute("data-source"));
+                            query.set("inlinePageTitle", aActionMenu.getAttribute("data-title"));
+                            Ody_Core.loadInNewTab(`?${query.toString()}`);
                             break;
                         case LOAD_IN_NEW_TAB:
-                            Ody_Utils.loadInNewTab(a$ActionMenu.data("href"));
+                            Ody_Core.loadInNewTab(aActionMenu.getAttribute("data-href"));
                             break;
                     }
                 } else if (aAction === "source_url") {
-                    Ody_Utils.loadInNewTab(a$ActionMenu.data("source"));
+                    Ody_Core.loadInNewTab(aActionMenu.getAttribute("data-source"));
                 } else if (aAction === "file" || aAction === "folder") {
-                    this.actionClickAjaxCall(a$ActionMenu.data("href"), aAction);
+                    this.actionClickAjaxCall(aActionMenu.getAttribute("data-href"), aAction);
                 }
 
                 // NOTE: Close the menu manually so I can return false at the end so the f*cking
                 // page will not scroll to the f*cking top.
-                a$ActionMenu.dropdown("hide");
+                const dropdown = bootstrap.Dropdown.getOrCreateInstance(aActionMenu);
+                dropdown && dropdown.hide();
+                // aActionMenu.dropdown("hide");
             } else {
                 this.actionClickAjaxCall(aHref, aAction);
             }
@@ -1100,19 +1066,15 @@
          * @param {String} aAction - The type of action that will be used to decide what to do with the path.
          */
         actionClickAjaxCall(aHref, aAction) {
-            $.ajax({
-                method: "POST",
-                // Non-existent location. It's used just to send POST requests.
-                url: "/handle_local_files",
-                cache: false,
-                data: {
-                    href: aHref,
-                    action: aAction
-                }
-            }).fail((aXHR, aStatusText) => {
-                console.error("Request failed: " + aStatusText);
-                console.error(aXHR);
-            });
+            const formData = new FormData();
+            formData.append("href", aHref);
+            formData.append("action", aAction);
+            fetch("/handle_local_files", {
+                    method: "POST",
+                    cache: "no-cache",
+                    body: formData
+                })
+                .catch(aError => console.error(aError));
         }
 
         /**
@@ -1134,72 +1096,44 @@
         }
 
         /**
-         * Clear all preferences stored into window.localStorage.
-         */
-        clearPrefsInStorage() {
-            if (!this._winStorage) {
-                return;
-            }
-
-            this._winStorage.clear();
-        }
-
-        /**
-         * Save preference to window.localStorage.
-         *
-         * @param {String} aKey   - The window.localStorage key to save the preference into.
-         * @param {String} aValue - The value associated to aKey.
-         *
-         * @return {String} description
-         */
-        savePrefToStorage(aKey, aValue) {
-            if (!this._winStorage) {
-                return;
-            }
-
-            this._winStorage.setItem("KB_" + aKey, aValue);
-        }
-
-        /**
-         * Get preferences from window.localStorage.
-         *
-         * @return {Object} Preferences stored in window.localStorage or the defaults if window.localStorage is not available.
-         */
-        getPrefsFromStorage() {
-            if (!this._winStorage) {
-                return DEFAULT_PREFS;
-            }
-
-            return {
-                pref_DefaultCategory: this._winStorage.getItem("KB_pref_DefaultCategory") ||
-                    DEFAULT_PREFS.pref_DefaultCategory,
-                pref_OpenPDFExternal: (this._winStorage.getItem("KB_pref_OpenPDFExternal") ||
-                    DEFAULT_PREFS.pref_OpenPDFExternal) === "true",
-                pref_DisplayCatCol: (this._winStorage.getItem("KB_pref_DisplayCatCol") ||
-                    DEFAULT_PREFS.pref_DisplayCatCol) === "true",
-                pref_DisplaySubCatCol: (this._winStorage.getItem("KB_pref_DisplaySubCatCol") ||
-                    DEFAULT_PREFS.pref_DisplaySubCatCol) === "true",
-                pref_TablePageLength: this._winStorage.getItem("KB_pref_TablePageLength") ||
-                    DEFAULT_PREFS.pref_TablePageLength
-            };
-        }
-
-        /**
          * Reset index scroll position.
          */
         resetScrollPosition() {
             document.documentElement.scrollTop = this._mainScrollPosition = 0;
         }
+
+        /**
+         * Get preference.
+         *
+         * Preferences passed as URL parameters have precedence over the stored in localStorage.
+         *
+         * @param {String} aKey - A preference key.
+         *
+         * @return {String|Boolean} A preference value.
+         */
+        getPref(aKey) {
+            if (this._URLParams.has(aKey)) {
+                return decodeURIComponent(this._URLParams.get(aKey));
+            }
+
+            return Ody_Prefs[aKey];
+        }
     }
 
-    Ody_Debugger.wrapObjectMethods({
-        KB_MainClass: KB_MainClass
-    });
+    if ("Ody_Debugger" in window) {
+        Ody_Debugger.wrapObjectMethods({
+            KB_MainClass: KB_MainClass
+        });
+    }
 
     KB_Table = $Table.DataTable(TableOptions);
+    KB_Main = new KB_MainClass();
 })();
 
 /* global Ody_Utils,
+          Ody_Core,
           Ody_Debugger,
-          Ody_SmoothScroll
+          Ody_SmoothScroll,
+          Ody_PrefsClass,
+          bootstrap
  */

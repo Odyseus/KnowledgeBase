@@ -3,11 +3,18 @@
  *****************/
 body {
     /* Kepp scrollbars visible because I hate all the elements in the page dancing around. */
-    overflow-y: scroll;
+    /* NOTE: When using Bootstrap 5.x.x, forcing the y scrollbar will display an extra
+    scrollbar that who in the f*ck knows where does it comes from. FFS!!! */
+    /*overflow-y: scroll;*/
 }
 
-div.boxed {
-    padding: 15px;
+#KB_pseudo-body.show {
+    opacity: 1 !important;
+    transition: opacity 500ms !important;
+}
+
+#KB_pseudo-body.hide {
+    opacity: 0 !important;
 }
 
 #KB_main-content-wrapper {
@@ -31,22 +38,37 @@ div.boxed {
     height: 100%;
 }
 
-/* For Back To Top Button */
+/* For Back To Top Buttons. */
 #to-top-of-page {
     bottom: 0;
     display: none;
-    font-size: 2.5em;
     margin: 0;
     outline: none;
-    padding: 0;
     position: fixed;
     right: 1rem;
     text-decoration: none;
     z-index: 999999;
+    opacity: 0.5 !important;
 }
 
 #to-top-of-page:hover {
-    opacity: 0.5 !important;
+    opacity: 1 !important;
+}
+
+/* NOTE: The Back To Top button defined as a span is used in the main index.
+ * In the rest of pages this button is defined as a button.
+ * This is so because in the main index I can use icons. In the rest of pages
+ * is not worth it to include a 200KB stylesheet for just one icon, so I use
+ * a character that looks like an arrow.
+ */
+span#to-top-of-page {
+    font-size: 2.5em;
+    padding: 0;
+}
+
+button#to-top-of-page {
+    font-size: 1em;
+    font-weight: bold;
 }
 
 /* The loading message centered on screen. */
@@ -104,7 +126,7 @@ th.KB_title {
     display: inline-block;
     position: relative;
     cursor: pointer;
-    color: var(--success);
+    color: var(--bs-success);
 
     /* Above ".KB_title-link:before" so I can select text.*/
     z-index: 1;
@@ -260,12 +282,12 @@ th.KB_title {
 /* Colorize sub-category togglers depending on the navbar color. */
 #KB_sidebar.navbar-dark button.dropdown-toggle.btn,
 #KB_sidebar.navbar-dark button.dropdown-toggle.btn::after {
-    color: var(--light);
+    color: var(--bs-light);
 }
 
 #KB_sidebar.navbar-light button.dropdown-toggle.btn,
 #KB_sidebar.navbar-light button.dropdown-toggle.btn::after {
-    color: var(--dark);
+    color: var(--bs-dark);
 }
 
 /********
@@ -332,11 +354,11 @@ th.KB_title {
 }
 
 .navbar-dark .KB_navbar-button {
-    color: var(--light);
+    color: var(--bs-light);
 }
 
 .navbar-light .KB_navbar-button {
-    color: var(--dark);
+    color: var(--bs-dark);
 }
 
 /* Set to bold all links on the navigation bar */

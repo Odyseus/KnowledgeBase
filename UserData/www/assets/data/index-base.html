@@ -1,173 +1,223 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-    <meta http-equiv="content-type" content="text/html;charset=utf-8">
-    <title>Knowledge Base</title>
-    <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.svg">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link type="text/css" rel="stylesheet" href="assets/css/bootstrap.min.css">
-    <link type="text/css" rel="stylesheet" href="assets/css/nerdicons.min.css">
-    <link type="text/css" rel="stylesheet" href="assets/css/highlight.min.css" />
-    <link type="text/css" rel="stylesheet" href="assets/css/datatables.min.css">
-    <link type="text/css" rel="stylesheet" href="assets/css/bootstrap.tweaks.css">
-</head>
+    <head>
+        <meta http-equiv="content-type" content="text/html;charset=utf-8">
+        <title>Knowledge Base</title>
+        <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.svg">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link type="text/css" rel="stylesheet" href="assets/css/bootstrap.min.css">
+        <link type="text/css" rel="stylesheet" href="assets/css/nerdicons.min.css">
+        <link type="text/css" rel="stylesheet" href="assets/css/highlight.min.css" />
+        <link type="text/css" rel="stylesheet" href="assets/css/datatables.min.css">
+        <link type="text/css" rel="stylesheet" href="assets/css/bootstrap.tweaks.css">
+    </head>
 
-<body lang="en">
-    <noscript>
-        <div class="alert alert-danger">
-            <p><strong>Oh snap! This page needs JavaScript enabled to display correctly.</strong></p>
-            <p><strong>This page uses JavaScript only to add extra functionality to it. There are no tracking services of any kind and never will be (at least, not from my side).</strong></p>
-        </div>
-    </noscript>
-    <div id="KB_pseudo-body" style="opacity: 0;">
-        <nav id="KB_top-navbar" class="px-2 py-0 navbar navbar-expand-sm navbar-dark bg-gradient-primary fixed-top">
-            <div class="container px-0 justify-content-start">
-                <div class="nav navbar-nav">
-                    <button tabindex="0" role="button" id="KB_toggle-sidebar" class="KB_nav-item nav-item KB_navbar-button btn" type="button" aria-label="Toggle sidebar">
-                        <i class="KB_navbar-button-icon nf nf-fa-bars"></i>
-                    </button>
-                    <a id="KB_home-link" class="KB_nav-item nav-item nav-link navbar-brand" href="#" title="Knowledge Base index">Index</a>
-                </div>
+    <body lang="en">
+        <noscript>
+            <div class="alert alert-danger">
+                <p><strong>Oh snap! This page needs JavaScript enabled to display correctly.</strong></p>
+                <p><strong>This page uses JavaScript only to add extra functionality to it. There are no tracking services of any kind and never will be (at least, not from my side).</strong></p>
             </div>
-            <div class="container px-0 justify-content-center">
-                <form id="KB_input-search-group" action="javascript:void(0)" class="nav-item navbar-form form-inline mx-auto">
-                    <div class="input-group input-group-sm">
-                        <div class="input-group-prepend" for="KB_input-search">
+        </noscript>
+        <div id="KB_pseudo-body" class="hide" style="opacity: 0;">
+            <nav id="KB_top-navbar"
+                 class="px-2 py-1 navbar navbar-expand-sm navbar-dark bg-primary fixed-top">
+                <div class="container px-0 justify-content-start">
+                    <div class="nav navbar-nav me-auto">
+                        <button id="KB_toggle-sidebar"
+                                class="KB_nav-item nav-item KB_navbar-button btn btn-sm"
+                                tabindex="0"
+                                type="button"
+                                aria-label="Toggle sidebar">
+                            <i class="KB_navbar-button-icon nf nf-fa-bars"></i>
+                        </button>
+                        <a id="KB_home-link"
+                           class="KB_nav-item nav-item nav-link navbar-brand"
+                           href="#"
+                           data-bs-toggle="tooltip"
+                           data-bs-placement="bottom"
+                           title="Knowledge Base index">
+                            <i class="nf nf-fa-home"></i>&nbsp;Index
+                        </a>
+                    </div>
+                </div>
+                <div class="container px-0 justify-content-center">
+                    <form id="KB_input-search-group" action="javascript:void(0)" class="nav-item navbar-form form-inline mx-auto">
+                        <div class="input-group input-group-sm">
                             <i class="input-group-text nf nf-fa-search"></i>
-                        </div>
-                        <input id="KB_input-search" name="KB_input-search" type="search" class="form-control form-control-sm" placeholder="Search" autofocus="autofocus">
-                        <div class="input-group-append" for="KB_input-search">
-                            <button id="KB_clear-search-button" class="KB_nav-item input-group-btn btn btn-sm btn-secondary text-white" title="Clear search input">
+                            <input id="KB_input-search"
+                                   name="KB_input-search"
+                                   type="search"
+                                   class="form-control form-control-sm"
+                                   placeholder="Search"
+                                   autofocus="autofocus">
+                            <button id="KB_clear-search-button"
+                                    class="KB_nav-item btn btn-sm btn-dark"
+                                    title="Clear search input">
                                 <i class="nf nf-fa-remove"></i>
                             </button>
                         </div>
-                    </div>
-                </form>
-                <form id="KB_table-length-chooser-form" class="nav-item navbar-form form-inline has-feedback mx-auto">
-                    <div class="input-group input-group-sm">
-                        <div class="input-group-prepend">
+                    </form>
+                    <form id="KB_table-length-chooser-form" class="nav-item navbar-form form-inline has-feedback mx-auto">
+                        <div class="input-group input-group-sm">
                             <i class="input-group-text nf nf-fa-bars"></i>
+                            <select class="form-select form-select-sm" id="KB_table-length-chooser-select" title="Select table length">
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="200">200</option>
+                                <option value="400">400</option>
+                                <option value="-1">All</option>
+                            </select>
                         </div>
-                        <select class="custom-select custom-select-sm" id="KB_table-length-chooser-select" title="Select table length">
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                            <option value="200">200</option>
-                            <option value="400">400</option>
-                            <option value="-1">All</option>
-                        </select>
-                    </div>
-                </form>
-            </div>
-            <button class="nav-item KB_navbar-button d-sm-none" type="button" data-toggle="collapse" data-target="#KB_top-navbar-content" aria-controls="KB_top-navbar-content" aria-expanded="false" aria-label="Toggle navigation">
-                <i class="KB_navbar-button-icon nf nf-fa-bars"></i>
-            </button>
-            <div class="container px-0 justify-content-end ml-auto">
-                <div id="KB_top-navbar-content" class="collapse navbar-collapse">
-                    <div class="nav navbar-nav ml-auto">
-                        <a id="KB_edit-button" class="KB_nav-item nav-item nav-link d-none mx-auto" href="#" role="button" title="Open inline page source with external program">
-                            <i class="nf nf-fa-edit"></i>
-                        </a>
-                        <a id="KB_reload-button" class="KB_nav-item nav-item nav-link d-none mx-auto" href="#" role="button" title="Force reload of the current inline page">
-                            <i class="nf nf-fa-refresh"></i>
-                        </a>
-                        <a class="nav-item nav-link mx-auto" href="#" role="button" data-toggle="modal" data-trigger="focus" data-target="#KB_index-modal" title="Page options">
-                            <i class="nf nf-seti-config mx-auto"></i>
-                        </a>
+                    </form>
+                </div>
+                <button class="nav-item KB_navbar-button d-sm-none"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#KB_top-navbar-content"
+                        aria-controls="KB_top-navbar-content"
+                        aria-expanded="false"
+                        aria-label="Toggle navigation">
+                    <i class="KB_navbar-button-icon nf nf-fa-bars"></i>
+                </button>
+                <div class="container px-0 justify-content-end">
+                    <div id="KB_top-navbar-content"
+                         class="collapse navbar-collapse">
+                        <div class="nav navbar-nav ms-auto">
+                            <button id="KB_edit-button"
+                                    class="KB_nav-item nav-item btn btn-sm btn-info ms-1 d-none"
+                                    type="button"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="bottom"
+                                    title="Open inline page source with external program">
+                                <i class="nf nf-fa-edit"></i>
+                            </button>
+                            <button id="KB_reload-button"
+                                    class="KB_nav-item nav-item btn btn-sm btn-info ms-1 d-none"
+                                    type="button"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="bottom"
+                                    title="Force reload of the current inline page">
+                                <i class="nf nf-fa-refresh"></i>
+                            </button>
+                            <button data-pref="default_category"
+                                    class="KB_pref-handler nav-item btn btn-sm btn-info ms-1"
+                                    type="button"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="bottom"
+                                    title="Set current category as default">
+                                <i class="nf nf-fa-bookmark"></i>
+                            </button>
+                            <button id="KB_index-modal-button"
+                                    class="KB_nav-item nav-item btn btn-sm btn-info ms-1"
+                                    type="button"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-placement="bottom"
+                                    title="Page options">
+                                <i class="nf nf-seti-config"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </nav>
-        <!--
+            </nav>
+            <!--
             NOTE: The use of row > col-* adds a lot of lateral paddings and margins.
             All that padding/margin causes a lot of asymmetry throughout the layout.
             The use of "mx-0" and "px-0" on "row"s and "col-*"s is to get rid of all of that.
             Everything is beautifully symmetrical once again!!!
             d-print-block class is used because Firefox is garbage. Without this class,
             the printed output has missing content.
-        -->
-        <div id="KB_dashboard" class="row flex-row mx-0 px-0 d-print-block">
-            <div id="KB_sidebar-wrapper" class="bg-gradient-primary col-lg-2 col-md-3">
-                <nav id="KB_sidebar" class="KB_needs-navbar-offset navbar navbar-dark" role="navigation">
-                    <div class="container-fluid">
-                        <ul class="navbar-nav nav nav-pills">
-                            <li class="nav-item navbar-brand">Categories</li>
-                            <!-- WARNING: This is a placeholder. Do not modify nor remove. -->
-                            <!-- {{categories}} -->
-                        </ul>
-                    </div>
-                </nav>
-            </div>
-            <!-- ^ #KB_sidebar-wrapper end -->
-            <div id="KB_main-content-wrapper" class="KB_needs-navbar-offset offset-0 offset-lg-2 offset-md-3  offset-sm-0 col-12 col-lg-10 col-md-9 col-sm-12">
-                <div class="row flex-row mx-0 px-0 d-print-block">
-                    <div class="col-12 mx-0 px-0">
-                        <div id="KB_inline-content" class="container boxed"></div>
-                    </div>
-                    <div id="KB_table-wrapper" class="col-12 mx-0 px-0">
-                        <table id="KB_table" class="display table table-sm table-responsive-sm table-striped table-bordered table-hover" cellspacing="0" width="100%">
-                            <colgroup>
-                                <col class="KB_img-col">
-                                </col>
-                                <col class="KB_cat-col">
-                                </col>
-                                <col class="KB_sub-cat-col">
-                                </col>
-                                <col class="KB_title-col">
-                                </col>
-                            </colgroup>
-                            <thead>
-                                <tr>
-                                    <th class="text-center text-bold px-0">
-                                        <i class="nf nf-fa-bars"></i>
-                                    </th>
-                                    <th>Category</th>
-                                    <th>Sub-category</th>
-                                    <th>Title</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                            <tfoot>
-                                <tr>
-                                    <th class="text-center text-bold px-0">
-                                        <i class="nf nf-fa-bars"></i>
-                                    </th>
-                                    <th>Category</th>
-                                    <th>Sub-category</th>
-                                    <th>Title</th>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                    <!-- ^ #KB_table-wrapper end -->
+             -->
+            <div id="KB_dashboard" class="row flex-row mx-0 px-0 d-print-block">
+                <div id="KB_sidebar-wrapper" class="bg-primary col-lg-2 col-md-3">
+                    <nav id="KB_sidebar" class="KB_needs-navbar-offset navbar navbar-dark" role="navigation">
+                        <div class="container-fluid">
+                            <ul class="navbar-nav nav nav-pills">
+                                <li class="nav-item navbar-brand">Categories</li>
+                                <!-- WARNING: This is a placeholder. Do not modify nor remove. -->
+                                <!-- {{categories}} -->
+                            </ul>
+                        </div>
+                    </nav>
                 </div>
+                <!-- ^ #KB_sidebar-wrapper end -->
+                <div id="KB_main-content-wrapper" class="KB_needs-navbar-offset offset-0 offset-lg-2 offset-md-3  offset-sm-0 col-12 col-lg-10 col-md-9 col-sm-12">
+                    <div class="row flex-row mx-0 px-0 d-print-block">
+                        <div class="col-12 mx-0 px-0">
+                            <div id="KB_inline-content" class="container boxed"></div>
+                        </div>
+                        <div id="KB_table-wrapper" class="col-12 mx-0 px-0">
+                            <table id="KB_table" class="display table table-sm table-responsive-sm table-striped table-bordered table-hover" cellspacing="0" width="100%">
+                                <colgroup>
+                                    <col class="KB_img-col">
+                                    </col>
+                                    <col class="KB_cat-col">
+                                    </col>
+                                    <col class="KB_sub-cat-col">
+                                    </col>
+                                    <col class="KB_title-col">
+                                    </col>
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th class="text-center text-bold px-0">
+                                            <i class="nf nf-fa-bars"></i>
+                                        </th>
+                                        <th>Category</th>
+                                        <th>Sub-category</th>
+                                        <th>Title</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th class="text-center text-bold px-0">
+                                            <i class="nf nf-fa-bars"></i>
+                                        </th>
+                                        <th>Category</th>
+                                        <th>Sub-category</th>
+                                        <th>Title</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <!-- ^ #KB_table-wrapper end -->
+                    </div>
+                </div>
+                <!-- ^ #KB_main-content-wrapper end -->
             </div>
-            <!-- ^ #KB_main-content-wrapper end -->
+            <!-- ^ #KB_dashboard end -->
+            <!-- WARNING: This is a placeholder. Do not modify nor remove. -->
+            <!-- {{modals}} -->
         </div>
-        <!-- ^ #KB_dashboard end -->
-        <!-- WARNING: This is a placeholder. Do not modify nor remove. -->
-        <!-- {{modals}} -->
-    </div>
-    <!-- ^ #KB_pseudo-body end -->
-    <!--
+        <!-- ^ #KB_pseudo-body end -->
+        <!--
         If I use the ID back-to-top or back_to_top, nothing freaking works!!!
-        All browsers seem to add the hidden attrinbute to these IDs. WTF!!!!!
-    -->
-    <span id="to-top-of-page" class="text-primary d-print-none" title="Back to top">
-        <i class="nf nf-mdi-arrow_up_box"></i>
-    </span>
-    <div id="KB_loading" class="modal-backdrop bg-primary">
-        <div class="message">Loading index...</div>
-    </div>
-    <script type="text/javascript" src="assets/js/jquery.min.js"></script>
-    <script type="text/javascript" src="assets/js/bootstrap.bundle.min.js"></script>
-    <script type="text/javascript" src="assets/js/highlight.pack.js"></script>
-    <script type="text/javascript" src="assets/js/datatables.min.js"></script>
-    <script type="text/javascript" src="assets/js/js_web_utils/debugger.js"></script>
-    <script type="text/javascript" src="assets/js/js_web_utils/utils.js"></script>
-    <script type="text/javascript" src="assets/js/js_web_utils/smoothScroll.js"></script>
-    <script type="text/javascript" defer src="assets/js/functions-index.js"></script>
-</body>
+        All browsers seem to add the hidden attribute to these IDs. WTF!!!!!
+        -->
+        <!-- NOTE: I'm using an icon shaped as a box, so it already looks like a button.
+                   That's why I don't set the btn classes. -->
+        <span id="to-top-of-page"
+              role="button"
+              class="text-primary d-print-none"
+              title="Back to top">
+            <i class="nf nf-mdi-arrow_up_box"></i>
+        </span>
+        <div id="KB_loading" class="modal-backdrop bg-primary">
+            <div class="message">Loading index...</div>
+        </div>
+        <script type="text/javascript" src="assets/js/jquery.min.js"></script>
+        <script type="text/javascript" src="assets/js/bootstrap.bundle.min.js"></script>
+        <script type="text/javascript" src="assets/js/highlight.min.js"></script>
+        <script type="text/javascript" src="assets/js/datatables.min.js"></script>
+        <script type="text/javascript" src="assets/js/js_web_utils/core.js"></script>
+        <script type="text/javascript" src="assets/js/js_web_utils/preferences.js"></script>
+        <script type="text/javascript" src="assets/js/js_web_utils/debugger.js"></script>
+        <script type="text/javascript" src="assets/js/js_web_utils/utils.js"></script>
+        <script type="text/javascript" src="assets/js/js_web_utils/smoothScroll.js"></script>
+        <script type="text/javascript" defer src="assets/js/functions-index.js"></script>
+    </body>
 
 </html>

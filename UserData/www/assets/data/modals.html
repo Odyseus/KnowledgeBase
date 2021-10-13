@@ -1,27 +1,37 @@
-<div class="modal fade" id="KB_index-modal" tabindex="-1" role="dialog" aria-labelledby="KB_index-modal-label" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" role="document">
+<div class="modal fade" id="KB_index-modal" tabindex="-1">
+    <!-- <div class="modal fade" id="KB_index-modal" tabindex="-1" role="dialog" aria-labelledby="KB_index-modal-label" aria-hidden="true"> -->
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"
+         role="document">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="KB_index-modal-label">Knowledge Base</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <h4 class="modal-title">Page settings</h4>
+                <button type="button"
+                        data-bs-dismiss="modal"
+                        data-bs-toggle="modal"
+                        data-bs-target="#KB_reset-settings-modal"
+                        class="btn btn-sm btn-warning ms-1"
+                        title="Reset page settings">
+                    <i class="nf nf-fa-refresh"></i>
+                </button>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                    <span aria-hidden="true"></span>
                 </button>
             </div>
             <!-- ^ .modal-header end -->
-            <div class="modal-body text-center">
-                <h4>Page settings&nbsp;
-                    <button type="button" data-dismiss="modal" data-toggle="modal" data-target="#KB_reset-settings-modal" class="btn btn-sm btn-outline-warning mx-auto" title="Reset page settings">
-                        <i class="nf nf-fa-refresh"></i>
-                    </button>
-                </h4>
+            <div class="modal-body">
                 <div class="container-fluid">
                     <div class="row">
-                        <div class="col-6">
-                            <button type="button" data-pref="pref_DefaultCategory" class="KB_pref-handler btn btn-sm btn-outline-primary my-2">Set current category as default</button>
-                            <form class="form-inline my-2">
-                                <div class="form-group mx-auto">
-                                    <label for="KB_pref_table-page-length">Table page length&nbsp;&nbsp;</label>
-                                    <select id="KB_pref_table-page-length" data-pref="pref_TablePageLength" class="KB_pref-handler ml-auto custom-select custom-select-sm">
+                        <div class="col-sm-6">
+                            <div class="row">
+                                <label for="KB_pref_table-page-length"
+                                       class="col-sm-6 col-form-label col-form-label-sm">Table page length</label>
+                                <div class="col-sm-6">
+                                    <select id="KB_pref_table-page-length"
+                                            data-pref="table_page_length"
+                                            class="KB_pref-handler form-select form-select-sm">
                                         <option value="25">25</option>
                                         <option value="50">50</option>
                                         <option value="100">100</option>
@@ -30,39 +40,71 @@
                                         <option value="-1">All</option>
                                     </select>
                                 </div>
-                            </form>
-                            <form class="form-inline mx-auto my-auto">
-                                <div class="form-group mx-auto">
-                                    <label for="ody-debugger-logging-level">Logging level&nbsp;&nbsp;</label>
-                                    <select id="ody-debugger-logging-level" class="custom-select custom-select-sm">
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="row">
+                                <label for="KB_pref_category-column"
+                                       class="col-sm-6 col-form-label col-form-label-sm">Display category column</label>
+                                <div class="col-sm-6 form-check form-switch align-self-center">
+                                    <input id="KB_pref_category-column"
+                                           data-pref="display_cat_col"
+                                           class="KB_pref-handler form-check-input float-end"
+                                           type="checkbox"
+                                           role="switch">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label for="KB_pref_sub-category-column"
+                                       class="col-sm-6 col-form-label col-form-label-sm">Display sub-category column</label>
+                                <div class="col-sm-6 form-check form-switch align-self-center">
+                                    <input id="KB_pref_sub-category-column"
+                                           data-pref="display_subcat_col"
+                                           class="KB_pref-handler form-check-input float-end"
+                                           type="checkbox"
+                                           role="switch">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label for="KB_pref_open-pdfs-externally"
+                                       class="col-sm-6 col-form-label col-form-label-sm">Open PDFs externally</label>
+                                <div class="col-sm-6 form-check form-switch align-self-center">
+                                    <input id="KB_pref_open-pdfs-externally"
+                                           data-pref="open_pdf_external"
+                                           class="KB_pref-handler form-check-input float-end"
+                                           type="checkbox"
+                                           role="switch">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="row">
+                                <label for="ody-debugger-logging-level"
+                                       class="col-sm-6 col-form-label col-form-label-sm">Logging level</label>
+                                <div class="col-sm-6">
+                                    <select id="ody-debugger-logging-level"
+                                            class="form-select form-select-sm col-sm-6">
                                         <option value="0">Normal</option>
                                         <option value="1">Verbose</option>
                                         <option value="2">Very verbose</option>
                                     </select>
                                 </div>
-                            </form>
+                            </div>
                         </div>
-                        <div class="col-6">
-                            <form class="">
-                                <div class="form-group text-left">
-                                    <div class="form-check my-2">
-                                        <input id="KB_pref_category-column" data-pref="pref_DisplayCatCol" class="KB_pref-handler form-check-input" type="checkbox">
-                                        <label class="form-check-label" for="KB_pref_category-column">Display category column</label>
-                                    </div>
-                                    <div class="form-check my-2">
-                                        <input id="KB_pref_sub-category-column" data-pref="pref_DisplaySubCatCol" class="KB_pref-handler form-check-input" type="checkbox">
-                                        <label class="form-check-label" for="KB_pref_sub-category-column">Display sub-category column</label>
-                                    </div>
-                                    <div class="form-check my-2">
-                                        <input id="KB_pref_open-pdfs-externally" data-pref="pref_OpenPDFExternal" class="KB_pref-handler form-check-input" type="checkbox">
-                                        <label class="form-check-label" for="KB_pref_open-pdfs-externally">Open PDFs externally</label>
-                                    </div>
-                                    <div class="form-check my-2">
-                                        <input id="ody-debugger-enabled" class="form-check-input" type="checkbox">
-                                        <label class="form-check-label" for="ody-debugger-enabled">Debugger enabled</label>
-                                    </div>
+                        <div class="col-sm-6">
+                            <div class="row">
+                                <label for="ody-debugger-enabled"
+                                       class="col-sm-6 col-form-label col-form-label-sm">Debugger enabled</label>
+                                <div class="col-sm-6 form-check form-switch align-self-center">
+                                    <input id="ody-debugger-enabled"
+                                           class="form-check-input float-end"
+                                           type="checkbox"
+                                           role="switch">
                                 </div>
-                            </form>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -91,7 +133,7 @@
             </div>
             <!-- ^ .modal-body end -->
             <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
             </div>
             <!-- ^ .modal-footer end -->
         </div>
@@ -100,19 +142,33 @@
     <!-- ^ .modal-dialog end -->
 </div>
 <!-- ^ #KB_index-modal end -->
-<div class="modal fade" id="KB_reset-settings-modal" tabindex="-1" role="dialog" aria-labelledby="KB_reset-settings-title" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
+<div class="modal fade"
+     id="KB_reset-settings-modal"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="KB_reset-settings-title"
+     aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered"
+         role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="KB_reset-settings-title">Reset page settings</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close">
+                    <span aria-hidden="true"></span>
                 </button>
             </div>
             <div class="modal-body">Do you wish to reset the page settings?</div>
             <div class="modal-footer">
-                <button id="KB_reset-settings-button" type="button" data-dismiss="modal" class="btn btn-warning">Reset page settings</button>
-                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                <button id="KB_reset-settings-button"
+                        type="button"
+                        data-bs-dismiss="modal"
+                        class="btn btn-warning">Reset page settings</button>
+                <button type="button"
+                        class="btn btn-primary"
+                        data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
