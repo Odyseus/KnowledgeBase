@@ -1,8 +1,20 @@
-// Based on: https://github.com/alicelieutier/smoothScroll
-
-var Ody_SmoothScroll = null;
-
-(function() {
+/**
+ * Smooth scroll to inline links targets.
+ *
+ * Based on: https://github.com/alicelieutier/smoothScroll
+ *
+ * NOTE: No other modules required.
+ */
+(function(global, factory) {
+    if (typeof exports === "object" && typeof module !== "undefined") {
+        module.exports = factory();
+    } else if (typeof define === "function" && define.amd) {
+        define(factory);
+    } else {
+        global = typeof globalThis !== "undefined" ? globalThis : global || self;
+        global.Ody_SmoothScroll = factory();
+    }
+}((typeof window !== "undefined" ? window : this), (function() { // jshint ignore:line
     "use strict"; // jshint ignore:line
 
     class SmoothScrollClass {
@@ -199,8 +211,12 @@ var Ody_SmoothScroll = null;
         });
     }
 
-    Ody_SmoothScroll = new SmoothScrollClass();
-})();
+    return new SmoothScrollClass();
+})));
 
-/* global Ody_Debugger
+/* global Ody_Debugger,
+          define,
+          globalThis
  */
+
+/* jshint browser: true */

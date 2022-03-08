@@ -1,62 +1,158 @@
-"use strict"; // jshint ignore:line
+/**
+ * Debugging utilities.
+ *
+ * NOTE: core.js module required.
+ */
+(function(global, factory) {
+    if (!("Ody_Core" in window)) {
+        throw new Error("Module required: core.js");
+    }
 
-var Ody_Debugger = null;
+    if (typeof exports === "object" && typeof module !== "undefined") {
+        module.exports = factory();
+    } else if (typeof define === "function" && define.amd) {
+        define(factory);
+    } else {
+        global = typeof globalThis !== "undefined" ? globalThis : global || self;
+        global.Ody_Debugger = factory();
+    }
+}((typeof window !== "undefined" ? window : this), (function() { // jshint ignore:line
+    "use strict"; // jshint ignore:line
 
-(function() {
     const LoggingLevel = {
         NORMAL: 0,
         VERBOSE: 1,
         VERY_VERBOSE: 2
     };
     const DebuggerParams = Object.freeze({
-        objectName: "Object",
-        methods: [],
-        blacklistMethods: false,
+        object_name: "Object",
+        methods: null,
+        blacklist_methods: false,
         debug: true,
         verbose: true,
         threshold: 3
     });
-    const DEFAULT_PREFS = {
-        pref_LoggingLevel: LoggingLevel.NORMAL,
-        pref_DebuggerEnabled: "false"
-    };
+
+    // NOTE: Class defined to avoid depending on the preferences.js module.
+    class PrefsClass {
+        constructor() {
+            this._defaults = {
+                logging_level: LoggingLevel.NORMAL,
+                debugger_enabled: false
+            };
+            this._winStorage = "localStorage" in window ? window.localStorage : null;
+        }
+
+        get debugger_enabled() {
+            if (!this._winStorage || this._winStorage.getItem("debugger_enabled") === null) {
+                return this._defaults["debugger_enabled"];
+            }
+
+            return this._winStorage.getItem("debugger_enabled") === "true";
+        }
+
+        set debugger_enabled(aValue) {
+            if (!this._winStorage) {
+                return;
+            }
+
+            this._winStorage.setItem("debugger_enabled", aValue);
+        }
+
+        get logging_level() {
+            if (!this._winStorage || this._winStorage.getItem("logging_level") === null) {
+                return this._defaults["logging_level"];
+            }
+
+            return parseInt(this._winStorage.getItem("logging_level"), 10);
+        }
+
+        set logging_level(aValue) {
+            if (!this._winStorage) {
+                return;
+            }
+
+            this._winStorage.setItem("logging_level", aValue);
+        }
+    }
+
+    const Prefs = new PrefsClass();
+
+    function _getHandler(aKey, aOptions, aTimes) {
+        return {
+            apply: function(aTarget, aThisA, aArgs) {
+                let val;
+                let now;
+
+                if (aOptions.verbose) {
+                    now = new Date().getTime();
+                }
+
+                if (aOptions.debug) {
+                    Ody_Core.tryFn(() => {
+                        val = aTarget.apply(aThisA, aArgs);
+                    }, (aErr) => console.error(aErr));
+                } else {
+                    val = aTarget.apply(aThisA, aArgs);
+                }
+
+                if (aOptions.verbose) {
+                    let time = new Date().getTime() - now;
+
+                    if (time >= aOptions.threshold) {
+                        aTimes.push(time);
+                        let total = 0;
+                        const timesLength = aTimes.length;
+                        let z = timesLength;
+
+                        while (z--) {
+                            total += aTimes[z];
+                        }
+
+                        const max = (Math.max.apply(null, aTimes) / 1000).toFixed(2);
+                        const avg = ((total / timesLength) / 1000).toFixed(2);
+                        time = (time / 1000).toFixed(2);
+
+                        console.log(`[${aOptions.object_name}.${aKey}]: ${time}ms (MAX: ${max}ms AVG: ${avg}ms)`);
+                    }
+                }
+
+                return val;
+            }
+        };
+    }
+
+    if (Prefs.debugger_enabled) {
+        const debouncedFindDuplicatedIDs = Ody_Core.debounce(Ody_Core.findDuplicatedIDs, 500);
+
+        const observerCallback = function(aMutationsList, aObserver) { // jshint ignore:line
+            Ody_Core.arrayEach(aMutationsList, (aMutation) => {
+                if (aMutation.type === "childList" || aMutation.type === "characterData") {
+                    debouncedFindDuplicatedIDs();
+                }
+            });
+        };
+
+        const observer = new MutationObserver(observerCallback);
+        observer.observe(document.querySelector("html"), {
+            childList: true,
+            subtree: true,
+            characterData: true
+        });
+    }
 
     class DebuggerClass {
         constructor() {
-            this._winStorage = "localStorage" in window ? window.localStorage : null;
-
-            let prefs = this.getDebuggerPrefsFromStorage();
-            for (let pref in prefs) {
-                this[pref] = prefs[pref];
-            }
-
             this.initDebuggerPreferenceHandlers();
-            this.pref_DebuggerEnabled && this.findDuplicatedIDs();
+            Prefs.debugger_enabled && Ody_Core.findDuplicatedIDs();
         }
 
-        /**
-         * Find duplicated element IDs and log them.
-         */
-        findDuplicatedIDs(aOnDemand) {
-            let idsSet = new Set();
-            let duplicatedIDs = [];
-            let all = document.querySelectorAll("[id]");
+        get logging_level() {
+            return Prefs.logging_level;
+        }
 
-            for (let i = all.length - 1; i >= 0; i--) {
-                let id = all[i].id;
-
-                if (idsSet.has(id)) {
-                    duplicatedIDs.push(id);
-                } else {
-                    idsSet.add(id);
-                }
-            }
-
-            if (duplicatedIDs.length > 0) {
-                console.error("Duplicated IDs found: " + duplicatedIDs.length + "\n" + duplicatedIDs.join("\n"));
-            } else {
-                aOnDemand && console.info("No duplicated IDs were found.");
-            }
+        get debugger_enabled() {
+            return Prefs.debugger_enabled;
         }
 
         initDebuggerPreferenceHandlers() {
@@ -64,106 +160,32 @@ var Ody_Debugger = null;
             let loggingLevelSelect = document.getElementById("ody-debugger-logging-level");
 
             if (enabledCheckbox) {
-                enabledCheckbox.checked = this.pref_DebuggerEnabled;
+                enabledCheckbox.checked = Prefs.debugger_enabled;
                 enabledCheckbox.addEventListener("click", () => {
-                    this.pref_DebuggerEnabled = !this.pref_DebuggerEnabled;
-                    this.saveDebuggerPrefToStorage("Ody_Debugger_Enabled", this.pref_DebuggerEnabled);
+                    Prefs.debugger_enabled = !Prefs.debugger_enabled;
                 }, false);
             }
 
             if (loggingLevelSelect) {
-                loggingLevelSelect.value = "" + this.pref_LoggingLevel;
+                loggingLevelSelect.value = "" + Prefs.logging_level;
                 loggingLevelSelect.addEventListener("change", (aE) => {
-                    this.saveDebuggerPrefToStorage("Ody_Debugger_LoggingLevel", aE.currentTarget.value);
+                    Prefs.logging_level = aE.currentTarget.value;
                 }, false);
             }
         }
 
-        /**
-         * Get preferences from window.localStorage.
-         *
-         * @return {Object} Preferences stored in window.localStorage or the defaults if window.localStorage is not available.
-         */
-        getDebuggerPrefsFromStorage() {
-            if (!this._winStorage) {
-                return DEFAULT_PREFS;
-            }
-
-            return {
-                pref_LoggingLevel: parseInt(this._winStorage.getItem("Ody_Debugger_LoggingLevel"), 10) ||
-                    DEFAULT_PREFS.pref_LoggingLevel,
-                pref_DebuggerEnabled: (this._winStorage.getItem("Ody_Debugger_Enabled") ||
-                    DEFAULT_PREFS.pref_DebuggerEnabled) === "true"
-            };
-        }
-
-        /**
-         * Save preference to window.localStorage.
-         *
-         * @param {String} aKey   - The window.localStorage key to save the preference into.
-         * @param {String} aValue - The value associated to aKey.
-         *
-         * @return {String} description
-         */
-        saveDebuggerPrefToStorage(aKey, aValue) {
-            if (!this._winStorage) {
-                return;
-            }
-
-            this._winStorage.setItem(aKey, aValue);
-        }
-
-        /**
-         * Parse parameters.
-         *
-         * Examines aParams and fills in default values from aDefaults for any properties in
-         * aDefaults that don't appear in aParams. If aAllowExtras is not true, it will throw
-         * an error if aParams contains any properties that aren't in aDefaults.
-         *
-         * If aParams is null, this returns the values from aDefaults.
-         *
-         * NOTE: I wanted to be able to atttach the debugger to the class used in the utils.js file.
-         * So, I define parseParams here instead of using the one in utils.js.
-         *
-         * @param {Object}  aParams      - Caller-provided parameter object, or null.
-         * @param {Object}  aDefaults    - Function-provided defaults object.
-         * @param {Boolean} aAllowExtras - Whether or not to allow properties not in aDefaults.
-         *
-         * @return {Object} A new object, containing the merged parameters from aParams and aDefaults.
-         */
-        parseParams(aParams, aDefaults, aAllowExtras) {
-            let ret = {};
-
-            if (!aParams) {
-                return Object.assign({}, aDefaults);
-            }
-
-            for (let prop in aParams) {
-                if (!(prop in aDefaults) && !aAllowExtras) {
-                    throw new Error('Unrecognized parameter "' + prop + '"');
-                }
-                ret[prop] = aParams[prop];
-            }
-
-            for (let prop in aDefaults) {
-                if (!(prop in aParams)) {
-                    ret[prop] = aDefaults[prop];
-                }
-            }
-
-            return ret;
-        }
-
         methodWrapper(aObject, aParams) {
-            let options = this.parseParams(aParams, DebuggerParams);
-            let _obj = Object.getPrototypeOf(aObject) === Object.prototype ?
+            const options = Ody_Core.parseParams(aParams, DebuggerParams);
+            const _obj = Object.getPrototypeOf(aObject) === Object.prototype ?
                 aObject :
                 aObject.prototype;
-            let keys = Object.getOwnPropertyNames(_obj);
+            // TODO: The constructor method of JavaScript classes isn't listed with Object.getOwnPropertyNames().
+            // Investigate what is it that can be done to fix this.
+            let keys = Object.getOwnPropertyNames(aObject.prototype);
 
-            if (options.methods.length > 0) {
+            if (Array.isArray(options.methods) && options.methods.length > 0) {
                 keys = keys.filter((aKey) => {
-                    return options.blacklistMethods ?
+                    return options.blacklist_methods ?
                         // Treat aMethods as a blacklist, so don't include these keys.
                         options.methods.indexOf(aKey) === -1 :
                         // Keep ONLY the keys in aMethods.
@@ -180,81 +202,38 @@ var Ody_Debugger = null;
                     !Object.getOwnPropertyDescriptor(_obj, aKey)["set"];
             });
 
-            let times = [];
-            let getHandler = (aKey) => {
-                return {
-                    apply: function(aTarget, aThisA, aArgs) {
-                        let val;
-                        let now;
+            const times = [];
 
-                        if (options.verbose) {
-                            now = new Date().getTime();
-                        }
-
-                        if (options.debug) {
-                            try {
-                                val = aTarget.apply(aThisA, aArgs);
-                            } catch (aErr) {
-                                console.error(aErr);
-                            }
-                        } else {
-                            val = aTarget.apply(aThisA, aArgs);
-                        }
-
-                        if (options.verbose) {
-                            let time = new Date().getTime() - now;
-
-                            if (time >= options.threshold) {
-                                times.push(time);
-                                let total = 0;
-                                let timesLength = times.length;
-
-                                for (let z = timesLength - 1; z >= 0; z--) {
-                                    total += times[z];
-                                }
-
-                                let max = (Math.max.apply(null, times) / 1000).toFixed(2);
-                                let avg = ((total / timesLength) / 1000).toFixed(2);
-                                time = (time / 1000).toFixed(2);
-
-                                console.log(`[${options.objectName}.${aKey}]: ${time}ms (MAX: ${max}ms AVG: ${avg}ms)`);
-                            }
-                        }
-
-                        return val;
-                    }
-                };
-            };
-
-            for (let i = keys.length - 1; i >= 0; i--) {
-                let key = keys[i];
+            let i = keys.length;
+            while (i--) {
+                const key = keys[i];
                 /* NOTE: In the original Cinnamon function, getters/setters aren't ignored.
                  * As I understand it, a getter would be executed when doing _obj[key], instead
                  * of storing the getter function. So, as a workaround, I just ignore all
                  * setters/getters and move on.
                  */
-                let fn = _obj[key];
+                const fn = _obj[key];
 
                 if (typeof fn !== "function") {
                     continue;
                 }
 
-                _obj[key] = new Proxy(fn, getHandler(key));
+                _obj[key] = new Proxy(fn, _getHandler(key, options, times));
             }
         }
 
         wrapObjectMethods(aProtos, aExtraOptions = {}) {
             try {
-                if (this.pref_LoggingLevel === LoggingLevel.VERY_VERBOSE || this.pref_DebuggerEnabled) {
-                    for (let name in aProtos) {
-                        let options = {
-                            objectName: name,
-                            verbose: this.pref_LoggingLevel === LoggingLevel.VERY_VERBOSE,
-                            debug: this.pref_DebuggerEnabled
+                if (Prefs.logging_level === LoggingLevel.VERY_VERBOSE || Prefs.debugger_enabled) {
+                    for (const name in aProtos) {
+                        const options = {
+                            object_name: name,
+                            verbose: Prefs.logging_level === LoggingLevel.VERY_VERBOSE,
+                            debug: Prefs.debugger_enabled
                         };
 
                         if (name in aExtraOptions) {
-                            for (let opt in aExtraOptions[name]) {
+                            for (const opt in aExtraOptions[name]) {
                                 if (aExtraOptions[name].hasOwnProperty(opt)) {
                                     options[opt] = aExtraOptions[name][opt];
                                 }
@@ -270,8 +249,12 @@ var Ody_Debugger = null;
         }
     }
 
-    Ody_Debugger = new DebuggerClass();
-})();
+    return new DebuggerClass();
+})));
 
-/* exported Ody_Debugger
+/* global Ody_Core,
+          define,
+          globalThis
  */
+
+/* jshint browser: true */
