@@ -4,17 +4,9 @@
 
 Attributes
 ----------
-CAT_LIST_ITEM_TEMPLATE : str
-    HTML template for the categories menu items.
-CAT_MENU_TEMPLATE : str
-    HTML template for the categories menus.
-custom_copytree_global_ignored_patterns : list
-    List of globally ignored patterns for the :any:`file_utils.custom_copytree` function.
 root_folder : str
     The main folder containing the application. All commands must be executed
     from this location without exceptions.
-WWW_BASE_PATH : str
-    The path to the www folder.
 """
 
 import json
@@ -22,6 +14,8 @@ import os
 
 from shlex import quote as shell_quote
 from subprocess import CalledProcessError
+
+from . import app_data
 
 from .python_utils import cmd_utils
 from .python_utils import file_utils
@@ -31,29 +25,14 @@ from .python_utils import shell_utils
 root_folder = os.path.realpath(os.path.abspath(os.path.join(
     os.path.normpath(os.getcwd()))))
 
-custom_copytree_global_ignored_patterns = [".git", ".hg"]
-
-WWW_BASE_PATH = os.path.join(root_folder, "UserData", "www")
-
-
-CAT_LIST_ITEM_TEMPLATE = """{indent}<li class="nav-item">
-{indent}    <span class="btn-group" role="group">
-{indent}        <button class="nav-link {cat_class} KB_cat-btn btn" data-parent="{data_parent}" data-cat="{data_cat}" href="#">
-{indent}            <i class="KB_cat-icon nf {cat_icon}"></i>{cat_title}
-{indent}        </button>
-{indent}    </span>
-{indent}</li>"""
-
-CAT_MENU_TEMPLATE = """<li class="nav-item">
-    <span class="btn-group" role="group">
-        <button class="nav-link KB_cat-btn btn" data-cat="{data_cat}" href="#"><i class="KB_cat-icon nf {cat_icon}">\
-</i>{cat_title}</button>
-        <button class="dropdown-toggle btn" href="#{cat_menu_id}" data-toggle="collapse" aria-expanded="false"></button>
-    </span>
-    <ul class="collapse list-unstyled KB_subcats" id="{cat_menu_id}">
-{sub_cat_items}
-    </ul>
-</li>"""
+PATHS = {
+    "www_base": os.path.join(root_folder, "UserData", "www"),
+    "data_tables_json": os.path.join(root_folder, "UserData", "www", "assets", "data", "data_tables.json"),
+    "pandoc_convertions": os.path.join(root_folder, "UserData", "data_storage", "pandoc_convertions"),
+    "docutils_convertions": os.path.join(root_folder, "UserData", "data_storage", "docutils_convertions"),
+    "pandoc_html_template": os.path.join(root_folder, "AppData", "data",
+                                         "includes", "pandoc_html_template.html")
+}
 
 
 class DataTablesObject():
@@ -86,10 +65,10 @@ class DataTablesObject():
         self.logger = logger
         self._file_extensions = file_extensions
 
-        self._get_data_by_file_extension()
         self._get_data_from_html_pages()
         self._get_data_from_repositories()
         self._get_data_from_archives()
+        self._get_data_by_file_extension()
 
     def _get_data_by_file_extension(self):
         """Generate JSON data depending on the file extensions stored in self._file_extensions.
@@ -106,7 +85,7 @@ class DataTablesObject():
         """
         for file_extension in self._file_extensions:
             file_pattern = "." + file_extension
-            pages_path = os.path.join(WWW_BASE_PATH, file_extension)
+            pages_path = os.path.join(PATHS["www_base"], file_extension)
 
             if not os.path.exists(pages_path):
                 continue
@@ -145,7 +124,7 @@ class DataTablesObject():
                                     if file_extension == "epub":
                                         rel_epub = os.path.join(
                                             file_extension, cat, sub_cat, title, "index.html")
-                                        abs_epub = os.path.join(WWW_BASE_PATH, rel_epub)
+                                        abs_epub = os.path.join(PATHS["www_base"], rel_epub)
 
                                         if file_utils.is_real_file(abs_epub):
                                             self.data_tables_obj.append({
@@ -167,7 +146,7 @@ class DataTablesObject():
         The UserData/www/html_pages/html_pages.json is manually maintained and it contains
         JSON data related to the content of the html_pages folder.
         """
-        json_path = os.path.join(WWW_BASE_PATH, "html_pages", "html_pages.json")
+        json_path = os.path.join(PATHS["www_base"], "html_pages", "html_pages.json")
         json_data = None
 
         try:
@@ -296,8 +275,7 @@ def pandoc_inplace_convertion(from_format, to_format, from_clipboard, logger):
         Halt execution.
     """
     file_pattern = ".%s" % from_format
-    output_path = os.path.join(root_folder, "UserData", "data_storage",
-                               "pandoc_convertions", "%s_to_%s" % (from_format, to_format))
+    output_path = os.path.join(PATHS["pandoc_convertions"], "%s_to_%s" % (from_format, to_format))
 
     # Use of the latest version of pandoc downloaded from their repository.
     # https://github.com/jgm/pandoc/releases
@@ -388,6 +366,116 @@ def convert_with_pandoc(input_file, output_path, from_format, to_format, logger)
         logger.error(err)
 
 
+def convert_rst_to_html_docutils(input_path_storage=None,
+                                 include_bootstrap_css=True,
+                                 include_bootstrap_js=False,
+                                 include_highlight_js=False,
+                                 logger=None):
+    try:
+        from docutils.core import publish_parts
+    except (ImportError, SystemError):
+        raise SystemExit("Required <docutils> Python module not found.")
+
+    import xml.etree.ElementTree as ET
+
+    settings_overrides = {
+        # "input_encoding": "unicode",
+        "stylesheet": None
+    }
+    input_path = file_utils.expand_path(input_path_storage) if input_path_storage else \
+        os.path.join(PATHS["docutils_convertions"], "rst_to_html")
+
+    for dirname, dirnames, filenames in os.walk(input_path, topdown=False):
+        for filename in filenames:
+            if filename.endswith(".rst") or filename.endswith(".txt"):
+                f_path = os.path.join(dirname, filename)
+                f_name = os.path.basename(f_path)
+                dst_name = os.path.splitext(f_name)[0]
+                dst_path = os.path.join(os.path.dirname(f_path), dst_name + ".html")
+
+                if file_utils.is_real_file(dst_path):
+                    continue
+
+                logger.info(shell_utils.get_cli_separator("-"), date=False)
+                logger.info("**Converting:**")
+                logger.info(f_path, date=False)
+
+                with open(f_path, "r") as rst_file:
+                    html_parts = publish_parts(source=rst_file.read(),
+                                               source_path=None,
+                                               settings=None,
+                                               writer_name="html5",
+                                               settings_overrides=settings_overrides)
+
+                    try:
+                        html_title = ET.fromstring(
+                            "<head>" + html_parts["head"] + "</head>"
+                        ).findall(".//title")[0].text
+                    except Exception as err:
+                        logger.warning("**Error getting document title**", date=False)
+                        print(err)
+                        html_title = ""
+
+                    html_doc = app_data.DOCUTILS_HTML5_TEMPLATE.format(
+                        title=html_title,
+                        bootstrap_css=app_data.BOOTSTRAP_CSS_TAG if include_bootstrap_css else "",
+                        highlight_css=app_data.HIGHLIGHT_CSS_TAG if include_highlight_js else "",
+                        body=html_parts["body"],
+                        bootstrap_js=app_data.BOOTSTRAP_JS_TAG if include_bootstrap_js else "",
+                        highlight_js=app_data.HIGHLIGHT_JS_TAG if include_highlight_js else ""
+                    )
+
+                    with open(dst_path, "w") as dst_file:
+                        dst_file.write(html_doc)
+
+
+def convert_rst_to_html_pandoc(input_path_storage=None,
+                               include_bootstrap_css=True,
+                               include_bootstrap_js=False,
+                               include_highlight_js=False,
+                               logger=None):
+    input_path = file_utils.expand_path(input_path_storage) if input_path_storage else \
+        os.path.join(PATHS["pandoc_convertions"], "rst_to_html")
+
+    for dirname, dirnames, filenames in os.walk(input_path, topdown=False):
+        for filename in filenames:
+            if filename.endswith(".rst") or filename.endswith(".txt"):
+                f_path = os.path.join(dirname, filename)
+                f_name = os.path.basename(f_path)
+                dst_name = os.path.splitext(f_name)[0]
+                dst_path = os.path.join(os.path.dirname(f_path), dst_name + ".html")
+
+                if file_utils.is_real_file(dst_path):
+                    continue
+
+                logger.info(shell_utils.get_cli_separator("-"), date=False)
+                logger.info("**Converting:**")
+                logger.info(f_path, date=False)
+
+                cmd = [
+                    "pandoc",
+                    shell_quote(f_path),
+                    "--output",
+                    shell_quote(dst_path),
+                    "--template=%s" % shell_quote(PATHS["pandoc_html_template"]),
+                    "--wrap=none",
+                    "--no-highlight",
+                    "--variable=include-bootstrap-css",
+                    "--variable=include-bootstrap-js",
+                    "--variable=include-highlight-js",
+                    "--from=rst",
+                    "--to=html5"
+                ]
+
+                try:
+                    logger.info(" ".join(cmd), date=False)
+
+                    cmd_utils.run_cmd(" ".join(cmd), stdout=None, stderr=None,
+                                      cwd=os.path.dirname(dst_path), shell=True, check=True)
+                except CalledProcessError as err:
+                    logger.error(err)
+
+
 def convert_epub_to_html(input_path_storage=None, logger=None):
     """Convert epub to html.
 
@@ -399,9 +487,7 @@ def convert_epub_to_html(input_path_storage=None, logger=None):
         The logger.
     """
     input_path = file_utils.expand_path(input_path_storage) if input_path_storage else \
-        os.path.join(root_folder, "UserData", "data_storage", "pandoc_convertions", "epub_to_html")
-    html_template_path = os.path.join(root_folder, "AppData", "data",
-                                      "includes", "epub_to_html_template.html")
+        os.path.join(PATHS["pandoc_convertions"], "epub_to_html")
 
     for dirname, dirnames, filenames in os.walk(input_path, topdown=False):
         for filename in filenames:
@@ -427,10 +513,12 @@ def convert_epub_to_html(input_path_storage=None, logger=None):
                     shell_quote(f_path),
                     "--output",
                     shell_quote(dst_file),
-                    "--css=/_assets_bootstrap_css",
+                    "--css=/assets/css/bootstrap.min.css",
+                    "--css=/assets/css/bootstrap.tweaks.css",
                     "--extract-media=assets",
-                    "--template=%s" % shell_quote(html_template_path),
+                    "--template=%s" % shell_quote(PATHS["pandoc_html_template"]),
                     "--wrap=none",
+                    "--no-highlight",
                     "--table-of-contents",
                     "--to=html5"
                 ]
@@ -462,17 +550,15 @@ def create_main_json_file(dry_run=False, logger=None):
                                        dry_run=dry_run,
                                        logger=logger).get_data_tables_obj()
 
-    data_tables_json_path = os.path.join(WWW_BASE_PATH, "assets", "data", "data_tables.json")
-
     try:
         if dry_run:
             logger.info("[DRY_RUN] Main JSON file will be created at: \n%s" %
-                        data_tables_json_path, date=False)
+                        PATHS["data_tables_json"], date=False)
         else:
-            with open(data_tables_json_path, "w") as data_tables_json_file:
+            with open(PATHS["data_tables_json"], "w") as data_tables_json_file:
                 data_tables_json_file.write(json.dumps(data_tables_obj))
 
-                logger.info("data_tables.json file created at: \n%s" % data_tables_json_path)
+                logger.info("data_tables.json file created at: \n%s" % PATHS["data_tables_json"])
     except Exception as err:
         logger.error(err)
 
@@ -494,12 +580,10 @@ def generate_categories_html(dry_run=False, logger=None):
     """
     logger.info(shell_utils.get_cli_separator("-"), date=False)
     logger.info("Generating categories.html file...")
-    # Collect all categories from the data_tables.json file.
-    data_tables_json = os.path.join(WWW_BASE_PATH, "assets", "data", "data_tables.json")
     temp_set = set()
 
     try:
-        with open(data_tables_json, "r") as data_tables_file:
+        with open(PATHS["data_tables_json"], "r") as data_tables_file:
             json_data = json.loads((data_tables_file.read()))
             for cat_data in json_data:
                 temp_set.add(cat_data["c"])
@@ -512,13 +596,12 @@ def generate_categories_html(dry_run=False, logger=None):
         root_folder, "UserData", "categories_data", "categories.json")
     raw_categories = list(temp_set)
     categories_data = {}
-    categories_html_list_items = [CAT_LIST_ITEM_TEMPLATE.format(
+    categories_html_list_items = [app_data.CAT_LIST_ITEM_TEMPLATE.format(
         cat_title="All",
         cat_class="KB_cat-link",
         cat_icon="nf-fa-bars",
         data_parent="",
-        data_cat="All",
-        indent=""
+        data_cat="All"
     )]
 
     if os.path.exists(categories_data_json):
@@ -581,28 +664,26 @@ def generate_categories_html(dry_run=False, logger=None):
     # Build the html list items.
     for cat, keys in sorted(categories.items()):
         if len(keys["subcategories"]) == 0:
-            categories_html_list_items.append(CAT_LIST_ITEM_TEMPLATE.format(
+            categories_html_list_items.append(app_data.CAT_LIST_ITEM_TEMPLATE.format(
                 cat_title=cat,
                 cat_class="KB_cat-link",
                 cat_icon=keys["icon"],
                 data_parent="",
-                data_cat=cat,
-                indent=""
+                data_cat=cat
             ))
         else:
             sub_cat_html_items = []
 
             for sub_cat in sorted(keys["subcategories"], key=lambda x: x["name"].lower()):
-                sub_cat_html_items.append(CAT_LIST_ITEM_TEMPLATE.format(
+                sub_cat_html_items.append(app_data.CAT_LIST_ITEM_TEMPLATE.format(
                     cat_title=sub_cat["name"],
                     cat_class="KB_sub-cat-link",
                     cat_icon=sub_cat["icon"],
                     data_parent="#KB_cat-menu-%s" % cat.lower(),
-                    data_cat="%s|%s" % (cat, sub_cat["name"]),
-                    indent="        "
+                    data_cat="%s|%s" % (cat, sub_cat["name"])
                 ))
 
-            categories_html_list_items.append(CAT_MENU_TEMPLATE.format(
+            categories_html_list_items.append(app_data.CAT_MENU_TEMPLATE.format(
                 cat_title=cat,
                 cat_icon=keys["icon"],
                 data_cat=cat,
@@ -611,7 +692,7 @@ def generate_categories_html(dry_run=False, logger=None):
             ))
 
     # And finally, save the HTML list items into categories.html file.
-    categories_html_file = os.path.join(WWW_BASE_PATH, "assets", "data", "categories.html")
+    categories_html_file = os.path.join(PATHS["www_base"], "assets", "data", "categories.html")
     categories_html_data = "\n".join(categories_html_list_items)
 
     try:
@@ -645,8 +726,8 @@ def generate_index_html(dry_run=False, logger=None):
     """
     logger.info(shell_utils.get_cli_separator("-"), date=False)
     logger.info("Generating index.html file...")
-    categories_html_file = os.path.join(WWW_BASE_PATH, "assets", "data", "categories.html")
-    modals_html_file = os.path.join(WWW_BASE_PATH, "assets", "data", "modals.html")
+    categories_html_file = os.path.join(PATHS["www_base"], "assets", "data", "categories.html")
+    modals_html_file = os.path.join(PATHS["www_base"], "assets", "data", "modals.html")
 
     try:
         with open(categories_html_file, "r") as html_file:
@@ -662,7 +743,7 @@ def generate_index_html(dry_run=False, logger=None):
         logger.error(err)
         raise SystemExit(1)
 
-    base_index_html_file = os.path.join(WWW_BASE_PATH, "assets", "data", "index-base.html")
+    base_index_html_file = os.path.join(PATHS["www_base"], "assets", "data", "index-base.html")
 
     try:
         with open(base_index_html_file, "r") as html_file:
@@ -672,7 +753,7 @@ def generate_index_html(dry_run=False, logger=None):
         logger.error(err)
         raise SystemExit(1)
 
-    index_html_file = os.path.join(WWW_BASE_PATH, "index.html")
+    index_html_file = os.path.join(PATHS["www_base"], "index.html")
 
     try:
         if dry_run:

@@ -36,6 +36,9 @@ Usage:
                               [--dry-run]
                               [--force-download]
                               [--input-path-storage=<path>]
+                              [--include-bootstrap-css]
+                              [--include-bootstrap-js]
+                              [--include-highlight-js]
     app.py server (start | stop | restart)
                   [--host=<host>]
                   [--port=<port>]
@@ -61,7 +64,7 @@ Options:
 
 --do-not-pull
     Do not update repositories (do not pull), just initialize the ones that
-    weren't cloned yet. Only used by the "update_all_repositories" sub-command.
+    weren't cloned yet. Only used by the *update_all_repositories* sub-command.
 
 --dry-run
     Do not perform file system changes. Only display messages informing of the
@@ -72,12 +75,19 @@ Options:
 
 --force-download
     Force the download of all archives, ignoring the frequency in which they
-    should be downloaded. Only used by the "download_all_archives" sub-command.
+    should be downloaded. Only used by the *download_all_archives* sub-command.
+
+--include-bootstrap-css
+--include-bootstrap-js
+--include-highlight-js
+    If these extra assets should be included when converting documents to HTML
+    with the *epub_to_html* and *rst_to_html* sub-commands.
 
 --input-path-storage=<path>
-    Path to a folder containing **.epub** files. If not specified, the folder at
-    **UserData/data_storage/pandoc_convertions/epub_to_html** will be used.
-    Only used by the "epub_to_html" sub-command.
+    Path to a folder containing **.epub**, **.rst** or **.txt** files.
+    If not specified, the folder at
+    **UserData/data_storage/pandoc_convertions/<epub_to_html|rst_to_html>**
+    will be used. Only used by the *epub_to_html* and *rst_to_html* sub-commands.
 
 """.format(appname=__appname__,
            appdescription=__appdescription__,
@@ -112,6 +122,8 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
         "html_to_markdown_files",
         "html_to_markdown_clip",
         "epub_to_html",
+        "rst_to_html_pandoc",
+        "rst_to_html_docutils",
         "build_sphinx_docs",
         "generate_categories_html",
         "generate_index_html",
@@ -315,6 +327,24 @@ class CommandLineInterface(cli_utils.CommandLineInterfaceSuper):
         """
         app_utils.convert_epub_to_html(input_path_storage=self.a["--input-path-storage"],
                                        logger=self.logger)
+
+    def rst_to_html_pandoc(self):
+        """See :any:`app_utils.convert_rst_to_html_pandoc`
+        """
+        app_utils.convert_rst_to_html_pandoc(input_path_storage=self.a["--input-path-storage"],
+                                             include_bootstrap_css=self.a["--include-bootstrap-css"],
+                                             include_bootstrap_js=self.a["--include-bootstrap-js"],
+                                             include_highlight_js=self.a["--include-highlight-js"],
+                                             logger=self.logger)
+
+    def rst_to_html_docutils(self):
+        """See :any:`app_utils.convert_rst_to_html_docutils`
+        """
+        app_utils.convert_rst_to_html_docutils(input_path_storage=self.a["--input-path-storage"],
+                                               include_bootstrap_css=self.a["--include-bootstrap-css"],
+                                               include_bootstrap_js=self.a["--include-bootstrap-js"],
+                                               include_highlight_js=self.a["--include-highlight-js"],
+                                               logger=self.logger)
 
     def open_main_webpage(self):
         """Self explanatory.

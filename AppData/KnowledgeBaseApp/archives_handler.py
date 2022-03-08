@@ -68,7 +68,7 @@ class ArchivesHandler():
         self._archives_storage = os.path.join(
             root_folder, "UserData", "data_storage", "downloaded_archives")
         self._archives_destination = os.path.join(
-            app_utils.WWW_BASE_PATH, "archives")
+            app_utils.PATHS["www_base"], "archives")
         self._archives_last_updated = os.path.join(self._archives_storage, "last_updated.json")
         self._current_date = time.strftime("%B %d %Y", time.gmtime())  # Format = January 1 2018
 

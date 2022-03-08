@@ -4,6 +4,8 @@
 
 Attributes
 ----------
+custom_copytree_global_ignored_patterns : list
+    List of globally ignored patterns for the :any:`file_utils.custom_copytree` function.
 global_repo_file_patterns_ignore : list
     Repositories globally ignored patterns.
 repo_service_url_map : dict
@@ -30,6 +32,8 @@ from .schemas import repositories_schema
 
 root_folder = os.path.realpath(os.path.abspath(os.path.join(
     os.path.normpath(os.getcwd()))))
+
+custom_copytree_global_ignored_patterns = [".git", ".hg"]
 
 
 repositories_data_tables_json_path = os.path.join(root_folder,
@@ -214,7 +218,7 @@ class RepositoriesHandler():
                     # <3 https://stackoverflow.com/a/19859907
                     # Modify dirs in-place to avoid visiting undesired directories.
                     dirs[:] = [d for d in dirs
-                               if d not in set(app_utils.custom_copytree_global_ignored_patterns)]
+                               if d not in set(custom_copytree_global_ignored_patterns)]
 
                     for f_name in string_utils.super_filter(files,
                                                             repo_file_patterns_include,
@@ -240,7 +244,7 @@ class RepositoriesHandler():
                                             self._get_folder_name(repo_data),
                                             file_rel_path)
                     source_path = os.path.join(repo_path, file_rel_path)
-                    destination_path = os.path.join(app_utils.WWW_BASE_PATH, www_path)
+                    destination_path = os.path.join(app_utils.PATHS["www_base"], www_path)
 
                     self._data_tables_obj.append({
                         "t": title,
@@ -262,7 +266,7 @@ class RepositoriesHandler():
                             else:
                                 file_utils.custom_copy2(source_path, destination_path, self.logger,
                                                         log_copied_file=True,
-                                                        relative_path=app_utils.WWW_BASE_PATH)
+                                                        relative_path=app_utils.PATHS["www_base"])
                         except Exception as err1:
                             self.logger.error(err1)
                 except Exception as err2:
@@ -271,7 +275,7 @@ class RepositoriesHandler():
                     continue
 
             if repo_data.get("copy_full_repo"):
-                full_repo_destination_path = os.path.join(app_utils.WWW_BASE_PATH,
+                full_repo_destination_path = os.path.join(app_utils.PATHS["www_base"],
                                                           "%s_repositories" % repo_data.get(
                                                               "repo_service", "github"),
                                                           self._get_folder_name(repo_data))
@@ -282,10 +286,10 @@ class RepositoriesHandler():
                 else:
                     file_utils.custom_copytree(repo_path,
                                                full_repo_destination_path,
-                                               ignored_patterns=app_utils.custom_copytree_global_ignored_patterns,
+                                               ignored_patterns=custom_copytree_global_ignored_patterns,
                                                logger=self.logger,
                                                log_copied_file=True,
-                                               relative_path=app_utils.WWW_BASE_PATH)
+                                               relative_path=app_utils.PATHS["www_base"])
 
         except Exception as err3:
             self.logger.error("%s-%s" % (repo_data.get("repo_owner"), repo_data.get("repo_name")))
@@ -636,7 +640,7 @@ class RepositoriesHandler():
 
             doctrees_path = os.path.join(root_folder, "UserData", "data_storage", "sphinx_doctrees",
                                          self._get_folder_name(repo_data), "doctrees")
-            html_path = os.path.join(app_utils.WWW_BASE_PATH,
+            html_path = os.path.join(app_utils.PATHS["www_base"],
                                      self._get_sphinx_generated_pages_storage(repo_data), "html")
 
             cmd = ["sphinx-build", ".", "-b", "html", "-d", doctrees_path, html_path]

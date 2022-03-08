@@ -81,21 +81,6 @@ class KnowledgeBaseWebapp(WebApp):
         """
         super().__init__(*args, **kwargs)
 
-    @bottle_app.route("/_assets_bootstrap_css")
-    def bootstrap_css_static():
-        """Serve the file found at ``UserData/www/assets/css/bootstrap.min.css``.
-
-        This allows me to use the Bootstrap CSS stylesheet from any HTML document located at any
-        directory depth. I can simply use ``<link rel="stylesheet" href="/_assets_bootstrap_css" />``
-        and the desired stylesheet will be used.
-
-        Returns
-        -------
-        object
-            An instance of `bottle.HTTPResponse`.
-        """
-        return bottle.static_file("bootstrap.min.css", root=os.path.join(www_root, "assets", "css"))
-
     @bottle_app.route("/<filepath:path>")
     def server_static(filepath):
         """Serve static files.
