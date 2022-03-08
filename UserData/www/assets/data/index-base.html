@@ -4,13 +4,13 @@
     <head>
         <meta http-equiv="content-type" content="text/html;charset=utf-8">
         <title>Knowledge Base</title>
-        <link rel="shortcut icon" type="image/x-icon" href="assets/img/favicon.svg">
+        <link rel="shortcut icon" type="image/x-icon" href="/assets/img/favicon.svg">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link type="text/css" rel="stylesheet" href="assets/css/bootstrap.min.css">
-        <link type="text/css" rel="stylesheet" href="assets/css/nerdicons.min.css">
-        <link type="text/css" rel="stylesheet" href="assets/css/highlight.min.css" />
-        <link type="text/css" rel="stylesheet" href="assets/css/datatables.min.css">
-        <link type="text/css" rel="stylesheet" href="assets/css/bootstrap.tweaks.css">
+        <link type="text/css" rel="stylesheet" href="/assets/css/bootstrap.min.css">
+        <link type="text/css" rel="stylesheet" href="/assets/css/nerdicons.min.css">
+        <link type="text/css" rel="stylesheet" href="/assets/css/highlight.min.css" />
+        <link type="text/css" rel="stylesheet" href="/assets/css/datatables.min.css">
+        <link type="text/css" rel="stylesheet" href="/assets/css/bootstrap.tweaks.css">
     </head>
 
     <body lang="en">
@@ -20,104 +20,89 @@
                 <p><strong>This page uses JavaScript only to add extra functionality to it. There are no tracking services of any kind and never will be (at least, not from my side).</strong></p>
             </div>
         </noscript>
-        <div id="KB_pseudo-body" class="hide" style="opacity: 0;">
+        <div id="KB_pseudo-body"
+             class="hide"
+             style="opacity: 0;">
             <nav id="KB_top-navbar"
-                 class="px-2 py-1 navbar navbar-expand-sm navbar-dark bg-primary fixed-top">
-                <div class="container px-0 justify-content-start">
-                    <div class="nav navbar-nav me-auto">
-                        <button id="KB_toggle-sidebar"
-                                class="KB_nav-item nav-item KB_navbar-button btn btn-sm"
-                                tabindex="0"
-                                type="button"
-                                aria-label="Toggle sidebar">
-                            <i class="KB_navbar-button-icon nf nf-fa-bars"></i>
-                        </button>
-                        <a id="KB_home-link"
-                           class="KB_nav-item nav-item nav-link navbar-brand"
-                           href="#"
-                           data-bs-toggle="tooltip"
-                           data-bs-placement="bottom"
-                           title="Knowledge Base index">
-                            <i class="nf nf-fa-home"></i>&nbsp;Index
-                        </a>
+                 class="py-0 my-0 px-0 navbar navbar-expand-sm navbar-dark bg-primary fixed-top">
+                <div class="container-fluid">
+                    <div class="container px-0 justify-content-start">
+                        <div class="nav navbar-nav me-auto">
+                            <button id="KB_toggle-sidebar"
+                                    class="KB_nav-item nav-item KB_navbar-button btn btn-sm"
+                                    tabindex="0"
+                                    type="button"
+                                    aria-label="Toggle sidebar">
+                                <i class="KB_navbar-button-icon nf nf-fa-bars"></i>
+                            </button>
+                            <a id="KB_home-link"
+                               class="KB_nav-item nav-item nav-link navbar-brand"
+                               href="#"
+                               data-bs-toggle="tooltip"
+                               data-bs-placement="bottom"
+                               title="Knowledge Base index">
+                                <i class="nf nf-mdi-home me-2"></i>Index
+                            </a>
+                        </div>
                     </div>
-                </div>
-                <div class="container px-0 justify-content-center">
-                    <form id="KB_input-search-group" action="javascript:void(0)" class="nav-item navbar-form form-inline mx-auto">
-                        <div class="input-group input-group-sm">
-                            <i class="input-group-text nf nf-fa-search"></i>
-                            <input id="KB_input-search"
-                                   name="KB_input-search"
-                                   type="search"
-                                   class="form-control form-control-sm"
-                                   placeholder="Search"
-                                   autofocus="autofocus">
-                            <button id="KB_clear-search-button"
-                                    class="KB_nav-item btn btn-sm btn-dark"
-                                    title="Clear search input">
-                                <i class="nf nf-fa-remove"></i>
-                            </button>
-                        </div>
-                    </form>
-                    <form id="KB_table-length-chooser-form" class="nav-item navbar-form form-inline has-feedback mx-auto">
-                        <div class="input-group input-group-sm">
-                            <i class="input-group-text nf nf-fa-bars"></i>
-                            <select class="form-select form-select-sm" id="KB_table-length-chooser-select" title="Select table length">
-                                <option value="25">25</option>
-                                <option value="50">50</option>
-                                <option value="100">100</option>
-                                <option value="200">200</option>
-                                <option value="400">400</option>
-                                <option value="-1">All</option>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-                <button class="nav-item KB_navbar-button d-sm-none"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#KB_top-navbar-content"
-                        aria-controls="KB_top-navbar-content"
-                        aria-expanded="false"
-                        aria-label="Toggle navigation">
-                    <i class="KB_navbar-button-icon nf nf-fa-bars"></i>
-                </button>
-                <div class="container px-0 justify-content-end">
-                    <div id="KB_top-navbar-content"
-                         class="collapse navbar-collapse">
-                        <div class="nav navbar-nav ms-auto">
-                            <button id="KB_edit-button"
-                                    class="KB_nav-item nav-item btn btn-sm btn-info ms-1 d-none"
-                                    type="button"
-                                    data-bs-toggle="tooltip"
-                                    data-bs-placement="bottom"
-                                    title="Open inline page source with external program">
-                                <i class="nf nf-fa-edit"></i>
-                            </button>
-                            <button id="KB_reload-button"
-                                    class="KB_nav-item nav-item btn btn-sm btn-info ms-1 d-none"
-                                    type="button"
-                                    data-bs-toggle="tooltip"
-                                    data-bs-placement="bottom"
-                                    title="Force reload of the current inline page">
-                                <i class="nf nf-fa-refresh"></i>
-                            </button>
-                            <button data-pref="default_category"
-                                    class="KB_pref-handler nav-item btn btn-sm btn-info ms-1"
-                                    type="button"
-                                    data-bs-toggle="tooltip"
-                                    data-bs-placement="bottom"
-                                    title="Set current category as default">
-                                <i class="nf nf-fa-bookmark"></i>
-                            </button>
-                            <button id="KB_index-modal-button"
-                                    class="KB_nav-item nav-item btn btn-sm btn-info ms-1"
-                                    type="button"
-                                    data-bs-toggle="tooltip"
-                                    data-bs-placement="bottom"
-                                    title="Page options">
-                                <i class="nf nf-seti-config"></i>
-                            </button>
+                    <div class="container px-0 justify-content-center">
+                        <form id="KB_input-search-group"
+                              action="javascript:void(0)"
+                              class="nav-item navbar-form form-inline mx-auto">
+                            <div class="input-group input-group-sm">
+                                <i class="input-group-text nf nf-fa-search"></i>
+                                <input id="KB_input-search"
+                                       name="KB_input-search"
+                                       type="search"
+                                       class="form-control form-control-sm"
+                                       placeholder="Search"
+                                       autofocus="autofocus">
+                                <button id="KB_clear-search-button"
+                                        class="KB_nav-item btn btn-sm btn-dark"
+                                        title="Clear search input">
+                                    <i class="nf nf-fa-remove"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <button class="nav-item KB_navbar-button d-sm-none"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#KB_top-navbar-content"
+                            aria-controls="KB_top-navbar-content"
+                            aria-expanded="false"
+                            aria-label="Toggle navigation">
+                        <i class="KB_navbar-button-icon nf nf-fa-bars"></i>
+                    </button>
+                    <div class="container px-0 justify-content-end">
+                        <div id="KB_top-navbar-content"
+                             class="collapse navbar-collapse">
+                            <div class="nav navbar-nav ms-auto">
+                                <button id="KB_edit-button"
+                                        class="KB_nav-item nav-item btn btn-sm btn-outline-light ms-1 d-none"
+                                        type="button"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="bottom"
+                                        title="Open inline page source with external program">
+                                    <i class="nf nf-fa-edit"></i>
+                                </button>
+                                <button id="KB_reload-button"
+                                        class="KB_nav-item nav-item btn btn-sm btn-outline-light ms-1 d-none"
+                                        type="button"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="bottom"
+                                        title="Force reload of the current inline page">
+                                    <i class="nf nf-fa-refresh"></i>
+                                </button>
+                                <button id="KB_index-offcanvas-button"
+                                        class="KB_nav-item nav-item btn btn-sm btn-outline-light ms-1"
+                                        type="button"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="bottom"
+                                        title="Page options">
+                                    <i class="nf nf-seti-config"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -131,7 +116,8 @@
             the printed output has missing content.
              -->
             <div id="KB_dashboard" class="row flex-row mx-0 px-0 d-print-block">
-                <div id="KB_sidebar-wrapper" class="bg-primary col-lg-2 col-md-3">
+                <!-- <div id="KB_sidebar-wrapper" class="bg-primary col-lg-2 col-md-3"> -->
+                <aside id="KB_sidebar-wrapper" class="bg-primary col-lg-2 col-md-3">
                     <nav id="KB_sidebar" class="KB_needs-navbar-offset navbar navbar-dark" role="navigation">
                         <div class="container-fluid">
                             <ul class="navbar-nav nav nav-pills">
@@ -141,9 +127,11 @@
                             </ul>
                         </div>
                     </nav>
-                </div>
+                </aside>
+                <!-- </div> -->
                 <!-- ^ #KB_sidebar-wrapper end -->
-                <div id="KB_main-content-wrapper" class="KB_needs-navbar-offset offset-0 offset-lg-2 offset-md-3  offset-sm-0 col-12 col-lg-10 col-md-9 col-sm-12">
+                <!-- <div id="KB_main-content-wrapper" class="KB_needs-navbar-offset offset-0 offset-lg-2 offset-md-3  offset-sm-0 col-12 col-lg-10 col-md-9 col-sm-12"> -->
+                <section id="KB_main-content-wrapper" class="KB_needs-navbar-offset offset-0 offset-lg-2 offset-md-3  offset-sm-0 col-12 col-lg-10 col-md-9 col-sm-12">
                     <div class="row flex-row mx-0 px-0 d-print-block">
                         <div class="col-12 mx-0 px-0">
                             <div id="KB_inline-content" class="container boxed"></div>
@@ -162,7 +150,7 @@
                                 </colgroup>
                                 <thead>
                                     <tr>
-                                        <th class="text-center text-bold px-0">
+                                        <th class="text-center px-0">
                                             <i class="nf nf-fa-bars"></i>
                                         </th>
                                         <th>Category</th>
@@ -173,7 +161,7 @@
                                 <tbody></tbody>
                                 <tfoot>
                                     <tr>
-                                        <th class="text-center text-bold px-0">
+                                        <th class="text-center px-0">
                                             <i class="nf nf-fa-bars"></i>
                                         </th>
                                         <th>Category</th>
@@ -185,7 +173,8 @@
                         </div>
                         <!-- ^ #KB_table-wrapper end -->
                     </div>
-                </div>
+                </section>
+                <!-- </div> -->
                 <!-- ^ #KB_main-content-wrapper end -->
             </div>
             <!-- ^ #KB_dashboard end -->
@@ -208,16 +197,18 @@
         <div id="KB_loading" class="modal-backdrop bg-primary">
             <div class="message">Loading index...</div>
         </div>
-        <script type="text/javascript" src="assets/js/jquery.min.js"></script>
-        <script type="text/javascript" src="assets/js/bootstrap.bundle.min.js"></script>
-        <script type="text/javascript" src="assets/js/highlight.min.js"></script>
-        <script type="text/javascript" src="assets/js/datatables.min.js"></script>
-        <script type="text/javascript" src="assets/js/js_web_utils/core.js"></script>
-        <script type="text/javascript" src="assets/js/js_web_utils/preferences.js"></script>
-        <script type="text/javascript" src="assets/js/js_web_utils/debugger.js"></script>
-        <script type="text/javascript" src="assets/js/js_web_utils/utils.js"></script>
-        <script type="text/javascript" src="assets/js/js_web_utils/smoothScroll.js"></script>
-        <script type="text/javascript" defer src="assets/js/functions-index.js"></script>
+        <script type="text/javascript" src="/assets/js/jquery.min.js"></script>
+        <script type="text/javascript" src="/assets/js/bootstrap.bundle.min.js"></script>
+        <script type="text/javascript" src="/assets/js/highlight.min.js"></script>
+        <script type="text/javascript" src="/assets/js/datatables.min.js"></script>
+        <script type="text/javascript" src="/assets/js/js_web_utils/datatables-bootstrap5.js"></script>
+        <script type="text/javascript" src="/assets/js/js_web_utils/datatables-custom_page_selector.js"></script>
+        <script type="text/javascript" src="/assets/js/js_web_utils/core.js"></script>
+        <script type="text/javascript" src="/assets/js/js_web_utils/preferences.js"></script>
+        <script type="text/javascript" src="/assets/js/js_web_utils/debugger.js"></script>
+        <script type="text/javascript" src="/assets/js/js_web_utils/utils.js"></script>
+        <script type="text/javascript" src="/assets/js/js_web_utils/smoothScroll.js"></script>
+        <script type="text/javascript" defer src="/assets/js/main.js"></script>
     </body>
 
 </html>

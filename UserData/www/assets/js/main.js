@@ -40,36 +40,21 @@
 
     // DOM elements.
     const PseudoBody = document.getElementById("KB_pseudo-body");
-    const LoadingOverlay = document.getElementById("KB_loading");
     const TopNavbar = document.getElementById("KB_top-navbar");
-    const Table = document.getElementById("KB_table");
-    const IndexModal = document.getElementById("KB_index-modal");
     const InlineContent = document.getElementById("KB_inline-content");
     const MainContentWrapper = document.getElementById("KB_main-content-wrapper");
     const EditButton = document.getElementById("KB_edit-button");
     const InputSearch = document.getElementById("KB_input-search");
     const InputSearchGroup = document.getElementById("KB_input-search-group");
     const ReloadButton = document.getElementById("KB_reload-button");
-    const ResetSettingsButton = document.getElementById("KB_reset-settings-button");
     const Sidebar = document.getElementById("KB_sidebar");
     const SidebarWrapper = document.getElementById("KB_sidebar-wrapper");
-    const TableLengthChooserForm = document.getElementById("KB_table-length-chooser-form");
-    const TableLengthChooserSelect = document.getElementById("KB_table-length-chooser-select");
     const TableWrapper = document.getElementById("KB_table-wrapper");
     const NavbarOffsetElements = new Map([
         ...document.getElementsByClassName("KB_needs-navbar-offset")
     ].map((aEl) => [aEl, {}]));
-    const TopNavbarItems = [
-        ...TopNavbar.getElementsByClassName("KB_nav-item")
-    ];
-    const SidebarCatButtons = [
-        ...Sidebar.getElementsByClassName("KB_cat-btn")
-    ];
-    const PrefHandlers = [
-        ...document.getElementsByClassName("KB_pref-handler")
-    ];
-    // jQuery objects.
-    const $Table = $(Table);
+    const SidebarCatButtons = Sidebar.getElementsByClassName("KB_cat-btn");
+    const PrefHandlers = document.getElementsByClassName("KB_pref-handler");
 
     /**
      * Action buttons data map.
@@ -86,7 +71,7 @@
             "new_tab": "show"
         },
         "ext": {
-            "color": "indigo",
+            "color": "purple",
             "file": "hide",
             "folder": "show",
             // NOTE: Shown even though open in new tab is the default action when clicking the entry title
@@ -106,7 +91,7 @@
             "new_tab": "show"
         },
         "epub": {
-            "color": "cyan",
+            "color": "blue",
             "file": "show",
             "folder": "show",
             "new_tab": "hide"
@@ -151,52 +136,6 @@
      */
     const DelayedTableDrawCallback = Ody_Core.debounce(() => {
         KB_Main && KB_Main.focusSearchInput();
-
-        Ody_Core.arrayEach([...Table.getElementsByClassName("KB_action-dropdown-menu")], (aEl) => {
-            // NOTE: This is to ensure that the events are attached to each dropdown menu just ONCE.
-            if (aEl.getAttribute("data-action-menu-handled")) {
-                return;
-            }
-
-            aEl.addEventListener("show.bs.dropdown", (aE) => {
-                let actionDropdownMenu = aE.currentTarget;
-
-                // NOTE: Again, this is to ensure that the events are attached to each menu items
-                // just ONCE.
-                if (actionDropdownMenu.getAttribute("data-action-menuitem-handled")) {
-                    return;
-                }
-
-                let actionItems = actionDropdownMenu.getElementsByClassName("dropdown-item");
-                let sourceURL = actionDropdownMenu.getAttribute("data-source") || "";
-                let handler = actionDropdownMenu.getAttribute("data-handler");
-
-                for (let i = actionItems.length - 1; i >= 0; i--) {
-                    let actItem = actionItems[i];
-                    let itemAction = actItem.getAttribute("data-action");
-
-                    if (itemAction === "source_url") {
-                        actItem.style.display = sourceURL ? "" : "none";
-                    } else {
-                        actItem.style.display = BtnActMap[handler][itemAction] === "show" ? "" : "none";
-                    }
-                }
-
-                actionDropdownMenu.setAttribute("data-action-menuitem-handled", true);
-            });
-
-            // NOTE: The keyup.td event won't work. Using jQuery, the keyup.td does work.
-            aEl.addEventListener("keyup", (aE) => {
-                // NOTE: Workaround for Firefox in Linux. ¬¬
-                // All of this nonsense due to web developers being DUMBASSES!!!
-                if (aE.keyCode === 27) { // Escape key.
-                    const dropdown = bootstrap.Dropdown.getOrCreateInstance(aE.target);
-                    dropdown && dropdown.hide();
-                }
-            });
-
-            aEl.setAttribute("data-action-menu-handled", true);
-        });
     }, 500);
 
     /**
@@ -249,20 +188,27 @@
         // Hide the selector to change the number of records to be shown per page.
         // Disabled in favor of a custom selector added to the top navbar.
         lengthChange: false,
-        // Do not show the DataTables' native search input and table length changer.
-        // Using custom ones directly inserted in the top navbar.
-        // Added the container with class KB_table-info-pagination-container to be able to
-        // display the info and top pagination in the same line with some CSS sorcery.
-        // Added the pagination-sm Bootstrap class to both paginations to make them smaller.
-        dom: '<<"KB_table-info-pagination-container pagination-sm"ip>r<t><"pagination-sm"p>>',
+        dom: '<"row align-items-center"<"col-4"i>' +
+            '<"col-8 d-flex align-items-center justify-content-end"p<"ms-1"S>>>tr' +
+            '<"row align-items-center"<"col-4"i>' +
+            '<"col-8 d-flex align-items-center justify-content-end"p<"ms-1"S>>>',
         // Which buttons to be shown in the pagination control.
         // full_numbers: 'First', 'Previous', 'Next' and 'Last' buttons, plus page numbers.
         pagingType: "full_numbers",
+        // NOTE: Make info table less verbose.
+        language: {
+            info: "_START_ to _END_ (_TOTAL_ entries)",
+            infoFiltered: "(filtered from _MAX_)",
+        },
         ordering: true,
-        ajax: {
-            url: "assets/data/data_tables.json",
-            dataSrc: "",
-            deferRender: true
+        ajax: function(aData, aCallback) {
+            fetch("/assets/data/data_tables.json", {
+                    cache: "no-cache"
+                })
+                .then(aResponse => aResponse.json())
+                .then(aData => aCallback({
+                    data: aData
+                }));
         },
         // Sort by title.
         // 0 is the column with the action buttons.
@@ -343,7 +289,7 @@
             data: "t",
             name: "title",
             targets: 3,
-            class: "KB_title text-bold",
+            class: "KB_title fw-bold",
             render: (aData, aType, aRow) => {
                 switch (aType) {
                     case "display":
@@ -354,7 +300,7 @@
             }
         }],
         initComplete: function() {
-            LoadingOverlay.classList.add("d-none");
+            document.getElementById("KB_loading").classList.add("d-none");
             PseudoBody.classList.replace("hide", "show");
         }
     };
@@ -411,7 +357,6 @@
 
             // Replicate the behavior of the DataTables native table length chooser.
             KB_Table.page.len(this.getPref("table_page_length")).draw();
-            TableLengthChooserSelect.value = this.getPref("table_page_length");
             KB_Table.column("category:name").visible(this.getPref("display_cat_col"));
             KB_Table.column("sub-category:name").visible(this.getPref("display_subcat_col"));
 
@@ -428,9 +373,40 @@
             this.delayedSetElementsOffset();
             Ody_Utils.initializeBaseBootstrapComponents();
             this.attachListeners();
+            this.setPrefHandlersValues();
         }
 
         attachListeners() {
+            PseudoBody.addEventListener("keyup", (aE) => {
+                // NOTE: Workaround for Firefox in Linux. ¬¬
+                // All of this nonsense due to web developers being DUMBASSES!!!
+                if (aE.keyCode === 27 && // Escape key.
+                    aE.target.parentNode.classList.contains("KB_action-dropdown-menu")) {
+                    const dropdown = bootstrap.Dropdown.getOrCreateInstance(aE.target);
+                    dropdown && dropdown.hide();
+                }
+            });
+
+            PseudoBody.addEventListener("show.bs.dropdown", (aE) => {
+                const actionDropdownMenu = aE.target.parentNode;
+
+                if (actionDropdownMenu.classList.contains("KB_action-dropdown-menu")) {
+                    const sourceURL = actionDropdownMenu.getAttribute("data-source") || "";
+                    const handler = actionDropdownMenu.getAttribute("data-handler");
+
+                    Ody_Core.arrayEach(actionDropdownMenu.getElementsByClassName("dropdown-item"),
+                        (aActItem) => {
+                            let itemAction = aActItem.getAttribute("data-action");
+
+                            if (itemAction === "source_url") {
+                                aActItem.style.display = sourceURL ? "" : "none";
+                            } else {
+                                aActItem.style.display = BtnActMap[handler][itemAction] === "show" ? "" : "none";
+                            }
+                        });
+                }
+            });
+
             window.addEventListener("resize", () => {
                 this.delayedSetElementsOffset();
             }, false);
@@ -440,8 +416,8 @@
             // thousands of elements a table has seems to be more performant.
             // WARNING: Pay attention not to add siblings to the handled elements. It WILL
             // screw up the event.target references that are needed.
-            Ody_Core.arrayEach(["click", "auxclick"], (aEvent) => {
-                PseudoBody.addEventListener(aEvent, (aE) => {
+            Ody_Core.arrayEach(["click", "auxclick"], (aEventName) => {
+                PseudoBody.addEventListener(aEventName, (aE) => {
                     const target = aE.target;
                     const classList = target.classList;
 
@@ -452,6 +428,15 @@
 
                         if (actionMenu.hasAttribute("data-handler")) {
                             this.actionClick(actionMenu, null, aE.target.getAttribute("data-action"));
+                        }
+                    } else {
+                        const targetHref = target.getAttribute("href");
+
+                        if (targetHref && targetHref[0] !== "#") {
+                            // Nothing freaking works in the un-configurable crap called Firefox Quantum (57+)!!!
+                            // So, I have to hard code it!!!
+                            aE.preventDefault();
+                            Ody_Core.loadInNewTab(aE.target.getAttribute("href"));
                         }
                     }
                 });
@@ -470,56 +455,44 @@
                 }
             });
 
-            IndexModal.addEventListener("show.bs.modal", () => {
-                Ody_Core.arrayEach(PrefHandlers, (aEl) => {
-                    const pref = aEl.getAttribute("data-pref");
-                    switch (pref) {
-                        case "display_cat_col":
-                        case "display_subcat_col":
-                        case "open_pdf_external":
-                            aEl.checked = Ody_Prefs[pref];
-                            break;
-                        case "table_page_length":
-                            aEl.value = Ody_Prefs[pref];
-                            break;
-                    }
-                });
-            });
-
             // Replicate the DataTables search function used by its native search input.
-            for (let i = SEARCH_INPUT_EVENTS.length - 1; i >= 0; i--) {
-                InputSearch.addEventListener(SEARCH_INPUT_EVENTS[i],
-                    this.inputSearchEventHandler.bind(this), false);
-            }
+            Ody_Core.arrayEach(SEARCH_INPUT_EVENTS, (aEventName) => {
+                InputSearch.addEventListener(aEventName, this.inputSearchEventHandler.bind(this), false);
+            });
 
             Ody_Core.arrayEach(SidebarCatButtons, (aEl) => {
-                Ody_Core.arrayEach(["click", "auxclick"], (aE) => {
-                    aEl.addEventListener(aE, this.setActiveCategory.bind(this));
+                Ody_Core.arrayEach(["click", "auxclick"], (aEventName) => {
+                    aEl.addEventListener(aEventName, this.setActiveCategory.bind(this));
                 });
             });
 
-            Ody_Core.arrayEach(TopNavbarItems, (aEl) => {
-                Ody_Core.arrayEach(["click", "auxclick"], (aE) => {
-                    aEl.addEventListener(aE, this.handleNavItemsClick.bind(this));
+            Ody_Core.arrayEach(TopNavbar.getElementsByClassName("KB_nav-item"), (aEl) => {
+                Ody_Core.arrayEach(["click", "auxclick"], (aEventName) => {
+                    aEl.addEventListener(aEventName, this.handleNavItemsClick.bind(this));
                 });
             });
 
-            TableLengthChooserSelect.addEventListener("change", (aE) => { // jshint ignore:line
-                KB_Table.page.len(aE.target.value).draw();
-
+            document.getElementById("KB_reset-settings-button").addEventListener("click", () => {
+                Ody_Prefs.clear();
+                this.setPrefHandlersValues();
                 return false;
             }, false);
+        }
 
-            KB_Table.on("length.dt.DT", (e, s, len) => {
-                if (TableLengthChooserSelect.value !== len) {
-                    TableLengthChooserSelect.value = len;
+        setPrefHandlersValues() {
+            Ody_Core.arrayEach(PrefHandlers, (aEl) => {
+                const pref = aEl.getAttribute("data-pref");
+                switch (pref) {
+                    case "display_cat_col":
+                    case "display_subcat_col":
+                    case "open_pdf_external":
+                        aEl.checked = Ody_Prefs[pref];
+                        break;
+                    case "table_page_length":
+                        aEl.value = Ody_Prefs[pref];
+                        break;
                 }
             });
-
-            ResetSettingsButton.addEventListener("click", () => {
-                Ody_Prefs.clear();
-                return false;
-            }, false);
         }
 
         doSetElementsOffset() {
@@ -543,9 +516,11 @@
                 case "KB_reload-button":
                     this.loadPageInline();
                     break;
-                case "KB_index-modal-button":
-                    const modal = bootstrap.Modal.getOrCreateInstance(IndexModal);
-                    modal && modal.show();
+                case "KB_index-offcanvas-button":
+                    const offcanvas = bootstrap.Offcanvas.getOrCreateInstance(
+                        document.getElementById("KB_index-offcanvas")
+                    );
+                    offcanvas && offcanvas.show();
                     break;
                 case "KB_edit-button":
                     this.actionClick(null, decodeURIComponent(this._URLParams.get("inlinePageURL")), "file", aE);
@@ -583,26 +558,14 @@
             let showSidebar = aShow === null ? SidebarWrapper.classList.contains("d-none") : aShow;
 
             if (showSidebar) { // Show sidebar.
-                Ody_Core.toggleElementsClasses(MainContentWrapper, [], CONTENT_WRAPPER_CLASSES);
-                Ody_Core.toggleElementsClasses(
-                    SidebarWrapper,
-                    // Remove the d-none class from the sidebar wrapper so it can be shown...
-                    ["d-none"],
-                    // ...add back all layout classes to the sidebar and content wrappers so
-                    // they can be laid out depending on the view port size.
-                    SIDEBAR_WRAPPER_CLASSES
-                );
+                MainContentWrapper.classList.add(...CONTENT_WRAPPER_CLASSES);
+                SidebarWrapper.classList.add(...SIDEBAR_WRAPPER_CLASSES);
+                SidebarWrapper.classList.remove("d-none");
             } else { // Hide sidebar.
-                Ody_Core.toggleElementsClasses(MainContentWrapper, CONTENT_WRAPPER_CLASSES, ["col-12"]);
-                Ody_Core.toggleElementsClasses(
-                    SidebarWrapper,
-                    // Remove all layout classes from the sidebar and content wrappers and
-                    // add only the col-12 class to the content wrapper so it occupys the
-                    // full width.
-                    SIDEBAR_WRAPPER_CLASSES,
-                    // ...add the d-none class to hide sidebar wrapper...
-                    ["d-none"]
-                );
+                MainContentWrapper.classList.remove(...CONTENT_WRAPPER_CLASSES);
+                MainContentWrapper.classList.add("col-12");
+                SidebarWrapper.classList.remove(...SIDEBAR_WRAPPER_CLASSES);
+                SidebarWrapper.classList.add("d-none");
             }
         }
 
@@ -709,14 +672,14 @@
          */
         highlightCategoryInSidebar(aCategory) {
             let currentCatButton = null;
-            for (let i = SidebarCatButtons.length - 1; i >= 0; i--) {
-                if (SidebarCatButtons[i].getAttribute("data-cat") === aCategory) {
-                    SidebarCatButtons[i].classList.add("active");
-                    currentCatButton = SidebarCatButtons[i];
+            Ody_Core.arrayEach(SidebarCatButtons, (aSBBtn) => {
+                if (aSBBtn.getAttribute("data-cat") === aCategory) {
+                    aSBBtn.classList.add("active");
+                    currentCatButton = aSBBtn;
                 } else {
-                    SidebarCatButtons[i].classList.remove("active");
+                    aSBBtn.classList.remove("active");
                 }
-            }
+            });
 
             if (currentCatButton !== null && !!currentCatButton.getAttribute("data-parent")) {
                 let collapse = bootstrap.Collapse.getOrCreateInstance(
@@ -756,9 +719,11 @@
                 let [cat, sub] = aCategory.split("|");
 
                 cat && KB_Table.column("category:name").search("^" + Ody_Core.escapeRegExp(cat) + "$",
-                    true, false, true).draw();
+                    true, false, true);
                 sub && KB_Table.column("sub-category:name").search("^" + Ody_Core.escapeRegExp(sub) + "$",
-                    true, false, true).draw();
+                    true, false, true);
+
+                KB_Table.page.len(this.getPref("table_page_length")).draw();
             }
         }
 
@@ -788,19 +753,19 @@
                         if (cat && cat.length > 1) {
                             KB_Table.columns().search("");
                             KB_Table.column("category:name").search("^" + Ody_Core.escapeRegExp(cat),
-                                true, false, true).draw();
+                                true, false, true);
                         }
 
                         if (sub && sub.length > 1) {
                             KB_Table.columns().search("");
                             KB_Table.column("sub-category:name").search("^" + Ody_Core.escapeRegExp(sub),
-                                true, false, true).draw();
+                                true, false, true);
                         }
 
                         if (title && title.length > 1) {
-                            KB_Table.column("title:name").search(title, false, true, true).draw();
+                            KB_Table.column("title:name").search(title, false, true, true);
                         } else {
-                            KB_Table.column("title:name").search("").draw();
+                            KB_Table.column("title:name").search("");
                         }
                     } else if (/:/.test(aVal)) { // Search by handler.
                         let [handler, title] = aVal.split(":");
@@ -808,17 +773,19 @@
                         if (handler && handler.length > 1) {
                             this.filterCategories(this._currentCategory);
                             KB_Table.column("handler:name").search("^" + Ody_Core.escapeRegExp(handler),
-                                true, false, true).draw();
+                                true, false, true);
                         }
 
                         if (title && title.length > 1) {
-                            KB_Table.column("title:name").search(title, false, true, true).draw();
+                            KB_Table.column("title:name").search(title, false, true, true);
                         } else {
-                            KB_Table.column("title:name").search("").draw();
+                            KB_Table.column("title:name").search("");
                         }
                     } else {
-                        KB_Table.search(aVal, false, true, true).draw();
+                        KB_Table.search(aVal, false, true, true);
                     }
+
+                    KB_Table.page.len(this.getPref("table_page_length")).draw();
                 }
             } else {
                 this.clearSearchInput();
@@ -841,7 +808,6 @@
 
                     TableWrapper.classList.add("d-none");
                     InputSearchGroup.classList.add("d-none");
-                    TableLengthChooserForm.classList.add("d-none");
 
                     InlineContent.classList.remove("d-none");
                     ReloadButton.classList.remove("d-none");
@@ -850,8 +816,8 @@
                         EditButton.classList.remove("d-none");
                     break;
                 case "table":
-                    TableWrapper.classList.remove("d-none");
                     this.toggleSidebar(true);
+                    TableWrapper.classList.remove("d-none");
                     this._currentSection = "table";
                     InlineContent.innerHTML = "";
                     this._URLParams = new URLSearchParams("");
@@ -860,7 +826,6 @@
                     ReloadButton.classList.add("d-none");
                     EditButton.classList.add("d-none");
                     InputSearchGroup.classList.remove("d-none");
-                    TableLengthChooserForm.classList.remove("d-none");
 
                     this.focusSearchInput();
                     // When going back to the index, restore the scroll position.
@@ -896,31 +861,9 @@
         }
 
         /**
-         * Open links inside pages loaded inline in a new tab.
-         *
-         * @param {Object} aE - Event that triggered the function.
-         */
-        contentLinkLoadInNewTab(aE) {
-            aE.preventDefault();
-            Ody_Core.loadInNewTab(aE.target.getAttribute("href"));
-        }
-
-        /**
          * Setup the content of a just inserted inline page.
          */
         setupHTMLInlineContent() {
-            let contentLinks = InlineContent.querySelectorAll("a[href]");
-
-            for (let i = contentLinks.length - 1; i >= 0; i--) {
-                let targetHref = contentLinks[i].getAttribute("href");
-
-                if (targetHref[0] !== "#") {
-                    // Nothing freaking works in the un-configurable crap called Firefox Quantum (57+)!!!
-                    // So, I have to hard code it!!!
-                    contentLinks[i].addEventListener("click", this.contentLinkLoadInNewTab, false);
-                }
-            }
-
             window.setTimeout(() => {
                 Ody_Core.highlightAllCodeBlocks(InlineContent);
             }, 10);
@@ -955,6 +898,7 @@
                     switch (pref) {
                         case "table_page_length":
                             Ody_Prefs[pref] = aE.currentTarget.value;
+                            KB_Table.page.len(aE.currentTarget.value).draw();
                             break;
                     }
                     break;
@@ -1126,11 +1070,23 @@
         });
     }
 
-    KB_Table = $Table.DataTable(TableOptions);
+    $.fn.dataTable.ext.feature.push({
+        fnInit: function(aTableSettings) {
+            let select = new $.fn.dataTable.CustomPageSelector(aTableSettings, {
+                // containerClasses: ["float-end"],
+                selectClasses: ["form-select", "form-select-sm"]
+            });
+            return select.node();
+        },
+        cFeature: "S"
+    });
+
+    KB_Table = new DataTable("#KB_table", TableOptions);
     KB_Main = new KB_MainClass();
 })();
 
-/* global Ody_Utils,
+/* global DataTable,
+          Ody_Utils,
           Ody_Core,
           Ody_Debugger,
           Ody_SmoothScroll,

@@ -1,147 +1,134 @@
-<div class="modal fade" id="KB_index-modal" tabindex="-1">
-    <!-- <div class="modal fade" id="KB_index-modal" tabindex="-1" role="dialog" aria-labelledby="KB_index-modal-label" aria-hidden="true"> -->
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable"
-         role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title">Page settings</h4>
-                <button type="button"
-                        data-bs-dismiss="modal"
-                        data-bs-toggle="modal"
-                        data-bs-target="#KB_reset-settings-modal"
-                        class="btn btn-sm btn-warning ms-1"
-                        title="Reset page settings">
-                    <i class="nf nf-fa-refresh"></i>
-                </button>
-                <button type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                        aria-label="Close">
-                    <span aria-hidden="true"></span>
-                </button>
-            </div>
-            <!-- ^ .modal-header end -->
-            <div class="modal-body">
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col-sm-6">
-                            <div class="row">
-                                <label for="KB_pref_table-page-length"
-                                       class="col-sm-6 col-form-label col-form-label-sm">Table page length</label>
-                                <div class="col-sm-6">
-                                    <select id="KB_pref_table-page-length"
-                                            data-pref="table_page_length"
-                                            class="KB_pref-handler form-select form-select-sm">
-                                        <option value="25">25</option>
-                                        <option value="50">50</option>
-                                        <option value="100">100</option>
-                                        <option value="200">200</option>
-                                        <option value="400">400</option>
-                                        <option value="-1">All</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-6">
-                            <div class="row">
-                                <label for="KB_pref_category-column"
-                                       class="col-sm-6 col-form-label col-form-label-sm">Display category column</label>
-                                <div class="col-sm-6 form-check form-switch align-self-center">
-                                    <input id="KB_pref_category-column"
-                                           data-pref="display_cat_col"
-                                           class="KB_pref-handler form-check-input float-end"
-                                           type="checkbox"
-                                           role="switch">
-                                </div>
-                            </div>
-                            <div class="row">
-                                <label for="KB_pref_sub-category-column"
-                                       class="col-sm-6 col-form-label col-form-label-sm">Display sub-category column</label>
-                                <div class="col-sm-6 form-check form-switch align-self-center">
-                                    <input id="KB_pref_sub-category-column"
-                                           data-pref="display_subcat_col"
-                                           class="KB_pref-handler form-check-input float-end"
-                                           type="checkbox"
-                                           role="switch">
-                                </div>
-                            </div>
-                            <div class="row">
-                                <label for="KB_pref_open-pdfs-externally"
-                                       class="col-sm-6 col-form-label col-form-label-sm">Open PDFs externally</label>
-                                <div class="col-sm-6 form-check form-switch align-self-center">
-                                    <input id="KB_pref_open-pdfs-externally"
-                                           data-pref="open_pdf_external"
-                                           class="KB_pref-handler form-check-input float-end"
-                                           type="checkbox"
-                                           role="switch">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="row">
-                        <div class="col-sm-6">
-                            <div class="row">
-                                <label for="ody-debugger-logging-level"
-                                       class="col-sm-6 col-form-label col-form-label-sm">Logging level</label>
-                                <div class="col-sm-6">
-                                    <select id="ody-debugger-logging-level"
-                                            class="form-select form-select-sm col-sm-6">
-                                        <option value="0">Normal</option>
-                                        <option value="1">Verbose</option>
-                                        <option value="2">Very verbose</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-sm-6">
-                            <div class="row">
-                                <label for="ody-debugger-enabled"
-                                       class="col-sm-6 col-form-label col-form-label-sm">Debugger enabled</label>
-                                <div class="col-sm-6 form-check form-switch align-self-center">
-                                    <input id="ody-debugger-enabled"
-                                           class="form-check-input float-end"
-                                           type="checkbox"
-                                           role="switch">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <hr>
-                <h4>About</h4>
-                <ul class="list-unstyled">
-                    <li>
-                        <p>Website created with <a href="https://getbootstrap.com"><b>Bootstrap</b></a>, HTML, CSS, and JS library.</p>
-                    </li>
-                    <li>
-                        <p>Bootstrap theme created with <a href="https://gitlab.com/PythonCLIApplications/BootstrapThemesGenerator"><b>Bootstrap themes generator</b></a> and based on <a href="https://bootswatch.com"><b>Bootswatch</b></a>'s <a href="https://bootswatch.com/flatly"><b>Flatly theme</b></a>.</p>
-                    </li>
-                    <li>
-                        <p>Code syntax highlighting powered by <a href="https://highlightjs.org/"><b>highlight.js</b></a>.</p>
-                    </li>
-                    <li>
-                        <p>The index uses <a href="https://datatables.net"><b>DataTables</b></a> table enhancing plug-in to display, sort and search content.</p>
-                    </li>
-                    <li>
-                        <p>Markdown files are rendered inline using <a href="https://github.com/lepture/mistune"><b>mistune</b></a>, a Python Markdown parser with renderers and plugins.</p>
-                    </li>
-                    <li>
-                        <p>Glyph icons are provided by <a href="https://nerdfonts.com"><b>Nerd Fonts</b></a>, iconic font aggregator, collection, and patcher.</p>
-                    </li>
-                </ul>
-            </div>
-            <!-- ^ .modal-body end -->
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
-            </div>
-            <!-- ^ .modal-footer end -->
-        </div>
-        <!-- ^ .modal-content end -->
+<div id="KB_index-offcanvas"
+     class="offcanvas offcanvas-end"
+     tabindex="-1"
+     aria-hidden="true">
+    <div class="offcanvas-header">
+        <h4 class="offcanvas-title">Knowledge Base</h4>
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="offcanvas"
+                data-bs-target="#KB_index-offcanvas"
+                aria-label="Close"></button>
     </div>
-    <!-- ^ .modal-dialog end -->
+    <div class="offcanvas-body">
+        <div class="d-flex align-items-baseline mb-1">
+            <h5>Page settings</h5>
+            <div class="mx-auto"></div>
+            <button data-pref="default_category"
+                    class="KB_pref-handler nav-item btn btn-sm btn-outline-primary ms-1"
+                    type="button"
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="bottom"
+                    title="Set current category as default">
+                <i class="nf nf-fa-bookmark"></i>
+            </button>
+            <button type="button"
+                    data-bs-dismiss="modal"
+                    data-bs-toggle="modal"
+                    data-bs-target="#KB_reset-settings-modal"
+                    class="btn btn-sm btn-outline-primary ms-1"
+                    title="Reset page settings">
+                <i class="nf nf-fa-refresh"></i>
+            </button>
+        </div>
+        <div class="container-fluid d-grid gap-2">
+            <div class="row">
+                <label for="KB_pref_table-page-length"
+                       class="col-sm-6 col-form-label col-form-label-sm">Table page length</label>
+                <div class="col-sm-6">
+                    <select id="KB_pref_table-page-length"
+                            data-pref="table_page_length"
+                            class="KB_pref-handler form-select form-select-sm">
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="200">200</option>
+                        <option value="400">400</option>
+                        <option value="-1">All</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <label for="KB_pref_category-column"
+                       class="col-sm-6 col-form-label col-form-label-sm">Display category column</label>
+                <div class="col-sm-6 form-check form-switch align-self-center">
+                    <input id="KB_pref_category-column"
+                           data-pref="display_cat_col"
+                           class="KB_pref-handler form-check-input float-end"
+                           type="checkbox"
+                           role="switch">
+                </div>
+            </div>
+            <div class="row">
+                <label for="KB_pref_sub-category-column"
+                       class="col-sm-6 col-form-label col-form-label-sm">Display sub-category column</label>
+                <div class="col-sm-6 form-check form-switch align-self-center">
+                    <input id="KB_pref_sub-category-column"
+                           data-pref="display_subcat_col"
+                           class="KB_pref-handler form-check-input float-end"
+                           type="checkbox"
+                           role="switch">
+                </div>
+            </div>
+            <div class="row">
+                <label for="KB_pref_open-pdfs-externally"
+                       class="col-sm-6 col-form-label col-form-label-sm">Open PDFs externally</label>
+                <div class="col-sm-6 form-check form-switch align-self-center">
+                    <input id="KB_pref_open-pdfs-externally"
+                           data-pref="open_pdf_external"
+                           class="KB_pref-handler form-check-input float-end"
+                           type="checkbox"
+                           role="switch">
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <label for="ody-debugger-logging-level"
+                       class="col-sm-6 col-form-label col-form-label-sm">Logging level</label>
+                <div class="col-sm-6 align-self-center">
+                    <select id="ody-debugger-logging-level"
+                            class="form-select form-select-sm col-sm-6">
+                        <option value="0">Normal</option>
+                        <option value="1">Verbose</option>
+                        <option value="2">Very verbose</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <label for="ody-debugger-enabled"
+                       class="col-sm-6 col-form-label col-form-label-sm">Debugger enabled</label>
+                <div class="col-sm-6 form-check form-switch align-self-center">
+                    <input id="ody-debugger-enabled"
+                           class="form-check-input float-end"
+                           type="checkbox"
+                           role="switch">
+                </div>
+            </div>
+        </div>
+        <hr>
+        <h5>About</h5>
+        <ul class="list-unstyled fs-small">
+            <li>
+                <p>Website created with <a href="https://getbootstrap.com"><b>Bootstrap</b></a>, HTML, CSS, and JS library.</p>
+            </li>
+            <li>
+                <p>Bootstrap theme created with <a href="https://gitlab.com/PythonCLIApplications/BootstrapThemesGenerator"><b>Bootstrap themes generator</b></a> and based on <a href="https://bootswatch.com"><b>Bootswatch</b></a>'s <a href="https://bootswatch.com/flatly"><b>Flatly theme</b></a>.</p>
+            </li>
+            <li>
+                <p>Code syntax highlighting powered by <a href="https://highlightjs.org/"><b>highlight.js</b></a>.</p>
+            </li>
+            <li>
+                <p>The index uses <a href="https://datatables.net"><b>DataTables</b></a> table enhancing plug-in to display, sort and search content.</p>
+            </li>
+            <li>
+                <p>Markdown files are rendered inline using <a href="https://github.com/lepture/mistune"><b>mistune</b></a>, a Python Markdown parser with renderers and plugins.</p>
+            </li>
+            <li>
+                <p>Glyph icons are provided by <a href="https://nerdfonts.com"><b>Nerd Fonts</b></a>, iconic font aggregator, collection, and patcher.</p>
+            </li>
+        </ul>
+    </div>
 </div>
-<!-- ^ #KB_index-modal end -->
 <div class="modal fade"
      id="KB_reset-settings-modal"
      tabindex="-1"
