@@ -28,7 +28,7 @@ root_folder = os.path.realpath(os.path.abspath(os.path.join(
 PATHS = {
     "www_base": os.path.join(root_folder, "UserData", "www"),
     "data_tables_json": os.path.join(root_folder, "UserData", "www", "assets", "data", "data_tables.json"),
-    "pandoc_convertions": os.path.join(root_folder, "UserData", "data_storage", "pandoc_convertions"),
+    "convertions": os.path.join(root_folder, "UserData", "data_storage", "convertions"),
     "docutils_convertions": os.path.join(root_folder, "UserData", "data_storage", "docutils_convertions"),
     "pandoc_html_template": os.path.join(root_folder, "AppData", "data",
                                          "includes", "pandoc_html_template.html")
@@ -275,7 +275,7 @@ def pandoc_inplace_convertion(from_format, to_format, from_clipboard, logger):
         Halt execution.
     """
     file_pattern = ".%s" % from_format
-    output_path = os.path.join(PATHS["pandoc_convertions"], "%s_to_%s" % (from_format, to_format))
+    output_path = os.path.join(PATHS["convertions"], "%s_to_%s" % (from_format, to_format))
 
     # Use of the latest version of pandoc downloaded from their repository.
     # https://github.com/jgm/pandoc/releases
@@ -435,7 +435,7 @@ def convert_rst_to_html_pandoc(input_path_storage=None,
                                include_highlight_js=False,
                                logger=None):
     input_path = file_utils.expand_path(input_path_storage) if input_path_storage else \
-        os.path.join(PATHS["pandoc_convertions"], "rst_to_html")
+        os.path.join(PATHS["convertions"], "rst_to_html")
 
     for dirname, dirnames, filenames in os.walk(input_path, topdown=False):
         for filename in filenames:
@@ -487,7 +487,7 @@ def convert_epub_to_html(input_path_storage=None, logger=None):
         The logger.
     """
     input_path = file_utils.expand_path(input_path_storage) if input_path_storage else \
-        os.path.join(PATHS["pandoc_convertions"], "epub_to_html")
+        os.path.join(PATHS["convertions"], "epub_to_html")
 
     for dirname, dirnames, filenames in os.walk(input_path, topdown=False):
         for filename in filenames:
@@ -710,7 +710,7 @@ def generate_categories_html(dry_run=False, logger=None):
 
 
 def generate_index_html(dry_run=False, logger=None):
-    """generate the index.html file.
+    """Generate the index.html file.
 
     Parameters
     ----------

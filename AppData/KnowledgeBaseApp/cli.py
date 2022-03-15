@@ -89,6 +89,39 @@ Options:
     **UserData/data_storage/pandoc_convertions/<epub_to_html|rst_to_html>**
     will be used. Only used by the *epub_to_html* and *rst_to_html* sub-commands.
 
+run <func_name>:
+
+    **update_all_repositories**
+        Update all repositories.
+
+    **handle_all_repositories**
+        Handle all repositories.
+
+    **download_all_archives**
+        Download all archives.
+
+    **create_main_json_file**
+        Generate the **data_tables.json** file.
+
+    **html_to_markdown_files**
+    **html_to_markdown_clip**
+    **epub_to_html**
+    **rst_to_html_pandoc**
+    **rst_to_html_docutils**
+        Convert files found at **UserData/data_storage/convertions**.
+
+    **build_sphinx_docs**
+        Build Sphinx documentation.
+
+    **generate_categories_html**
+        Generate the categories.html file.
+
+    **generate_index_html**
+        Generate the index.html file.
+
+    **open_main_webpage**
+        Open the main web page.
+
 """.format(appname=__appname__,
            appdescription=__appdescription__,
            version=__version__,
