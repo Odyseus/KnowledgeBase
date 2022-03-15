@@ -288,7 +288,7 @@ def pandoc_inplace_convertion(from_format, to_format, from_clipboard, logger):
         os.makedirs(output_path)
 
     if from_clipboard:
-        from .common import pyperclip
+        from .python_utils import pyperclip
         from_clipboard_file_name = "from_clipboard.%s" % to_format
         from_clipboard_file_path = os.path.join(output_path, from_clipboard_file_name)
 
