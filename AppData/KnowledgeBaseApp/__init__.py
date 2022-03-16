@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 __status__ = "Unstable"
 __appname__ = "Knowledge Base"
