@@ -3,6 +3,8 @@
 
 Attributes
 ----------
+PATHS : dict
+    Paths storage.
 root_folder : str
     The main folder containing the application. All commands must be executed
     from this location without exceptions.
@@ -43,8 +45,8 @@ class DataTablesObject():
     ----------
     data_tables_obj : list
         Where the JSON data is stored before finally save it into a JSON file.
-    logger : object
-        See <class :any:`LogSystem`>.
+    logger : LogSystem
+        The logger.
     """
 
     def __init__(self, file_extensions=[], dry_run=False, logger=None):
@@ -56,8 +58,8 @@ class DataTablesObject():
             Used by the :any:`DataTablesObject._get_data_by_file_extension` method.
         dry_run : bool, optional
             Log an action without actually performing it.
-        logger : object
-            See <class :any:`LogSystem`>.
+        logger : LogSystem
+            The logger.
         """
         self.data_tables_obj = []
         self._dry_run = dry_run
@@ -233,8 +235,8 @@ def convert_html_to_markdown(from_clipboard, logger):
     ----------
     from_clipboard : bool
         Convert clipboard content.
-    logger : object
-        See <class :any:`LogSystem`>.
+    logger : LogSystem
+        The logger.
     """
     pandoc_inplace_convertion(from_format="html", to_format="md",
                               from_clipboard=from_clipboard, logger=logger)
@@ -247,8 +249,8 @@ def convert_rst_to_markdown(from_clipboard, logger):
     ----------
     from_clipboard : bool
         Convert clipboard content.
-    logger : object
-        See <class :any:`LogSystem`>.
+    logger : LogSystem
+        The logger.
     """
     pandoc_inplace_convertion(from_format="rst", to_format="md",
                               from_clipboard=from_clipboard, logger=logger)
@@ -265,8 +267,8 @@ def pandoc_inplace_convertion(from_format, to_format, from_clipboard, logger):
         To which format to convert to. See :any:`convert_with_pandoc` for more details.
     from_clipboard : bool
         Convert clipboard content.
-    logger : object
-        See <class :any:`LogSystem`>.
+    logger : LogSystem
+        The logger.
 
     Returns
     -------
@@ -329,8 +331,8 @@ def convert_with_pandoc(input_file, output_path, from_format, to_format, logger)
         To which format to convert to. Similarly to "from_format", this parameter is a file
         extension that will be used to chose the argument to pass to the "--to" Pandoc option.
         It is also the file extension that will be assigned to the output file.
-    logger : object
-        See <class :any:`LogSystem`>.
+    logger : LogSystem
+        The logger.
     """
     pandoc_path = get_pandoc_path()
 
@@ -370,6 +372,26 @@ def convert_rst_to_html_docutils(input_path_storage=None,
                                  include_bootstrap_js=False,
                                  include_highlight_js=False,
                                  logger=None):
+    """Convert Rst to HTML with docutils.
+
+    Parameters
+    ----------
+    input_path_storage : None, optional
+        Path to where .rst files are stored.
+    include_bootstrap_css : bool, optional
+        Whether to include the Bootstrap CSS stylesheet.
+    include_bootstrap_js : bool, optional
+        Whether to include the Bootstrap JS script.
+    include_highlight_js : bool, optional
+        Whether to include the highlight.js JS script.
+    logger : LogSystem
+        The logger.
+
+    Raises
+    ------
+    SystemExit
+        Halt execution.
+    """
     try:
         from docutils.core import publish_parts
     except (ImportError, SystemError):
@@ -433,6 +455,21 @@ def convert_rst_to_html_pandoc(input_path_storage=None,
                                include_bootstrap_js=False,
                                include_highlight_js=False,
                                logger=None):
+    """Convert Rst to HTML with Pandoc.
+
+    Parameters
+    ----------
+    input_path_storage : None, optional
+        Path to where .rst files are stored.
+    include_bootstrap_css : bool, optional
+        Whether to include the Bootstrap CSS stylesheet.
+    include_bootstrap_js : bool, optional
+        Whether to include the Bootstrap JS script.
+    include_highlight_js : bool, optional
+        Whether to include the highlight.js JS script.
+    logger : LogSystem
+        The logger.
+    """
     input_path = file_utils.expand_path(input_path_storage) if input_path_storage else \
         os.path.join(PATHS["convertions"], "rst_to_html")
 
@@ -540,8 +577,8 @@ def create_main_json_file(dry_run=False, logger=None):
     ----------
     dry_run : bool, optional
         See :any:`DataTablesObject` > dry_run parameter.
-    logger : object
-        See <class :any:`LogSystem`>.
+    logger : LogSystem
+        The logger.
     """
     logger.info(shell_utils.get_cli_separator("-"), date=False)
     logger.info("Generating main JSON file...")
@@ -569,8 +606,8 @@ def generate_categories_html(dry_run=False, logger=None):
     ----------
     dry_run : bool, optional
         See :any:`DataTablesObject` > dry_run parameter.
-    logger : object
-        See <class :any:`LogSystem`>.
+    logger : LogSystem
+        The logger.
 
     Raises
     ------
@@ -715,8 +752,8 @@ def generate_index_html(dry_run=False, logger=None):
     ----------
     dry_run : bool, optional
         See :any:`DataTablesObject` > dry_run parameter.
-    logger : object
-        See <class :any:`LogSystem`>.
+    logger : LogSystem
+        The logger.
 
     Raises
     ------
